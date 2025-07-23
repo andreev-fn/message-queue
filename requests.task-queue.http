@@ -1,0 +1,52 @@
+### check health
+GET http://localhost:8060/health
+
+### create task
+POST http://localhost:8060/task/create
+Content-Type: application/json
+
+{
+  "kind": "test",
+  "payload": {
+    "arg": "1234"
+  }
+}
+
+### confirm task
+POST http://localhost:8060/task/confirm?id=af88f155-3d13-47a5-9be3-73f829abec0c
+
+### check task 1
+GET http://localhost:8060/task/check?id=35643438-12ca-4f28-ab8e-1215f92c221f
+
+### check task 2
+GET http://localhost:8060/task/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fca
+
+### check task not found
+GET http://localhost:8060/task/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fcb
+
+### get task to work
+POST http://localhost:8060/work/take?kind=test&limit=3
+
+### save task result (success)
+POST http://localhost:8060/work/finish
+Content-Type: application/json
+
+{
+  "id": "af88f155-3d13-47a5-9be3-73f829abec0c",
+  "report": "{\"result\":\"success\"}",
+  "error": null
+}
+
+### save task result (error)
+POST http://localhost:8060/work/finish
+Content-Type: application/json
+
+{
+  "id": "af88f155-3d13-47a5-9be3-73f829abec0c",
+  "report": null,
+  "error": {
+    "code": "timeout_error",
+    "message": "shit happened",
+    "additional_info": null
+  }
+}

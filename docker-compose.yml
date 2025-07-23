@@ -1,0 +1,24 @@
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: queue
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  server:
+    build:
+      context: server
+    depends_on:
+      - database
+    environment:
+      APP_DB_USER: user
+      APP_DB_PASS: pass
+      APP_DB_HOST: database:5432
+      APP_DB_NAME: queue
+    ports:
+      - "127.0.0.1:8060:8060"
