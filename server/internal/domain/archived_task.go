@@ -9,19 +9,6 @@ import (
 	"time"
 )
 
-// ArchivedTaskDTO supposed to be used only for storage, don't change values manually
-type ArchivedTaskDTO struct {
-	ID          uuid.UUID
-	Kind        string
-	Payload     json.RawMessage
-	CreatedAt   time.Time
-	FinalizedAt time.Time
-	Status      TaskStatus
-	Priority    int
-	Retries     int
-	Result      *json.RawMessage
-}
-
 type ArchivedTask struct {
 	id          uuid.UUID
 	kind        string
@@ -55,34 +42,6 @@ func NewArchivedTask(task *Task) (*ArchivedTask, error) {
 		task.Retries(),
 		task.Result(),
 	}, nil
-}
-
-func ArchivedTaskFromDTO(dto *ArchivedTaskDTO) *ArchivedTask {
-	return &ArchivedTask{
-		dto.ID,
-		dto.Kind,
-		dto.Payload,
-		dto.CreatedAt,
-		dto.FinalizedAt,
-		dto.Status,
-		dto.Priority,
-		dto.Retries,
-		dto.Result,
-	}
-}
-
-func (t *ArchivedTask) ToDTO() *ArchivedTaskDTO {
-	return &ArchivedTaskDTO{
-		t.id,
-		t.kind,
-		t.payload,
-		t.createdAt,
-		t.finalizedAt,
-		t.status,
-		t.priority,
-		t.retries,
-		t.result,
-	}
 }
 
 func (t *ArchivedTask) ID() uuid.UUID            { return t.id }
