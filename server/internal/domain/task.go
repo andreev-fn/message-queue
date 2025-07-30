@@ -52,21 +52,21 @@ func NewTask(
 		return nil, errors.New("start time must be in the future")
 	}
 	return &Task{
-		id,
-		kind,
-		payload,
-		clock.Now(),
-		nil,
-		TaskStatusCreated,
-		clock.Now(),
-		startAt,
-		nil,
-		priority,
-		0,
-		nil,
-		0,
-		true,
-		false,
+		id:              id,
+		kind:            kind,
+		payload:         payload,
+		createdAt:       clock.Now(),
+		finalizedAt:     nil,
+		status:          TaskStatusCreated,
+		statusChangedAt: clock.Now(),
+		delayedUntil:    startAt,
+		timeoutAt:       nil,
+		priority:        priority,
+		retries:         0,
+		result:          nil,
+		version:         0,
+		isNew:           true,
+		isResultNew:     false,
 	}, nil
 }
 

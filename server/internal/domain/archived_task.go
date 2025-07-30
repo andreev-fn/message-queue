@@ -32,15 +32,15 @@ func NewArchivedTask(task *Task) (*ArchivedTask, error) {
 	}
 
 	return &ArchivedTask{
-		task.ID(),
-		task.Kind(),
-		task.Payload(),
-		task.CreatedAt(),
-		*finalizedAt,
-		task.Status(),
-		task.Priority(),
-		task.Retries(),
-		task.Result(),
+		id:          task.ID(),
+		kind:        task.Kind(),
+		payload:     task.Payload(),
+		createdAt:   task.CreatedAt(),
+		finalizedAt: *finalizedAt,
+		status:      task.Status(),
+		priority:    task.Priority(),
+		retries:     task.Retries(),
+		result:      task.Result(),
 	}, nil
 }
 

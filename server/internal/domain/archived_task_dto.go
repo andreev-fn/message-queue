@@ -21,28 +21,28 @@ type ArchivedTaskDTO struct {
 
 func ArchivedTaskFromDTO(dto *ArchivedTaskDTO) *ArchivedTask {
 	return &ArchivedTask{
-		dto.ID,
-		dto.Kind,
-		dto.Payload,
-		dto.CreatedAt,
-		dto.FinalizedAt,
-		dto.Status,
-		dto.Priority,
-		dto.Retries,
-		dto.Result,
+		id:          dto.ID,
+		kind:        dto.Kind,
+		payload:     dto.Payload,
+		createdAt:   dto.CreatedAt,
+		finalizedAt: dto.FinalizedAt,
+		status:      dto.Status,
+		priority:    dto.Priority,
+		retries:     dto.Retries,
+		result:      dto.Result,
 	}
 }
 
 func (t *ArchivedTask) ToDTO() *ArchivedTaskDTO {
 	return &ArchivedTaskDTO{
-		t.id,
-		t.kind,
-		t.payload,
-		t.createdAt,
-		t.finalizedAt,
-		t.status,
-		t.priority,
-		t.retries,
-		t.result,
+		ID:          t.id,
+		Kind:        t.kind,
+		Payload:     t.payload,
+		CreatedAt:   t.createdAt,
+		FinalizedAt: t.finalizedAt,
+		Status:      t.status,
+		Priority:    t.priority,
+		Retries:     t.retries,
+		Result:      t.result,
 	}
 }
