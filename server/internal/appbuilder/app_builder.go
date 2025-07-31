@@ -11,7 +11,7 @@ import (
 	"server/internal/usecases"
 	"server/internal/utils/timeutils"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Config struct {
