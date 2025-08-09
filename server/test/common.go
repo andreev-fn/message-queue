@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"server/internal/appbuilder"
 	"server/internal/domain"
+	"server/internal/utils/testutils"
 	"server/internal/utils/timeutils"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 type ResponseWrapper struct {
@@ -22,6 +24,10 @@ type ResponseWrapper struct {
 
 func buildTestApp(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
 	t.Helper()
+
+	if !testutils.ShouldRunIntegrationTests() {
+		t.SkipNow()
+	}
 
 	clock := timeutils.NewStubClock(time.Date(2025, 6, 12, 12, 0, 0, 0, time.Local))
 
@@ -73,3 +79,7 @@ func createTask(t *testing.T, app *appbuilder.App, id string, kind string, prior
 
 	return task
 }
+
+type NoopEventDispatcher struct{}
+
+func (NoopEventDispatcher) Dispatch(event domain.Event) {}

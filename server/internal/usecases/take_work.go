@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"server/internal/eventbus"
 	"server/internal/storage"
+	"server/internal/taskreadiness"
 	"server/internal/utils/dbutils"
 	"server/internal/utils/timeutils"
+	"time"
 )
 
 type TaskToWork struct {
@@ -21,6 +24,7 @@ type TakeWork struct {
 	clock    timeutils.Clock
 	db       *sql.DB
 	taskRepo *storage.TaskRepository
+	eventBus *eventbus.EventBus
 }
 
 func NewTakeWork(
@@ -28,16 +32,50 @@ func NewTakeWork(
 	clock timeutils.Clock,
 	db *sql.DB,
 	taskRepo *storage.TaskRepository,
+	eventBus *eventbus.EventBus,
 ) *TakeWork {
 	return &TakeWork{
 		logger:   logger,
 		clock:    clock,
 		db:       db,
 		taskRepo: taskRepo,
+		eventBus: eventBus,
 	}
 }
 
-func (uc *TakeWork) Do(ctx context.Context, kinds []string, limit int) ([]TaskToWork, error) {
+func (uc *TakeWork) Do(ctx context.Context, kinds []string, limit int, poll time.Duration) ([]TaskToWork, error) {
+	// fast path first
+	result, err := uc.takeTasks(ctx, kinds, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result) > 0 || poll == 0 {
+		return result, nil
+	}
+
+	poller := taskreadiness.NewPoller(kinds, poll)
+	unsubscribe := uc.eventBus.Subscribe(eventbus.ChannelTaskReady, poller.HandleEvent)
+	defer unsubscribe()
+
+	for {
+		result, err = uc.takeTasks(ctx, kinds, limit)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(result) > 0 {
+			return result, nil
+		}
+
+		poller.WaitForNextAttempt(ctx)
+		if poller.IsTimedOut() {
+			return []TaskToWork{}, nil
+		}
+	}
+}
+
+func (uc *TakeWork) takeTasks(ctx context.Context, kinds []string, limit int) ([]TaskToWork, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err

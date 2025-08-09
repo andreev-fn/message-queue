@@ -92,7 +92,7 @@ func (t *Task) Result() *json.RawMessage {
 	return utils.P(slices.Clone(*t.result))
 }
 
-func (t *Task) Confirm(clock timeutils.Clock) error {
+func (t *Task) Confirm(clock timeutils.Clock, ed EventDispatcher) error {
 	if t.status != TaskStatusCreated {
 		return errors.New("task must be in CREATED status")
 	}
@@ -101,6 +101,7 @@ func (t *Task) Confirm(clock timeutils.Clock) error {
 		t.setStatus(clock, TaskStatusDelayed)
 	} else {
 		t.setStatus(clock, TaskStatusReady)
+		ed.Dispatch(NewTaskReadyEvent(t.kind))
 	}
 
 	return nil
@@ -131,7 +132,7 @@ func (t *Task) Delay(clock timeutils.Clock, delayedUntil time.Time) error {
 	return nil
 }
 
-func (t *Task) Resume(clock timeutils.Clock) error {
+func (t *Task) Resume(clock timeutils.Clock, ed EventDispatcher) error {
 	if t.status != TaskStatusDelayed {
 		return errors.New("task must be in DELAYED status")
 	}
@@ -146,6 +147,7 @@ func (t *Task) Resume(clock timeutils.Clock) error {
 	t.delayedUntil = nil // cleanup after DELAYED status
 
 	t.setStatus(clock, TaskStatusReady)
+	ed.Dispatch(NewTaskReadyEvent(t.kind))
 
 	return nil
 }

@@ -1,6 +1,18 @@
 ### check health
 GET http://localhost:8060/health
 
+### create task (auto_confirm)
+POST http://localhost:8060/task/create
+Content-Type: application/json
+
+{
+  "kind": "test",
+  "payload": {
+    "arg": "1234"
+  },
+  "auto_confirm": true
+}
+
 ### create task
 POST http://localhost:8060/task/create
 Content-Type: application/json
@@ -26,6 +38,9 @@ GET http://localhost:8060/task/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fcb
 
 ### get task to work
 POST http://localhost:8060/work/take?kind=test&limit=3
+
+### get task to work (with poll)
+POST http://localhost:8060/work/take?kind=test&limit=3&poll=25
 
 ### save task result (success)
 POST http://localhost:8060/work/finish

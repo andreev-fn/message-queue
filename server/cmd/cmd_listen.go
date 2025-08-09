@@ -34,17 +34,23 @@ func Listen(app *appbuilder.App) {
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
-	<-quit
+	go func() {
+		if err := app.EventBus.Run(ctx); err != nil {
+			app.Logger.Error("event bus stopped unexpectedly", "error", err)
+		}
+	}()
+
+	<-ctx.Done()
 
 	app.Logger.Info("shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	shutdownCtx, cancelShutdownCtx := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelShutdownCtx()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		app.Logger.Error("shutting down failed", "error", err)
 		return
 	}

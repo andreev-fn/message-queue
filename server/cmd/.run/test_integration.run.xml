@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="test_integration" type="GoTestRunConfiguration" factoryName="Go Test">
+    <module name="task-queue" />
+    <working_directory value="$PROJECT_DIR$/server" />
+    <envs>
+      <env name="INTEGRATION" value="true" />
+    </envs>
+    <kind value="DIRECTORY" />
+    <package value="server" />
+    <directory value="$PROJECT_DIR$/server" />
+    <filePath value="$PROJECT_DIR$" />
+    <framework value="gotest" />
+    <method v="2" />
+  </configuration>
+</component>

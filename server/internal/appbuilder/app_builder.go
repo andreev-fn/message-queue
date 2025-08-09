@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"server/internal/appbuilder/requestscope"
+	"server/internal/eventbus"
+	"server/internal/eventbus/postgres"
 	"server/internal/routes"
 	"server/internal/storage"
 	"server/internal/usecases"
@@ -32,6 +35,10 @@ type App struct {
 
 	TaskRepo         *storage.TaskRepository
 	ArchivedTaskRepo *storage.ArchivedTaskRepository
+
+	EventBus *eventbus.EventBus
+
+	RequestScopeFactory requestscope.Factory
 
 	ArchiveTasks     *usecases.ArchiveTasks
 	ExpireProcessing *usecases.ExpireProcessing
@@ -70,15 +77,19 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 	taskRepo := storage.NewTaskRepository(clock, logger)
 	archivedTaskRepo := storage.NewArchivedTaskRepository()
 
+	eventBus := eventbus.NewEventBus(logger, clock, postgres.NewPubSubDriver(db))
+
+	requestScopeFactory := NewRequestScopeFactory(eventBus)
+
 	archiveTasks := usecases.NewArchiveTasks(clock, db, taskRepo, archivedTaskRepo)
 	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, taskRepo)
-	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, taskRepo)
+	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, taskRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()
 	routes.NewCreateTask(
 		db,
 		logger,
-		usecases.NewCreateTask(logger, clock, db, taskRepo),
+		usecases.NewCreateTask(logger, clock, db, taskRepo, requestScopeFactory),
 	).Mount(mux)
 	routes.NewFinishWork(
 		db,
@@ -88,12 +99,12 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 	routes.NewTakeWork(
 		db,
 		logger,
-		usecases.NewTakeWork(logger, clock, db, taskRepo),
+		usecases.NewTakeWork(logger, clock, db, taskRepo, eventBus),
 	).Mount(mux)
 	routes.NewConfirmTask(
 		db,
 		logger,
-		usecases.NewConfirmTask(logger, clock, db, taskRepo),
+		usecases.NewConfirmTask(logger, clock, db, taskRepo, requestScopeFactory),
 	).Mount(mux)
 	routes.NewCheckTask(
 		db,
@@ -107,6 +118,8 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 		db,
 		taskRepo,
 		archivedTaskRepo,
+		eventBus,
+		requestScopeFactory,
 		archiveTasks,
 		expireProcessing,
 		resumeDelayed,

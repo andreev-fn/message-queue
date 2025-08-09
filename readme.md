@@ -16,7 +16,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☐ Removal of old tasks
 - ☐ Metrics
 - ☐ Implement webhooks
-- ☐ Some kind of long-polling for workers
+- ☑ Some kind of long-polling for workers
 - ☐ Rate-limited queues
 - ☐ Batch operations
 - ☐ Single-process mode
@@ -33,6 +33,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 
 - ✅ **Task Prioritization** – High-priority tasks are picked first.
 - ✅ **Retries & Backoff** – Failed tasks are retried automatically.
+- ✅ **Long-polling** – Workers can efficiently wait until a task comes.
 
 ## 📦 When to Use
 

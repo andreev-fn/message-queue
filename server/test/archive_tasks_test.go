@@ -3,11 +3,12 @@ package test
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"server/internal/domain"
 	"server/internal/storage"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestArchiveTasksFinalized(t *testing.T) {
@@ -18,7 +19,7 @@ func TestArchiveTasksFinalized(t *testing.T) {
 	const taskID = "00000000-0000-0000-0000-000000000001"
 	testTask := createTask(t, app, taskID, "test", 100)
 
-	err := testTask.Confirm(app.Clock)
+	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
 	require.NoError(t, err)
 
 	err = testTask.StartProcessing(app.Clock)
@@ -54,7 +55,7 @@ func TestArchiveTasksNotFinal(t *testing.T) {
 	const taskID = "00000000-0000-0000-0000-000000000001"
 	testTask := createTask(t, app, taskID, "test", 100)
 
-	err := testTask.Confirm(app.Clock)
+	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
 	require.NoError(t, err)
 
 	err = testTask.StartProcessing(app.Clock)

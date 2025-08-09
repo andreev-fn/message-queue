@@ -26,7 +26,7 @@ func TestTakeWork(t *testing.T) {
 	}
 
 	for _, testTask := range testTasks {
-		err := testTask.Confirm(app.Clock)
+		err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
 		require.NoError(t, err)
 
 		err = app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)

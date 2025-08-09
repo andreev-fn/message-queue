@@ -19,7 +19,7 @@ func TestFinishSuccessfulWork(t *testing.T) {
 	const taskID = "00000000-0000-0000-0000-000000000001"
 	testTask := createTask(t, app, taskID, "test", 100)
 
-	err := testTask.Confirm(app.Clock)
+	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
 	require.NoError(t, err)
 
 	err = testTask.StartProcessing(app.Clock)
@@ -70,7 +70,7 @@ func TestFinishUnsuccessfulWork(t *testing.T) {
 	const taskID = "00000000-0000-0000-0000-000000000001"
 	testTask := createTask(t, app, taskID, "test", 100)
 
-	err := testTask.Confirm(app.Clock)
+	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
 	require.NoError(t, err)
 
 	err = testTask.StartProcessing(app.Clock)

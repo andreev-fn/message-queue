@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"log/slog"
+	"server/internal/appbuilder/requestscope"
 	"server/internal/domain"
 	"server/internal/storage"
 	"server/internal/utils/timeutils"
@@ -14,10 +15,11 @@ import (
 )
 
 type CreateTask struct {
-	logger   *slog.Logger
-	clock    timeutils.Clock
-	db       *sql.DB
-	taskRepo *storage.TaskRepository
+	logger       *slog.Logger
+	clock        timeutils.Clock
+	db           *sql.DB
+	taskRepo     *storage.TaskRepository
+	scopeFactory requestscope.Factory
 }
 
 func NewCreateTask(
@@ -25,12 +27,14 @@ func NewCreateTask(
 	clock timeutils.Clock,
 	db *sql.DB,
 	taskRepo *storage.TaskRepository,
+	scopeFactory requestscope.Factory,
 ) *CreateTask {
 	return &CreateTask{
-		logger:   logger,
-		clock:    clock,
-		db:       db,
-		taskRepo: taskRepo,
+		logger:       logger,
+		clock:        clock,
+		db:           db,
+		taskRepo:     taskRepo,
+		scopeFactory: scopeFactory,
 	}
 }
 
@@ -42,19 +46,25 @@ func (uc *CreateTask) Do(
 	autoConfirm bool,
 	startAt *time.Time,
 ) (string, error) {
+	scope := uc.scopeFactory.New()
+
 	task, err := domain.NewTask(uc.clock, uuid.New(), kind, payload, priority, startAt)
 	if err != nil {
 		return "", err
 	}
 
 	if autoConfirm {
-		if err := task.Confirm(uc.clock); err != nil {
+		if err := task.Confirm(uc.clock, scope.Dispatcher); err != nil {
 			return "", fmt.Errorf("task.Confirm: %w", err)
 		}
 	}
 
 	if err := uc.taskRepo.SaveInNewTransaction(ctx, uc.db, task); err != nil {
 		return "", fmt.Errorf("taskRepo.SaveInNewTransaction: %w", err)
+	}
+
+	if err := scope.TaskReadyNotifier.Flush(); err != nil {
+		uc.logger.Error("scope.TaskReadyNotifier.Flush", "error", err)
 	}
 
 	return task.ID().String(), nil

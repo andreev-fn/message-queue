@@ -10,6 +10,7 @@ import (
 	"server/internal/usecases"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type TakeWork struct {
@@ -56,10 +57,28 @@ func (a *TakeWork) handler(writer http.ResponseWriter, request *http.Request) {
 			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'limit' must be an integer"))
 			return
 		}
+		if customLimit < 1 {
+			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'limit' must be greater than 0"))
+			return
+		}
 		limit = customLimit
 	}
 
-	tasks, err := a.useCase.Do(request.Context(), kinds, limit)
+	poll := time.Duration(0)
+	if params.Has("poll") {
+		customPoll, err := strconv.Atoi(params.Get("poll"))
+		if err != nil {
+			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'poll' must be an integer"))
+			return
+		}
+		if customPoll < 0 {
+			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'poll' must be >= 0"))
+			return
+		}
+		poll = time.Duration(customPoll) * time.Second
+	}
+
+	tasks, err := a.useCase.Do(request.Context(), kinds, limit, poll)
 	if err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return
