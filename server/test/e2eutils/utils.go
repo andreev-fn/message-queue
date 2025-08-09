@@ -1,19 +1,16 @@
-package test
+package e2eutils
 
 import (
-	"crypto/md5"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
-	"server/internal/appbuilder"
-	"server/internal/domain"
-	"server/internal/utils/testutils"
-	"server/internal/utils/timeutils"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"server/internal/appbuilder"
+	"server/internal/utils/testutils"
+	"server/internal/utils/timeutils"
 )
 
 type ResponseWrapper struct {
@@ -22,12 +19,22 @@ type ResponseWrapper struct {
 	Error   *string          `json:"error"`
 }
 
-func buildTestApp(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
+func Prepare(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
 	t.Helper()
 
 	if !testutils.ShouldRunIntegrationTests() {
 		t.SkipNow()
 	}
+
+	app, clock := BuildTestApp(t)
+
+	CleanupDatabase(t, app.DB)
+
+	return app, clock
+}
+
+func BuildTestApp(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
+	t.Helper()
 
 	clock := timeutils.NewStubClock(time.Date(2025, 6, 12, 12, 0, 0, 0, time.Local))
 
@@ -44,7 +51,7 @@ func buildTestApp(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
 	return app, clock
 }
 
-func cleanupDatabase(t *testing.T, db *sql.DB) {
+func CleanupDatabase(t *testing.T, db *sql.DB) {
 	t.Helper()
 
 	if _, err := db.Exec("DELETE FROM tasks"); err != nil {
@@ -60,26 +67,3 @@ func cleanupDatabase(t *testing.T, db *sql.DB) {
 		require.NoError(t, err)
 	}
 }
-
-func createTask(t *testing.T, app *appbuilder.App, id string, kind string, priority int) *domain.Task {
-	t.Helper()
-
-	parsedID := uuid.MustParse(id)
-	md5bytes := md5.Sum(parsedID[:])
-	arg := hex.EncodeToString(md5bytes[:])
-	task, err := domain.NewTask(
-		app.Clock,
-		parsedID,
-		kind,
-		json.RawMessage(`{"arg":"`+arg+`"}`),
-		priority,
-		nil,
-	)
-	require.NoError(t, err)
-
-	return task
-}
-
-type NoopEventDispatcher struct{}
-
-func (NoopEventDispatcher) Dispatch(event domain.Event) {}

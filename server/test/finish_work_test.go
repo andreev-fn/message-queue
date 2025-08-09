@@ -4,34 +4,33 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"server/internal/domain"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"server/internal/domain"
+	"server/test/e2eutils"
 )
 
 func TestFinishSuccessfulWork(t *testing.T) {
-	app, _ := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, _ := e2eutils.Prepare(t)
 
-	// Create test data directly in the database
-	const taskID = "00000000-0000-0000-0000-000000000001"
-	testTask := createTask(t, app, taskID, "test", 100)
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 100
+		taskResult   = `{"result":"success"}`
+	)
 
-	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
-	require.NoError(t, err)
+	// Arrange
+	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
 
-	err = testTask.StartProcessing(app.Clock)
-	require.NoError(t, err)
-
-	err = app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)
-	require.NoError(t, err)
-
-	// Prepare request
+	// Act
 	requestBody := map[string]interface{}{
 		"id":     taskID,
-		"report": `{"result":"success"}`,
+		"report": taskResult,
 		"error":  nil,
 	}
 	body, err := json.Marshal(requestBody)
@@ -48,7 +47,7 @@ func TestFinishSuccessfulWork(t *testing.T) {
 	// Assert response
 	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
 
-	var respWrapper ResponseWrapper
+	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
 	require.NoError(t, err)
 
@@ -56,30 +55,27 @@ func TestFinishSuccessfulWork(t *testing.T) {
 	require.Nil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	// Verify task status in database
+	// Assert task in DB
 	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
 	require.NoError(t, err)
 	require.Equal(t, domain.TaskStatusCompleted, task.Status())
-	require.JSONEq(t, `{"result":"success"}`, string(*task.Result()))
+	require.NotNil(t, task.Result())
+	require.JSONEq(t, taskResult, string(*task.Result()))
 }
 
 func TestFinishUnsuccessfulWork(t *testing.T) {
-	app, _ := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, _ := e2eutils.Prepare(t)
 
-	const taskID = "00000000-0000-0000-0000-000000000001"
-	testTask := createTask(t, app, taskID, "test", 100)
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 100
+	)
 
-	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
-	require.NoError(t, err)
+	// Arrange
+	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
 
-	err = testTask.StartProcessing(app.Clock)
-	require.NoError(t, err)
-
-	err = app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)
-	require.NoError(t, err)
-
-	// Prepare request with error
+	// Act
 	requestBody := map[string]interface{}{
 		"id":     taskID,
 		"report": nil,
@@ -100,9 +96,10 @@ func TestFinishUnsuccessfulWork(t *testing.T) {
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
 
+	// Assert response
 	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
 
-	var respWrapper ResponseWrapper
+	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
 	require.NoError(t, err)
 
@@ -110,16 +107,16 @@ func TestFinishUnsuccessfulWork(t *testing.T) {
 	require.Nil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	// Verify task status in database
+	// Assert task in DB
 	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
 	require.NoError(t, err)
 	require.Equal(t, domain.TaskStatusDelayed, task.Status())
 }
 
 func TestFinishWorkUnknownTask(t *testing.T) {
-	app, _ := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, _ := e2eutils.Prepare(t)
 
+	// Act
 	requestBody := map[string]interface{}{
 		"id":     "d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2",
 		"report": `{"result":"success"}`,
@@ -136,9 +133,10 @@ func TestFinishWorkUnknownTask(t *testing.T) {
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
 
+	// Assert
 	require.Equal(t, http.StatusInternalServerError, resp.Result().StatusCode)
 
-	var respWrapper ResponseWrapper
+	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
 	require.NoError(t, err)
 

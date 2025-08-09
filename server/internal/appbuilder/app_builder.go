@@ -41,6 +41,11 @@ type App struct {
 
 	RequestScopeFactory requestscope.Factory
 
+	CreateTask       *usecases.CreateTask
+	ConfirmTask      *usecases.ConfirmTask
+	TakeWork         *usecases.TakeWork
+	FinishWork       *usecases.FinishWork
+	CheckTask        *usecases.CheckTask
 	ArchiveTasks     *usecases.ArchiveTasks
 	ExpireProcessing *usecases.ExpireProcessing
 	ResumeDelayed    *usecases.ResumeDelayed
@@ -82,48 +87,43 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 
 	requestScopeFactory := NewRequestScopeFactory(eventBus)
 
+	createTask := usecases.NewCreateTask(logger, clock, db, taskRepo, requestScopeFactory)
+	confirmTask := usecases.NewConfirmTask(logger, clock, db, taskRepo, requestScopeFactory)
+	takeWork := usecases.NewTakeWork(logger, clock, db, taskRepo, eventBus)
+	finishWork := usecases.NewFinishWork(clock, logger, db, taskRepo)
+	checkTask := usecases.NewCheckTask(db, taskRepo, archivedTaskRepo)
 	archiveTasks := usecases.NewArchiveTasks(clock, db, taskRepo, archivedTaskRepo)
 	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, taskRepo)
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, taskRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()
-	routes.NewCreateTask(
-		db,
-		logger,
-		usecases.NewCreateTask(logger, clock, db, taskRepo, requestScopeFactory),
-	).Mount(mux)
-	routes.NewFinishWork(
-		db,
-		logger,
-		usecases.NewFinishWork(clock, logger, db, taskRepo),
-	).Mount(mux)
-	routes.NewTakeWork(
-		db,
-		logger,
-		usecases.NewTakeWork(logger, clock, db, taskRepo, eventBus),
-	).Mount(mux)
-	routes.NewConfirmTask(
-		db,
-		logger,
-		usecases.NewConfirmTask(logger, clock, db, taskRepo, requestScopeFactory),
-	).Mount(mux)
-	routes.NewCheckTask(
-		db,
-		logger,
-		usecases.NewCheckTask(db, taskRepo, archivedTaskRepo),
-	).Mount(mux)
+	routes.NewCreateTask(db, logger, createTask).Mount(mux)
+	routes.NewConfirmTask(db, logger, confirmTask).Mount(mux)
+	routes.NewTakeWork(db, logger, takeWork).Mount(mux)
+	routes.NewFinishWork(db, logger, finishWork).Mount(mux)
+	routes.NewCheckTask(db, logger, checkTask).Mount(mux)
 
 	return &App{
-		Clock:               clock,
-		Logger:              logger,
-		DB:                  db,
-		TaskRepo:            taskRepo,
-		ArchivedTaskRepo:    archivedTaskRepo,
-		EventBus:            eventBus,
+		Clock:  clock,
+		Logger: logger,
+		DB:     db,
+
+		TaskRepo:         taskRepo,
+		ArchivedTaskRepo: archivedTaskRepo,
+
+		EventBus: eventBus,
+
 		RequestScopeFactory: requestScopeFactory,
-		ArchiveTasks:        archiveTasks,
-		ExpireProcessing:    expireProcessing,
-		ResumeDelayed:       resumeDelayed,
-		Router:              mux,
+
+		CreateTask:       createTask,
+		ConfirmTask:      confirmTask,
+		TakeWork:         takeWork,
+		FinishWork:       finishWork,
+		CheckTask:        checkTask,
+		ArchiveTasks:     archiveTasks,
+		ExpireProcessing: expireProcessing,
+		ResumeDelayed:    resumeDelayed,
+
+		Router: mux,
 	}, nil
 }

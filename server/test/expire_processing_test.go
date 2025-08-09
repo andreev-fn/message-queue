@@ -2,31 +2,29 @@ package test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
-	"server/internal/domain"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"server/internal/domain"
+	"server/test/e2eutils"
 )
 
 func TestExpireProcessingAfterTimeout(t *testing.T) {
-	app, clock := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, clock := e2eutils.Prepare(t)
 
-	// Create test data directly in the database
-	const taskID = "00000000-0000-0000-0000-000000000001"
-	testTask := createTask(t, app, taskID, "test", 100)
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 100
+	)
 
-	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
-	require.NoError(t, err)
-
-	err = testTask.StartProcessing(app.Clock)
-	require.NoError(t, err)
-
-	err = app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)
-	require.NoError(t, err)
-
+	// Arrange
+	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
 	clock.Set(clock.Now().Add(6 * time.Minute))
 
+	// Act
 	affected, err := app.ExpireProcessing.Do(context.Background(), 10)
 	require.NoError(t, err)
 
@@ -41,33 +39,28 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 }
 
 func TestExpireProcessingBeforeTimeout(t *testing.T) {
-	app, clock := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, clock := e2eutils.Prepare(t)
 
-	// Create test data directly in the database
-	const taskID = "00000000-0000-0000-0000-000000000001"
-	testTask := createTask(t, app, taskID, "test", 100)
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 100
+	)
 
-	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
-	require.NoError(t, err)
-
-	err = testTask.StartProcessing(app.Clock)
-	require.NoError(t, err)
-
-	err = app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)
-	require.NoError(t, err)
-
+	// Arrange
+	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
 	clock.Set(clock.Now().Add(3 * time.Minute))
 
+	// Act
 	affected, err := app.ExpireProcessing.Do(context.Background(), 10)
 	require.NoError(t, err)
 
 	// Assert
 	require.Equal(t, 0, affected)
 
-	updatedTask, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	unchangedTask, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
 	require.NoError(t, err)
 
-	require.Equal(t, domain.TaskStatusProcessing, updatedTask.Status())
-	require.Equal(t, 0, updatedTask.Retries())
+	require.Equal(t, domain.TaskStatusProcessing, unchangedTask.Status())
+	require.Equal(t, 0, unchangedTask.Retries())
 }

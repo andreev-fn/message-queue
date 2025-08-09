@@ -4,22 +4,29 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"server/internal/domain"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"server/internal/domain"
+	"server/test/e2eutils"
 )
 
 func TestCreateTask(t *testing.T) {
-	app, _ := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, _ := e2eutils.Prepare(t)
 
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 100
+	)
+
+	// Act
 	body, err := json.Marshal(map[string]any{
-		"kind": "test",
-		"payload": map[string]any{
-			"arg": "1234",
-		},
+		"kind":    taskKind,
+		"payload": json.RawMessage(taskPayload),
 	})
 	require.NoError(t, err)
 
@@ -28,14 +35,13 @@ func TestCreateTask(t *testing.T) {
 
 	req.Header.Set("Content-Type", "application/json")
 
-	// Act
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
 
-	// Assert
+	// Assert response
 	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
 
-	var respWrapper ResponseWrapper
+	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
 	require.NoError(t, err)
 
@@ -49,28 +55,32 @@ func TestCreateTask(t *testing.T) {
 	err = json.Unmarshal(*respWrapper.Result, &respDTO)
 	require.NoError(t, err)
 
-	// Verify task in database
+	// Assert task in DB
 	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, respDTO.ID)
 	require.NoError(t, err)
 
-	require.Equal(t, "test", task.Kind())
-	require.JSONEq(t, `{"arg": "1234"}`, string(task.Payload()))
+	require.Equal(t, taskKind, task.Kind())
+	require.JSONEq(t, taskPayload, string(task.Payload()))
 	require.Equal(t, app.Clock.Now(), task.CreatedAt())
 	require.Equal(t, domain.TaskStatusCreated, task.Status())
-	require.Equal(t, 100, task.Priority())
+	require.Equal(t, taskPriority, task.Priority())
 }
 
 func TestCreateTaskWithPriorityAndConfirm(t *testing.T) {
-	app, _ := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, _ := e2eutils.Prepare(t)
 
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 5
+	)
+
+	// Act
 	body, err := json.Marshal(map[string]any{
-		"kind": "test",
-		"payload": map[string]any{
-			"arg": "12345",
-		},
+		"kind":         taskKind,
+		"payload":      json.RawMessage(taskPayload),
 		"auto_confirm": true,
-		"priority":     5,
+		"priority":     taskPriority,
 	})
 	require.NoError(t, err)
 
@@ -79,14 +89,13 @@ func TestCreateTaskWithPriorityAndConfirm(t *testing.T) {
 
 	req.Header.Set("Content-Type", "application/json")
 
-	// Act
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
 
-	// Assert
+	// Assert response
 	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
 
-	var respWrapper ResponseWrapper
+	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
 	require.NoError(t, err)
 
@@ -100,13 +109,13 @@ func TestCreateTaskWithPriorityAndConfirm(t *testing.T) {
 	err = json.Unmarshal(*respWrapper.Result, &respDTO)
 	require.NoError(t, err)
 
-	// Verify task in database
+	// Assert task in DB
 	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, respDTO.ID)
 	require.NoError(t, err)
 
-	require.Equal(t, "test", task.Kind())
-	require.JSONEq(t, `{"arg": "12345"}`, string(task.Payload()))
+	require.Equal(t, taskKind, task.Kind())
+	require.JSONEq(t, taskPayload, string(task.Payload()))
 	require.Equal(t, app.Clock.Now(), task.CreatedAt())
 	require.Equal(t, domain.TaskStatusReady, task.Status())
-	require.Equal(t, 5, task.Priority())
+	require.Equal(t, taskPriority, task.Priority())
 }

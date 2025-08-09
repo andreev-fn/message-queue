@@ -2,40 +2,34 @@ package test
 
 import (
 	"context"
-	"encoding/json"
-	"server/internal/domain"
-	"server/internal/storage"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"server/internal/domain"
+	"server/internal/storage"
+	"server/test/e2eutils"
 )
 
 func TestArchiveTasksFinalized(t *testing.T) {
-	app, clock := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, clock := e2eutils.Prepare(t)
 
-	// Create test data directly in the database
-	const taskID = "00000000-0000-0000-0000-000000000001"
-	testTask := createTask(t, app, taskID, "test", 100)
+	const (
+		taskKind    = "test"
+		taskPayload = `{"arg": 123}`
+		taskResult  = `{"result":"success"}`
+	)
 
-	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
-	require.NoError(t, err)
-
-	err = testTask.StartProcessing(app.Clock)
-	require.NoError(t, err)
-
-	err = testTask.Complete(app.Clock, json.RawMessage(`{"result":"success"}`))
-	require.NoError(t, err)
-
-	err = app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)
-	require.NoError(t, err)
-
+	// Arrange
+	taskID := e2eutils.CreateCompletedTask(t, app, taskKind, taskPayload, taskResult)
 	clock.Set(clock.Now().Add(time.Minute))
 
+	// Act
 	affected, err := app.ArchiveTasks.Do(context.Background(), 10)
 	require.NoError(t, err)
 
+	// Assert
 	require.Equal(t, 1, affected)
 
 	_, err = app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
@@ -45,30 +39,30 @@ func TestArchiveTasksFinalized(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, domain.TaskStatusCompleted, archivedTask.Status())
+	require.Equal(t, taskKind, archivedTask.Kind())
+	require.JSONEq(t, taskPayload, string(archivedTask.Payload()))
+	require.NotNil(t, archivedTask.Result())
+	require.JSONEq(t, taskResult, string(*archivedTask.Result()))
 }
 
 func TestArchiveTasksNotFinal(t *testing.T) {
-	app, clock := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, clock := e2eutils.Prepare(t)
 
-	// Create test data directly in the database
-	const taskID = "00000000-0000-0000-0000-000000000001"
-	testTask := createTask(t, app, taskID, "test", 100)
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 100
+	)
 
-	err := testTask.Confirm(app.Clock, NoopEventDispatcher{})
-	require.NoError(t, err)
-
-	err = testTask.StartProcessing(app.Clock)
-	require.NoError(t, err)
-
-	err = app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)
-	require.NoError(t, err)
-
+	// Arrange
+	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
 	clock.Set(clock.Now().Add(time.Minute))
 
+	// Act
 	affected, err := app.ArchiveTasks.Do(context.Background(), 10)
 	require.NoError(t, err)
 
+	// Assert
 	require.Equal(t, 0, affected)
 
 	_, err = app.ArchivedTaskRepo.GetTaskByID(context.Background(), app.DB, taskID)

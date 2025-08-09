@@ -3,33 +3,39 @@ package test
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"server/internal/domain"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"server/internal/domain"
+	"server/test/e2eutils"
 )
 
 func TestConfirmTask(t *testing.T) {
-	app, _ := buildTestApp(t)
-	cleanupDatabase(t, app.DB)
+	app, _ := e2eutils.Prepare(t)
 
-	const taskID = "00000000-0000-0000-0000-000000000001"
-	testTask := createTask(t, app, taskID, "test", 100)
+	const (
+		taskKind     = "test"
+		taskPayload  = `{"arg": 123}`
+		taskPriority = 100
+	)
 
-	err := app.TaskRepo.SaveInNewTransaction(context.Background(), app.DB, testTask)
-	require.NoError(t, err)
+	// Arrange
+	taskID := e2eutils.CreateTask(t, app, taskKind, taskPayload, taskPriority)
 
+	// Act
 	req, err := http.NewRequest(http.MethodPost, "/task/confirm?id="+taskID, nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
 
-	// Assert
+	// Assert response
 	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
 
-	var respWrapper ResponseWrapper
+	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
 	require.NoError(t, err)
 
@@ -37,12 +43,13 @@ func TestConfirmTask(t *testing.T) {
 	require.Nil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	// Verify task in database
+	// Assert task in DB
 	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
 	require.NoError(t, err)
 
-	require.Equal(t, "test", task.Kind())
-	require.JSONEq(t, `{"arg": "cf404dc806178c245b5b4fe2531e6d8c"}`, string(task.Payload()))
+	require.Equal(t, taskKind, task.Kind())
+	require.JSONEq(t, taskPayload, string(task.Payload()))
+	require.Equal(t, taskPriority, task.Priority())
 	require.Equal(t, app.Clock.Now(), task.CreatedAt())
 	require.Equal(t, domain.TaskStatusReady, task.Status())
 }
