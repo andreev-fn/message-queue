@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"server/internal/appbuilder/requestscope"
 	"server/internal/eventbus"
 	"server/internal/eventbus/postgres"
@@ -13,8 +16,6 @@ import (
 	"server/internal/storage"
 	"server/internal/usecases"
 	"server/internal/utils/timeutils"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Config struct {
@@ -113,16 +114,16 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 	).Mount(mux)
 
 	return &App{
-		clock,
-		logger,
-		db,
-		taskRepo,
-		archivedTaskRepo,
-		eventBus,
-		requestScopeFactory,
-		archiveTasks,
-		expireProcessing,
-		resumeDelayed,
-		mux,
+		Clock:               clock,
+		Logger:              logger,
+		DB:                  db,
+		TaskRepo:            taskRepo,
+		ArchivedTaskRepo:    archivedTaskRepo,
+		EventBus:            eventBus,
+		RequestScopeFactory: requestScopeFactory,
+		ArchiveTasks:        archiveTasks,
+		ExpireProcessing:    expireProcessing,
+		ResumeDelayed:       resumeDelayed,
+		Router:              mux,
 	}, nil
 }
