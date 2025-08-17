@@ -6,32 +6,33 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+
 	"server/internal/usecases"
 )
 
-type ConfirmTask struct {
+type ConfirmMessage struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.ConfirmTask
+	useCase *usecases.ConfirmMessage
 }
 
-func NewConfirmTask(
+func NewConfirmMessage(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.ConfirmTask,
-) *ConfirmTask {
-	return &ConfirmTask{
+	useCase *usecases.ConfirmMessage,
+) *ConfirmMessage {
+	return &ConfirmMessage{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *ConfirmTask) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/task/confirm", a.handler)
+func (a *ConfirmMessage) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/message/confirm", a.handler)
 }
 
-func (a *ConfirmTask) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *ConfirmMessage) handler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/json")
 
 	if request.Method != http.MethodPost {
@@ -39,13 +40,13 @@ func (a *ConfirmTask) handler(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	taskID := request.URL.Query().Get("id")
-	if taskID == "" {
+	msgID := request.URL.Query().Get("id")
+	if msgID == "" {
 		a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'id' required"))
 		return
 	}
 
-	if err := a.useCase.Do(request.Context(), taskID); err != nil {
+	if err := a.useCase.Do(request.Context(), msgID); err != nil {
 		a.writeError(writer, http.StatusInternalServerError, err)
 		return
 	}
@@ -53,9 +54,9 @@ func (a *ConfirmTask) handler(writer http.ResponseWriter, request *http.Request)
 	a.writeSuccess(writer)
 }
 
-func (a *ConfirmTask) writeError(writer http.ResponseWriter, code int, err error) {
+func (a *ConfirmMessage) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("confirm task failed", "error", err)
+		a.logger.Error("confirm message failed", "error", err)
 	}
 
 	writer.WriteHeader(code)
@@ -70,7 +71,7 @@ func (a *ConfirmTask) writeError(writer http.ResponseWriter, code int, err error
 	}
 }
 
-func (a *ConfirmTask) writeSuccess(writer http.ResponseWriter) {
+func (a *ConfirmMessage) writeSuccess(writer http.ResponseWriter) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
 		"result":  nil,

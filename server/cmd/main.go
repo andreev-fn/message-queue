@@ -4,21 +4,22 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"server/cmd/config"
-	"server/internal/appbuilder"
 	"slices"
 	"strings"
+
+	"server/cmd/config"
+	"server/internal/appbuilder"
 )
 
 const (
 	CmdListen           = "listen"
-	CmdArchiveTasks     = "archive-tasks"
+	CmdArchiveMessages  = "archive-messages"
 	CmdExpireProcessing = "expire-processing"
 	CmdResumeDelayed    = "resume-delayed"
 )
 
 func main() {
-	availableCommands := []string{CmdListen, CmdArchiveTasks, CmdExpireProcessing, CmdResumeDelayed}
+	availableCommands := []string{CmdListen, CmdArchiveMessages, CmdExpireProcessing, CmdResumeDelayed}
 
 	if len(os.Args) != 2 || !slices.Contains(availableCommands, os.Args[1]) {
 		fmt.Println("Usage: queue <cmd>")
@@ -39,8 +40,8 @@ func main() {
 	switch os.Args[1] {
 	case CmdListen:
 		Listen(app)
-	case CmdArchiveTasks:
-		ArchiveTasks(app)
+	case CmdArchiveMessages:
+		ArchiveMessages(app)
 	case CmdExpireProcessing:
 		ExpireProcessing(app)
 	case CmdResumeDelayed:

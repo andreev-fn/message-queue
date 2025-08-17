@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+
 	"server/internal/domain"
 	"server/internal/storage"
 	"server/internal/utils/dbutils"
@@ -12,30 +13,30 @@ import (
 )
 
 type ExpireProcessing struct {
-	clock    timeutils.Clock
-	logger   *slog.Logger
-	db       *sql.DB
-	taskRepo *storage.TaskRepository
+	clock   timeutils.Clock
+	logger  *slog.Logger
+	db      *sql.DB
+	msgRepo *storage.MessageRepository
 }
 
 func NewExpireProcessing(
 	clock timeutils.Clock,
 	logger *slog.Logger,
 	db *sql.DB,
-	taskRepo *storage.TaskRepository,
+	msgRepo *storage.MessageRepository,
 ) *ExpireProcessing {
 	return &ExpireProcessing{
-		clock:    clock,
-		logger:   logger,
-		db:       db,
-		taskRepo: taskRepo,
+		clock:   clock,
+		logger:  logger,
+		db:      db,
+		msgRepo: msgRepo,
 	}
 }
 
 func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
-	tasks, err := uc.taskRepo.GetProcessingToExpire(ctx, uc.db, limit)
+	messages, err := uc.msgRepo.GetProcessingToExpire(ctx, uc.db, limit)
 	if err != nil {
-		return 0, fmt.Errorf("taskRepo.GetProcessingToExpire: %w", err)
+		return 0, fmt.Errorf("msgRepo.GetProcessingToExpire: %w", err)
 	}
 
 	tx, err := uc.db.BeginTx(ctx, nil)
@@ -44,16 +45,16 @@ func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
 	}
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
-	for _, task := range tasks {
+	for _, message := range messages {
 		// todo: replace with factory
 		errorHandler := domain.NewExponentialErrorHandler(uc.clock)
 
-		if err := errorHandler.HandleError(task, "timeout"); err != nil {
+		if err := errorHandler.HandleError(message, "timeout"); err != nil {
 			return 0, err
 		}
 
-		if err := uc.taskRepo.Save(ctx, tx, task); err != nil {
-			return 0, fmt.Errorf("taskRepo.Save: %w", err)
+		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {
+			return 0, fmt.Errorf("msgRepo.Save: %w", err)
 		}
 	}
 
@@ -61,5 +62,5 @@ func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
 		return 0, fmt.Errorf("tx.Commit: %w", err)
 	}
 
-	return len(tasks), nil
+	return len(messages), nil
 }

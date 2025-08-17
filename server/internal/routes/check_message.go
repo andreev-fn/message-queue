@@ -6,32 +6,33 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+
 	"server/internal/usecases"
 )
 
-type CheckTask struct {
+type CheckMessage struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.CheckTask
+	useCase *usecases.CheckMessage
 }
 
-func NewCheckTask(
+func NewCheckMessage(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.CheckTask,
-) *CheckTask {
-	return &CheckTask{
+	useCase *usecases.CheckMessage,
+) *CheckMessage {
+	return &CheckMessage{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *CheckTask) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/task/check", a.handler)
+func (a *CheckMessage) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/message/check", a.handler)
 }
 
-func (a *CheckTask) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *CheckMessage) handler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/json")
 
 	if request.Method != http.MethodGet {
@@ -39,13 +40,13 @@ func (a *CheckTask) handler(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	taskID := request.URL.Query().Get("id")
-	if taskID == "" {
+	msgID := request.URL.Query().Get("id")
+	if msgID == "" {
 		a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'id' required"))
 		return
 	}
 
-	result, err := a.useCase.Do(request.Context(), taskID)
+	result, err := a.useCase.Do(request.Context(), msgID)
 	if err != nil {
 		a.writeError(writer, http.StatusInternalServerError, err)
 		return
@@ -54,9 +55,9 @@ func (a *CheckTask) handler(writer http.ResponseWriter, request *http.Request) {
 	a.writeSuccess(writer, result)
 }
 
-func (a *CheckTask) writeError(writer http.ResponseWriter, code int, err error) {
+func (a *CheckMessage) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("get tasks by id failed", "error", err)
+		a.logger.Error("get messages by id failed", "error", err)
 	}
 
 	writer.WriteHeader(code)
@@ -71,7 +72,7 @@ func (a *CheckTask) writeError(writer http.ResponseWriter, code int, err error) 
 	}
 }
 
-func (a *CheckTask) writeSuccess(writer http.ResponseWriter, result *usecases.CheckTaskResult) {
+func (a *CheckMessage) writeSuccess(writer http.ResponseWriter, result *usecases.CheckMsgResult) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
 		"result": map[string]any{

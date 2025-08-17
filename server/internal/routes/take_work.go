@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"server/internal/usecases"
 	"strconv"
 	"strings"
 	"time"
+
+	"server/internal/usecases"
 )
 
 type TakeWork struct {
@@ -78,18 +79,18 @@ func (a *TakeWork) handler(writer http.ResponseWriter, request *http.Request) {
 		poll = time.Duration(customPoll) * time.Second
 	}
 
-	tasks, err := a.useCase.Do(request.Context(), kinds, limit, poll)
+	messages, err := a.useCase.Do(request.Context(), kinds, limit, poll)
 	if err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return
 	}
 
-	a.writeSuccess(writer, tasks)
+	a.writeSuccess(writer, messages)
 }
 
 func (a *TakeWork) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("get tasks use case failed", "error", err)
+		a.logger.Error("get messages use case failed", "error", err)
 	}
 
 	writer.WriteHeader(code)
@@ -104,13 +105,13 @@ func (a *TakeWork) writeError(writer http.ResponseWriter, code int, err error) {
 	}
 }
 
-func (a *TakeWork) writeSuccess(writer http.ResponseWriter, tasks []usecases.TaskToWork) {
-	result := make([]any, 0, len(tasks))
+func (a *TakeWork) writeSuccess(writer http.ResponseWriter, messages []usecases.MessageToWork) {
+	result := make([]any, 0, len(messages))
 
-	for _, task := range tasks {
+	for _, message := range messages {
 		result = append(result, map[string]any{
-			"id":      task.ID,
-			"payload": string(task.Payload),
+			"id":      message.ID,
+			"payload": string(message.Payload),
 		})
 	}
 

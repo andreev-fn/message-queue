@@ -11,10 +11,10 @@ import (
 	"server/internal/utils"
 )
 
-func CreateTask(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
+func CreateMsg(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
 	t.Helper()
 
-	taskID, err := app.CreateTask.Do(
+	msgID, err := app.CreateMessage.Do(
 		context.Background(),
 		kind,
 		json.RawMessage(payload),
@@ -24,52 +24,52 @@ func CreateTask(t *testing.T, app *appbuilder.App, kind string, payload string, 
 	)
 	require.NoError(t, err)
 
-	return taskID
+	return msgID
 }
 
-func CreateReadyTask(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
+func CreateReadyMsg(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
 	t.Helper()
 
-	taskID := CreateTask(t, app, kind, payload, priority)
+	msgID := CreateMsg(t, app, kind, payload, priority)
 
-	err := app.ConfirmTask.Do(context.Background(), taskID)
+	err := app.ConfirmMessage.Do(context.Background(), msgID)
 	require.NoError(t, err)
 
-	return taskID
+	return msgID
 }
 
-func CreateProcessingTask(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
+func CreateProcessingMsg(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
 	t.Helper()
 
-	taskID := CreateReadyTask(t, app, kind, payload, priority)
+	msgID := CreateReadyMsg(t, app, kind, payload, priority)
 
 	result, err := app.TakeWork.Do(context.Background(), []string{kind}, 1, 0)
 	require.NoError(t, err)
 
 	require.Len(t, result, 1)
-	require.Equal(t, taskID, result[0].ID)
+	require.Equal(t, msgID, result[0].ID)
 
-	return taskID
+	return msgID
 }
 
-func CreateDelayedTask(t *testing.T, app *appbuilder.App, kind string, payload string) string {
+func CreateDelayedMsg(t *testing.T, app *appbuilder.App, kind string, payload string) string {
 	t.Helper()
 
-	taskID := CreateProcessingTask(t, app, kind, payload, 100)
+	msgID := CreateProcessingMsg(t, app, kind, payload, 100)
 
-	err := app.FinishWork.Do(context.Background(), taskID, nil, utils.P("timeout_error"))
+	err := app.FinishWork.Do(context.Background(), msgID, nil, utils.P("timeout_error"))
 	require.NoError(t, err)
 
-	return taskID
+	return msgID
 }
 
-func CreateCompletedTask(t *testing.T, app *appbuilder.App, kind string, payload string, result string) string {
+func CreateCompletedMsg(t *testing.T, app *appbuilder.App, kind string, payload string, result string) string {
 	t.Helper()
 
-	taskID := CreateProcessingTask(t, app, kind, payload, 100)
+	msgID := CreateProcessingMsg(t, app, kind, payload, 100)
 
-	err := app.FinishWork.Do(context.Background(), taskID, json.RawMessage(result), nil)
+	err := app.FinishWork.Do(context.Background(), msgID, json.RawMessage(result), nil)
 	require.NoError(t, err)
 
-	return taskID
+	return msgID
 }

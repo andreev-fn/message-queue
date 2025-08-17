@@ -4,8 +4,9 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"server/internal/appbuilder"
 	"syscall"
+
+	"server/internal/appbuilder"
 )
 
 func ExpireProcessing(app *appbuilder.App) {
@@ -29,12 +30,12 @@ func ExpireProcessing(app *appbuilder.App) {
 			return
 		}
 
-		app.Logger.Info("batch of tasks were expired", "count", affected)
+		app.Logger.Info("batch of messages were expired", "count", affected)
 
 		totalAffected += affected
 
 		if affected < target {
-			app.Logger.Info("all processing tasks expired")
+			app.Logger.Info("all processing messages expired")
 			break
 		}
 	}

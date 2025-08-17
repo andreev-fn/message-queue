@@ -1,8 +1,8 @@
 ### check health
 GET http://localhost:8060/health
 
-### create task (auto_confirm)
-POST http://localhost:8060/task/create
+### create message (auto_confirm)
+POST http://localhost:8060/message/create
 Content-Type: application/json
 
 {
@@ -13,8 +13,8 @@ Content-Type: application/json
   "auto_confirm": true
 }
 
-### create task
-POST http://localhost:8060/task/create
+### create message
+POST http://localhost:8060/message/create
 Content-Type: application/json
 
 {
@@ -24,25 +24,25 @@ Content-Type: application/json
   }
 }
 
-### confirm task
-POST http://localhost:8060/task/confirm?id=af88f155-3d13-47a5-9be3-73f829abec0c
+### confirm message
+POST http://localhost:8060/message/confirm?id=af88f155-3d13-47a5-9be3-73f829abec0c
 
-### check task 1
-GET http://localhost:8060/task/check?id=35643438-12ca-4f28-ab8e-1215f92c221f
+### check message 1
+GET http://localhost:8060/message/check?id=35643438-12ca-4f28-ab8e-1215f92c221f
 
-### check task 2
-GET http://localhost:8060/task/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fca
+### check message 2
+GET http://localhost:8060/message/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fca
 
-### check task not found
-GET http://localhost:8060/task/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fcb
+### check message not found
+GET http://localhost:8060/message/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fcb
 
-### get task to work
+### get messages to work
 POST http://localhost:8060/work/take?kind=test&limit=3
 
-### get task to work (with poll)
+### get messages to work (with poll)
 POST http://localhost:8060/work/take?kind=test&limit=3&poll=25
 
-### save task result (success)
+### save message result (success)
 POST http://localhost:8060/work/finish
 Content-Type: application/json
 
@@ -52,7 +52,7 @@ Content-Type: application/json
   "error": null
 }
 
-### save task result (error)
+### save message result (error)
 POST http://localhost:8060/work/finish
 Content-Type: application/json
 

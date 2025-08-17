@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="test_integration" type="GoTestRunConfiguration" factoryName="Go Test">
-    <module name="task-queue" />
+    <module name="message-queue" />
     <working_directory value="$PROJECT_DIR$/server" />
     <envs>
       <env name="INTEGRATION" value="true" />

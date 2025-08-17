@@ -13,20 +13,20 @@ import (
 	"server/test/e2eutils"
 )
 
-func TestCheckExistingTask(t *testing.T) {
+func TestCheckExistingMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		taskKind     = "test"
-		taskPayload  = `{"arg": 123}`
-		taskPriority = 100
+		msgKind     = "test"
+		msgPayload  = `{"arg": 123}`
+		msgPriority = 100
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateTask(t, app, taskKind, taskPayload, taskPriority)
+	msgID := e2eutils.CreateMsg(t, app, msgKind, msgPayload, msgPriority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodGet, "/task/check?id="+taskID, nil)
+	req, err := http.NewRequest(http.MethodGet, "/message/check?id="+msgID, nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()
@@ -55,22 +55,22 @@ func TestCheckExistingTask(t *testing.T) {
 	err = json.Unmarshal(*respWrapper.Result, &respDTO)
 	require.NoError(t, err)
 
-	require.Equal(t, taskID, respDTO.ID)
-	require.Equal(t, taskKind, respDTO.Kind)
+	require.Equal(t, msgID, respDTO.ID)
+	require.Equal(t, msgKind, respDTO.Kind)
 	require.Equal(t, app.Clock.Now(), respDTO.CreatedAt)
-	require.Equal(t, string(domain.TaskStatusCreated), respDTO.Status)
+	require.Equal(t, string(domain.MsgStatusCreated), respDTO.Status)
 	require.Equal(t, 0, respDTO.Retries)
-	require.JSONEq(t, taskPayload, string(respDTO.Payload))
+	require.JSONEq(t, msgPayload, string(respDTO.Payload))
 	require.Nil(t, respDTO.Result)
 }
 
-func TestCheckNonExistentTask(t *testing.T) {
+func TestCheckNonExistentMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const nonExistentID = "00000000-0000-0000-0000-000000000002"
 
 	// Act
-	req, err := http.NewRequest(http.MethodGet, "/task/check?id="+nonExistentID, nil)
+	req, err := http.NewRequest(http.MethodGet, "/message/check?id="+nonExistentID, nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()
@@ -86,5 +86,5 @@ func TestCheckNonExistentTask(t *testing.T) {
 	require.False(t, respWrapper.Success)
 	require.Nil(t, respWrapper.Result)
 	require.NotNil(t, respWrapper.Error)
-	require.Contains(t, *respWrapper.Error, "task not found")
+	require.Contains(t, *respWrapper.Error, "message not found")
 }

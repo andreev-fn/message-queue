@@ -5,13 +5,14 @@ import (
 	"errors"
 	"log/slog"
 	"math"
-	"server/internal/utils/timeutils"
 	"sync"
 	"time"
+
+	"server/internal/utils/timeutils"
 )
 
 const (
-	ChannelTaskReady = "task_ready"
+	ChannelMsgReady = "message_ready"
 )
 
 type EventHandler func(message string)
@@ -38,7 +39,7 @@ func (eb *EventBus) Run(ctx context.Context) error {
 	for {
 		lastAttempt := eb.clock.Now()
 
-		err := eb.driver.Listen(ctx, []string{ChannelTaskReady}, func(channel, message string) {
+		err := eb.driver.Listen(ctx, []string{ChannelMsgReady}, func(channel, message string) {
 			eb.dispatch(channel, message)
 		})
 		if err != nil {

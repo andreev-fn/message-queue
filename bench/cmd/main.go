@@ -15,8 +15,8 @@ import (
 	"time"
 )
 
-// 2024/12/26 02:03:17 created 500038 tasks (4347.6 t/s), consumed 499732 tasks (4344.9 t/s)
-// 2025/08/09 12:48:59 created 861166 tasks (2562.8 t/s), consumed 860965 tasks (2568.2 t/s)
+// 2024/12/26 02:03:17 created 500038 messages (4347.6 t/s), consumed 499732 messages (4344.9 t/s)
+// 2025/08/09 12:48:59 created 861166 messages (2562.8 t/s), consumed 860965 messages (2568.2 t/s)
 
 const threadsCountW = 24
 const threadsCountR = 32
@@ -36,10 +36,10 @@ func main() {
 	defer cancel()
 
 	for i := 0; i < threadsCountW; i++ {
-		go createTasks(ctx, i)
+		go createMessages(ctx, i)
 	}
 	for i := 0; i < threadsCountR; i++ {
-		go consumeTasks(ctx)
+		go consumeMessages(ctx)
 	}
 
 	go printStats(ctx)
@@ -71,7 +71,7 @@ func printStats(ctx context.Context) {
 		prevTime = time.Now()
 
 		log.Printf(
-			"created %d tasks (%.1f t/s), consumed %d tasks (%.1f t/s)",
+			"created %d messages (%.1f t/s), consumed %d messages (%.1f t/s)",
 			created, createRate, consumed, consumeRate,
 		)
 	}
@@ -79,11 +79,11 @@ func printStats(ctx context.Context) {
 
 const baseURL = "http://127.0.0.1:8060"
 
-type Task struct {
+type Message struct {
 	ID string `json:"id"`
 }
 
-func createTasks(ctx context.Context, threadNum int) {
+func createMessages(ctx context.Context, threadNum int) {
 	if threadNum > 99 {
 		panic("too many threads")
 	}
@@ -98,7 +98,7 @@ func createTasks(ctx context.Context, threadNum int) {
 		arg := fmt.Sprintf("%.2d%.10d", threadNum, i)
 		i += 1
 
-		if err := createTask(arg); err != nil {
+		if err := createMessage(arg); err != nil {
 			log.Println(err)
 			continue
 		}
@@ -107,7 +107,7 @@ func createTasks(ctx context.Context, threadNum int) {
 	}
 }
 
-func createTask(arg string) error {
+func createMessage(arg string) error {
 	requestBody, err := json.Marshal(map[string]any{
 		"kind": "test",
 		"payload": map[string]any{
@@ -121,7 +121,7 @@ func createTask(arg string) error {
 
 	request, err := http.NewRequest(
 		http.MethodPost,
-		baseURL+"/task/create",
+		baseURL+"/message/create",
 		bytes.NewReader(requestBody),
 	)
 	if err != nil {
@@ -153,27 +153,27 @@ func createTask(arg string) error {
 	return nil
 }
 
-func consumeTasks(ctx context.Context) {
+func consumeMessages(ctx context.Context) {
 	for {
 		if ctx.Err() != nil {
 			break
 		}
 
-		if err := consumeTask(); err != nil {
-			log.Println("consume task error:", err)
+		if err := consumeMessage(); err != nil {
+			log.Println("consume message error:", err)
 			continue
 		}
 	}
 }
 
-func consumeTask() error {
-	tasks, err := takeWork()
+func consumeMessage() error {
+	messages, err := takeWork()
 	if err != nil {
 		return fmt.Errorf("takeWork: %w", err)
 	}
 
-	for _, task := range tasks {
-		if err := finishWork(task.ID); err != nil {
+	for _, message := range messages {
+		if err := finishWork(message.ID); err != nil {
 			return fmt.Errorf("finishWork: %w", err)
 		}
 
@@ -183,7 +183,7 @@ func consumeTask() error {
 	return nil
 }
 
-func takeWork() ([]Task, error) {
+func takeWork() ([]Message, error) {
 	request, err := http.NewRequest(http.MethodPost, baseURL+"/work/take?kind=test&limit=100", nil)
 	if err != nil {
 		return nil, err
@@ -205,26 +205,26 @@ func takeWork() ([]Task, error) {
 		return nil, fmt.Errorf("non-200 response: %s, body: %s", httpResponse.Status, string(responseBody))
 	}
 
-	type GetTasksResponse struct {
-		Success *bool  `json:"success"`
-		Jobs    []Task `json:"result"`
+	type ResponseDTO struct {
+		Success *bool     `json:"success"`
+		Result  []Message `json:"result"`
 	}
 
-	var getTasksResponse GetTasksResponse
-	err = json.Unmarshal(responseBody, &getTasksResponse)
+	var responseDTO ResponseDTO
+	err = json.Unmarshal(responseBody, &responseDTO)
 	if err != nil {
 		return nil, fmt.Errorf("json.Unmarshal: %w; response: %s", err, string(responseBody))
 	}
 
-	if getTasksResponse.Success == nil {
+	if responseDTO.Success == nil {
 		return nil, errors.New("invalid response")
 	}
 
-	if *getTasksResponse.Success == false {
+	if *responseDTO.Success == false {
 		return nil, errors.New("unsuccessful response")
 	}
 
-	return getTasksResponse.Jobs, nil
+	return responseDTO.Result, nil
 }
 
 func finishWork(id string) error {

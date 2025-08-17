@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
 	"server/internal/usecases"
 )
 
@@ -111,7 +112,7 @@ func (a *FinishWork) handler(writer http.ResponseWriter, request *http.Request) 
 
 func (a *FinishWork) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("save tasks result use case failed", "error", err)
+		a.logger.Error("save message result use case failed", "error", err)
 	}
 
 	writer.WriteHeader(code)

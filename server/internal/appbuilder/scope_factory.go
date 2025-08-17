@@ -4,7 +4,7 @@ import (
 	"server/internal/appbuilder/requestscope"
 	"server/internal/domain"
 	"server/internal/eventbus"
-	"server/internal/taskreadiness"
+	"server/internal/msgreadiness"
 )
 
 type RequestScopeFactory struct {
@@ -20,13 +20,13 @@ func NewRequestScopeFactory(
 }
 
 func (f *RequestScopeFactory) New() *requestscope.Scope {
-	taskReadyNotifier := taskreadiness.NewNotifier(f.eventBus)
+	msgReadyNotifier := msgreadiness.NewNotifier(f.eventBus)
 
 	dispatcher := NewEventDispatcher()
-	dispatcher.Register(domain.TaskReadyEventName, taskReadyNotifier.HandleEvent)
+	dispatcher.Register(domain.MsgReadyEventName, msgReadyNotifier.HandleEvent)
 
 	return &requestscope.Scope{
-		Dispatcher:        dispatcher,
-		TaskReadyNotifier: taskReadyNotifier,
+		Dispatcher:       dispatcher,
+		MsgReadyNotifier: msgReadyNotifier,
 	}
 }

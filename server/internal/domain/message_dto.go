@@ -2,18 +2,19 @@ package domain
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-// TaskDTO supposed to be used only for storage, don't change values manually
-type TaskDTO struct {
+// MessageDTO supposed to be used only for storage, don't change values manually
+type MessageDTO struct {
 	ID              uuid.UUID
 	Kind            string
 	Payload         json.RawMessage
 	CreatedAt       time.Time
 	FinalizedAt     *time.Time
-	Status          TaskStatus
+	Status          MessageStatus
 	StatusChangedAt time.Time
 	DelayedUntil    *time.Time
 	TimeoutAt       *time.Time
@@ -25,8 +26,8 @@ type TaskDTO struct {
 	IsResultNew     bool
 }
 
-func FromDTO(dto *TaskDTO) *Task {
-	return &Task{
+func FromDTO(dto *MessageDTO) *Message {
+	return &Message{
 		id:              dto.ID,
 		kind:            dto.Kind,
 		payload:         dto.Payload,
@@ -45,22 +46,22 @@ func FromDTO(dto *TaskDTO) *Task {
 	}
 }
 
-func (t *Task) ToDTO() *TaskDTO {
-	return &TaskDTO{
-		ID:              t.id,
-		Kind:            t.kind,
-		Payload:         t.payload,
-		CreatedAt:       t.createdAt,
-		FinalizedAt:     t.finalizedAt,
-		Status:          t.status,
-		StatusChangedAt: t.statusChangedAt,
-		DelayedUntil:    t.delayedUntil,
-		TimeoutAt:       t.timeoutAt,
-		Priority:        t.priority,
-		Retries:         t.retries,
-		Result:          t.result,
-		Version:         t.version,
-		IsNew:           t.isNew,
-		IsResultNew:     t.isResultNew,
+func (m *Message) ToDTO() *MessageDTO {
+	return &MessageDTO{
+		ID:              m.id,
+		Kind:            m.kind,
+		Payload:         m.payload,
+		CreatedAt:       m.createdAt,
+		FinalizedAt:     m.finalizedAt,
+		Status:          m.status,
+		StatusChangedAt: m.statusChangedAt,
+		DelayedUntil:    m.delayedUntil,
+		TimeoutAt:       m.timeoutAt,
+		Priority:        m.priority,
+		Retries:         m.retries,
+		Result:          m.result,
+		Version:         m.version,
+		IsNew:           m.isNew,
+		IsResultNew:     m.isResultNew,
 	}
 }

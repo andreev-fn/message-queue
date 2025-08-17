@@ -13,20 +13,20 @@ import (
 	"server/test/e2eutils"
 )
 
-func TestConfirmTask(t *testing.T) {
+func TestConfirmMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		taskKind     = "test"
-		taskPayload  = `{"arg": 123}`
-		taskPriority = 100
+		msgKind     = "test"
+		msgPayload  = `{"arg": 123}`
+		msgPriority = 100
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateTask(t, app, taskKind, taskPayload, taskPriority)
+	msgID := e2eutils.CreateMsg(t, app, msgKind, msgPayload, msgPriority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/task/confirm?id="+taskID, nil)
+	req, err := http.NewRequest(http.MethodPost, "/message/confirm?id="+msgID, nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()
@@ -43,13 +43,13 @@ func TestConfirmTask(t *testing.T) {
 	require.Nil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	// Assert task in DB
-	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	// Assert the message in DB
+	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, taskKind, task.Kind())
-	require.JSONEq(t, taskPayload, string(task.Payload()))
-	require.Equal(t, taskPriority, task.Priority())
-	require.Equal(t, app.Clock.Now(), task.CreatedAt())
-	require.Equal(t, domain.TaskStatusReady, task.Status())
+	require.Equal(t, msgKind, message.Kind())
+	require.JSONEq(t, msgPayload, string(message.Payload()))
+	require.Equal(t, msgPriority, message.Priority())
+	require.Equal(t, app.Clock.Now(), message.CreatedAt())
+	require.Equal(t, domain.MsgStatusReady, message.Status())
 }

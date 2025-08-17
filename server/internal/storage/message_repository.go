@@ -6,52 +6,53 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
+
 	"server/internal/domain"
 	"server/internal/utils/dbutils"
 	"server/internal/utils/timeutils"
-	"strings"
 )
 
 const selectAll = `
 	SELECT 
-		t.id, t.kind, t.created_at, t.finalized_at, t.status, t.status_changed_at,
-		t.delayed_until, t.timeout_at, t.priority, t.retries, t.version,
+		m.id, m.kind, m.created_at, m.finalized_at, m.status, m.status_changed_at,
+		m.delayed_until, m.timeout_at, m.priority, m.retries, m.version,
 		p.payload,
 		r.result
-	FROM tasks t
-	LEFT JOIN task_payloads p ON p.task_id = t.id
-	LEFT JOIN task_results r ON r.task_id = t.id
+	FROM messages m
+	LEFT JOIN message_payloads p ON p.msg_id = m.id
+	LEFT JOIN message_results r ON r.msg_id = m.id
 `
 
-var ErrTaskNotFound = errors.New("task not found")
+var ErrMsgNotFound = errors.New("message not found")
 
-func scanRows(rows *sql.Rows) ([]*domain.Task, error) {
+func scanRows(rows *sql.Rows) ([]*domain.Message, error) {
 	defer rows.Close()
 
-	var result []*domain.Task
+	var result []*domain.Message
 
 	for rows.Next() {
-		var task domain.TaskDTO
+		var message domain.MessageDTO
 
 		if err := rows.Scan(
-			&task.ID,
-			&task.Kind,
-			&task.CreatedAt,
-			&task.FinalizedAt,
-			&task.Status,
-			&task.StatusChangedAt,
-			&task.DelayedUntil,
-			&task.TimeoutAt,
-			&task.Priority,
-			&task.Retries,
-			&task.Version,
-			&task.Payload,
-			&task.Result,
+			&message.ID,
+			&message.Kind,
+			&message.CreatedAt,
+			&message.FinalizedAt,
+			&message.Status,
+			&message.StatusChangedAt,
+			&message.DelayedUntil,
+			&message.TimeoutAt,
+			&message.Priority,
+			&message.Retries,
+			&message.Version,
+			&message.Payload,
+			&message.Result,
 		); err != nil {
 			return nil, err
 		}
 
-		result = append(result, domain.FromDTO(&task))
+		result = append(result, domain.FromDTO(&message))
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -60,22 +61,22 @@ func scanRows(rows *sql.Rows) ([]*domain.Task, error) {
 	return result, nil
 }
 
-type TaskRepository struct {
+type MessageRepository struct {
 	clock  timeutils.Clock
 	logger *slog.Logger
 }
 
-func NewTaskRepository(clock timeutils.Clock, logger *slog.Logger) *TaskRepository {
-	return &TaskRepository{
+func NewMessageRepository(clock timeutils.Clock, logger *slog.Logger) *MessageRepository {
+	return &MessageRepository{
 		clock:  clock,
 		logger: logger,
 	}
 }
 
-func (r *TaskRepository) SaveInNewTransaction(
+func (r *MessageRepository) SaveInNewTransaction(
 	ctx context.Context,
 	db *sql.DB,
-	task *domain.Task,
+	msg *domain.Message,
 ) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -83,7 +84,7 @@ func (r *TaskRepository) SaveInNewTransaction(
 	}
 	defer dbutils.RollbackWithLog(tx, r.logger)
 
-	if err := r.Save(ctx, tx, task); err != nil {
+	if err := r.Save(ctx, tx, msg); err != nil {
 		return err
 	}
 
@@ -94,30 +95,30 @@ func (r *TaskRepository) SaveInNewTransaction(
 	return nil
 }
 
-func (r *TaskRepository) Save(
+func (r *MessageRepository) Save(
 	ctx context.Context,
 	tx *sql.Tx,
-	task *domain.Task,
+	msg *domain.Message,
 ) error {
-	taskDTO := task.ToDTO()
+	msgDTO := msg.ToDTO()
 
-	if taskDTO.IsNew {
-		if err := r.create(ctx, tx, taskDTO); err != nil {
+	if msgDTO.IsNew {
+		if err := r.create(ctx, tx, msgDTO); err != nil {
 			return err
 		}
 	} else {
-		if err := r.update(ctx, tx, taskDTO); err != nil {
+		if err := r.update(ctx, tx, msgDTO); err != nil {
 			return err
 		}
 	}
 
-	if taskDTO.IsResultNew {
-		query := `INSERT INTO task_results (task_id, result) VALUES ($1, $2)`
+	if msgDTO.IsResultNew {
+		query := `INSERT INTO message_results (msg_id, result) VALUES ($1, $2)`
 		if _, err := tx.ExecContext(
 			ctx,
 			query,
-			taskDTO.ID,
-			taskDTO.Result,
+			msgDTO.ID,
+			msgDTO.Result,
 		); err != nil {
 			return err
 		}
@@ -126,13 +127,13 @@ func (r *TaskRepository) Save(
 	return nil
 }
 
-func (r *TaskRepository) create(
+func (r *MessageRepository) create(
 	ctx context.Context,
 	tx *sql.Tx,
-	taskDTO *domain.TaskDTO,
+	msgDTO *domain.MessageDTO,
 ) error {
 	query := `
-		INSERT INTO tasks (
+		INSERT INTO messages (
 			id, kind, created_at, finalized_at, status, status_changed_at, 
 		    delayed_until, timeout_at, priority, retries, version
    		) VALUES (
@@ -143,27 +144,27 @@ func (r *TaskRepository) create(
 	if _, err := tx.ExecContext(
 		ctx,
 		query,
-		taskDTO.ID,
-		taskDTO.Kind,
-		taskDTO.CreatedAt,
-		taskDTO.FinalizedAt,
-		taskDTO.Status,
-		taskDTO.StatusChangedAt,
-		taskDTO.DelayedUntil,
-		taskDTO.TimeoutAt,
-		taskDTO.Priority,
-		taskDTO.Retries,
-		taskDTO.Version,
+		msgDTO.ID,
+		msgDTO.Kind,
+		msgDTO.CreatedAt,
+		msgDTO.FinalizedAt,
+		msgDTO.Status,
+		msgDTO.StatusChangedAt,
+		msgDTO.DelayedUntil,
+		msgDTO.TimeoutAt,
+		msgDTO.Priority,
+		msgDTO.Retries,
+		msgDTO.Version,
 	); err != nil {
 		return err
 	}
 
-	query = `INSERT INTO task_payloads (task_id, payload) VALUES ($1, $2)`
+	query = `INSERT INTO message_payloads (msg_id, payload) VALUES ($1, $2)`
 	if _, err := tx.ExecContext(
 		ctx,
 		query,
-		taskDTO.ID,
-		taskDTO.Payload,
+		msgDTO.ID,
+		msgDTO.Payload,
 	); err != nil {
 		return err
 	}
@@ -171,14 +172,14 @@ func (r *TaskRepository) create(
 	return nil
 }
 
-func (r *TaskRepository) update(
+func (r *MessageRepository) update(
 	ctx context.Context,
 	conn dbutils.Querier,
-	taskDTO *domain.TaskDTO,
+	msgDTO *domain.MessageDTO,
 ) error {
 	// We know that `kind` and `created_at` never change, so we can safely skip updating them.
 	query := `
-		UPDATE tasks
+		UPDATE messages
 		SET finalized_at = $2,
 		    status = $3, 
 			status_changed_at = $4,
@@ -192,15 +193,15 @@ func (r *TaskRepository) update(
 	result, err := conn.ExecContext(
 		ctx,
 		query,
-		taskDTO.ID,
-		taskDTO.FinalizedAt,
-		taskDTO.Status,
-		taskDTO.StatusChangedAt,
-		taskDTO.DelayedUntil,
-		taskDTO.TimeoutAt,
-		taskDTO.Priority,
-		taskDTO.Retries,
-		taskDTO.Version,
+		msgDTO.ID,
+		msgDTO.FinalizedAt,
+		msgDTO.Status,
+		msgDTO.StatusChangedAt,
+		msgDTO.DelayedUntil,
+		msgDTO.TimeoutAt,
+		msgDTO.Priority,
+		msgDTO.Retries,
+		msgDTO.Version,
 	)
 	if err != nil {
 		return err
@@ -213,47 +214,47 @@ func (r *TaskRepository) update(
 	return nil
 }
 
-func (r *TaskRepository) GetTaskByID(
+func (r *MessageRepository) GetByID(
 	ctx context.Context,
 	conn dbutils.Querier,
 	id string,
-) (*domain.Task, error) {
+) (*domain.Message, error) {
 	query := selectAll + `WHERE id = $1`
 	rows, err := conn.QueryContext(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
 
-	tasks, err := scanRows(rows)
+	messages, err := scanRows(rows)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(tasks) == 0 {
-		return nil, ErrTaskNotFound
+	if len(messages) == 0 {
+		return nil, ErrMsgNotFound
 	}
 
-	return tasks[0], nil
+	return messages[0], nil
 }
 
-func (r *TaskRepository) GetReadyWithLock(
+func (r *MessageRepository) GetReadyWithLock(
 	ctx context.Context,
 	conn dbutils.Querier,
 	kinds []string,
 	limit int,
-) ([]*domain.Task, error) {
+) ([]*domain.Message, error) {
 	if len(kinds) == 0 {
-		return []*domain.Task{}, nil
+		return []*domain.Message{}, nil
 	}
 
 	query := selectAll + `
 		WHERE kind IN (:kinds) AND status = $1
 		ORDER BY priority DESC, status_changed_at ASC
 		LIMIT $2
-		FOR UPDATE OF t SKIP LOCKED
+		FOR UPDATE OF m SKIP LOCKED
 	`
 	query = strings.ReplaceAll(query, ":kinds", "'"+strings.Join(kinds, "','")+"'")
-	rows, err := conn.QueryContext(ctx, query, domain.TaskStatusReady, limit)
+	rows, err := conn.QueryContext(ctx, query, domain.MsgStatusReady, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -261,17 +262,17 @@ func (r *TaskRepository) GetReadyWithLock(
 	return scanRows(rows)
 }
 
-func (r *TaskRepository) GetProcessingToExpire(
+func (r *MessageRepository) GetProcessingToExpire(
 	ctx context.Context,
 	conn dbutils.Querier,
 	limit int,
-) ([]*domain.Task, error) {
+) ([]*domain.Message, error) {
 	query := selectAll + `
 		WHERE status = $1 AND timeout_at < $2
 		ORDER BY timeout_at ASC
 		LIMIT $3
 	`
-	rows, err := conn.QueryContext(ctx, query, domain.TaskStatusProcessing, r.clock.Now(), limit)
+	rows, err := conn.QueryContext(ctx, query, domain.MsgStatusProcessing, r.clock.Now(), limit)
 	if err != nil {
 		return nil, err
 	}
@@ -279,17 +280,17 @@ func (r *TaskRepository) GetProcessingToExpire(
 	return scanRows(rows)
 }
 
-func (r *TaskRepository) GetDelayedReadyToResume(
+func (r *MessageRepository) GetDelayedReadyToResume(
 	ctx context.Context,
 	conn dbutils.Querier,
 	limit int,
-) ([]*domain.Task, error) {
+) ([]*domain.Message, error) {
 	query := selectAll + `
 		WHERE status = $1 AND delayed_until < $2
 		ORDER BY delayed_until ASC
 		LIMIT $3
 	`
-	rows, err := conn.QueryContext(ctx, query, domain.TaskStatusDelayed, r.clock.Now(), limit)
+	rows, err := conn.QueryContext(ctx, query, domain.MsgStatusDelayed, r.clock.Now(), limit)
 	if err != nil {
 		return nil, err
 	}
@@ -297,11 +298,11 @@ func (r *TaskRepository) GetDelayedReadyToResume(
 	return scanRows(rows)
 }
 
-func (r *TaskRepository) GetTasksToArchive(
+func (r *MessageRepository) GetFinalizedToArchive(
 	ctx context.Context,
 	conn dbutils.Querier,
 	limit int,
-) ([]*domain.Task, error) {
+) ([]*domain.Message, error) {
 	query := selectAll + `
 		WHERE status IN ($1, $2)
 		ORDER BY finalized_at ASC
@@ -310,8 +311,8 @@ func (r *TaskRepository) GetTasksToArchive(
 	rows, err := conn.QueryContext(
 		ctx,
 		query,
-		domain.TaskStatusCompleted,
-		domain.TaskStatusFailed,
+		domain.MsgStatusCompleted,
+		domain.MsgStatusFailed,
 		limit,
 	)
 	if err != nil {
@@ -321,10 +322,10 @@ func (r *TaskRepository) GetTasksToArchive(
 	return scanRows(rows)
 }
 
-func (r *TaskRepository) DeleteInNewTransaction(
+func (r *MessageRepository) DeleteInNewTransaction(
 	ctx context.Context,
 	db *sql.DB,
-	task *domain.Task,
+	msg *domain.Message,
 ) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -332,7 +333,7 @@ func (r *TaskRepository) DeleteInNewTransaction(
 	}
 	defer dbutils.RollbackWithLog(tx, r.logger)
 
-	if err := r.Delete(ctx, tx, task); err != nil {
+	if err := r.Delete(ctx, tx, msg); err != nil {
 		return err
 	}
 
@@ -343,23 +344,23 @@ func (r *TaskRepository) DeleteInNewTransaction(
 	return nil
 }
 
-func (r *TaskRepository) Delete(
+func (r *MessageRepository) Delete(
 	ctx context.Context,
 	tx *sql.Tx,
-	task *domain.Task,
+	msg *domain.Message,
 ) error {
-	query := `DELETE FROM tasks WHERE id = $1`
-	if _, err := tx.ExecContext(ctx, query, task.ID()); err != nil {
+	query := `DELETE FROM messages WHERE id = $1`
+	if _, err := tx.ExecContext(ctx, query, msg.ID()); err != nil {
 		return err
 	}
 
-	query = `DELETE FROM task_payloads WHERE task_id = $1`
-	if _, err := tx.ExecContext(ctx, query, task.ID()); err != nil {
+	query = `DELETE FROM message_payloads WHERE msg_id = $1`
+	if _, err := tx.ExecContext(ctx, query, msg.ID()); err != nil {
 		return err
 	}
 
-	query = `DELETE FROM task_results WHERE task_id = $1`
-	if _, err := tx.ExecContext(ctx, query, task.ID()); err != nil {
+	query = `DELETE FROM message_results WHERE msg_id = $1`
+	if _, err := tx.ExecContext(ctx, query, msg.ID()); err != nil {
 		return err
 	}
 

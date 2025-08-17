@@ -4,8 +4,9 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"server/internal/appbuilder"
 	"syscall"
+
+	"server/internal/appbuilder"
 )
 
 func ResumeDelayed(app *appbuilder.App) {
@@ -26,18 +27,18 @@ func ResumeDelayed(app *appbuilder.App) {
 		if err != nil {
 			app.Logger.Error("retry processing failed", "error", err)
 			if affected > 0 {
-				app.Logger.Info("batch of tasks was retried", "count", affected)
+				app.Logger.Info("batch of messages was retried", "count", affected)
 			}
 
 			return
 		}
 
-		app.Logger.Info("batch of tasks was retried", "count", affected)
+		app.Logger.Info("batch of messages was retried", "count", affected)
 
 		totalAffected += affected
 
 		if affected < target {
-			app.Logger.Info("all delayed tasks retried")
+			app.Logger.Info("all delayed messages retried")
 			break
 		}
 	}

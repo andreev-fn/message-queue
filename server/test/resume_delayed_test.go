@@ -15,12 +15,12 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
 	const (
-		taskKind    = "test"
-		taskPayload = `{"arg": 123}`
+		msgKind    = "test"
+		msgPayload = `{"arg": 123}`
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateDelayedTask(t, app, taskKind, taskPayload)
+	msgID := e2eutils.CreateDelayedMsg(t, app, msgKind, msgPayload)
 	clock.Set(clock.Now().Add(3 * time.Minute))
 
 	// Act
@@ -30,23 +30,23 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 	// Assert
 	require.Equal(t, 1, affected)
 
-	updatedTask, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	updatedMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, domain.TaskStatusReady, updatedTask.Status())
-	require.Equal(t, 1, updatedTask.Retries())
+	require.Equal(t, domain.MsgStatusReady, updatedMsg.Status())
+	require.Equal(t, 1, updatedMsg.Retries())
 }
 
 func TestResumeDelayedBeforeTimeout(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
 	const (
-		taskKind    = "test"
-		taskPayload = `{"arg": 123}`
+		msgKind    = "test"
+		msgPayload = `{"arg": 123}`
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateDelayedTask(t, app, taskKind, taskPayload)
+	msgID := e2eutils.CreateDelayedMsg(t, app, msgKind, msgPayload)
 	clock.Set(clock.Now().Add(1 * time.Minute))
 
 	// Act
@@ -56,9 +56,9 @@ func TestResumeDelayedBeforeTimeout(t *testing.T) {
 	// Assert
 	require.Equal(t, 0, affected)
 
-	unchangedTask, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	unchangedMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, domain.TaskStatusDelayed, unchangedTask.Status())
-	require.Equal(t, 1, unchangedTask.Retries())
+	require.Equal(t, domain.MsgStatusDelayed, unchangedMsg.Status())
+	require.Equal(t, 1, unchangedMsg.Retries())
 }

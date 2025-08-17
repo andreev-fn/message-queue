@@ -34,19 +34,19 @@ type App struct {
 	Logger *slog.Logger
 	DB     *sql.DB
 
-	TaskRepo         *storage.TaskRepository
-	ArchivedTaskRepo *storage.ArchivedTaskRepository
+	MsgRepo         *storage.MessageRepository
+	ArchivedMsgRepo *storage.ArchivedMsgRepository
 
 	EventBus *eventbus.EventBus
 
 	RequestScopeFactory requestscope.Factory
 
-	CreateTask       *usecases.CreateTask
-	ConfirmTask      *usecases.ConfirmTask
+	CreateMessage    *usecases.CreateMessage
+	ConfirmMessage   *usecases.ConfirmMessage
 	TakeWork         *usecases.TakeWork
 	FinishWork       *usecases.FinishWork
-	CheckTask        *usecases.CheckTask
-	ArchiveTasks     *usecases.ArchiveTasks
+	CheckMessage     *usecases.CheckMessage
+	ArchiveMessages  *usecases.ArchiveMessages
 	ExpireProcessing *usecases.ExpireProcessing
 	ResumeDelayed    *usecases.ResumeDelayed
 
@@ -80,47 +80,47 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 	db.SetMaxIdleConns(64)
 	db.SetMaxOpenConns(64)
 
-	taskRepo := storage.NewTaskRepository(clock, logger)
-	archivedTaskRepo := storage.NewArchivedTaskRepository()
+	msgRepo := storage.NewMessageRepository(clock, logger)
+	archivedMsgRepo := storage.NewArchivedMsgRepository()
 
 	eventBus := eventbus.NewEventBus(logger, clock, postgres.NewPubSubDriver(db))
 
 	requestScopeFactory := NewRequestScopeFactory(eventBus)
 
-	createTask := usecases.NewCreateTask(logger, clock, db, taskRepo, requestScopeFactory)
-	confirmTask := usecases.NewConfirmTask(logger, clock, db, taskRepo, requestScopeFactory)
-	takeWork := usecases.NewTakeWork(logger, clock, db, taskRepo, eventBus)
-	finishWork := usecases.NewFinishWork(clock, logger, db, taskRepo)
-	checkTask := usecases.NewCheckTask(db, taskRepo, archivedTaskRepo)
-	archiveTasks := usecases.NewArchiveTasks(clock, db, taskRepo, archivedTaskRepo)
-	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, taskRepo)
-	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, taskRepo, requestScopeFactory)
+	createMessage := usecases.NewCreateMessage(logger, clock, db, msgRepo, requestScopeFactory)
+	confirmMessage := usecases.NewConfirmMessage(logger, clock, db, msgRepo, requestScopeFactory)
+	takeWork := usecases.NewTakeWork(logger, clock, db, msgRepo, eventBus)
+	finishWork := usecases.NewFinishWork(clock, logger, db, msgRepo)
+	checkMessage := usecases.NewCheckMessage(db, msgRepo, archivedMsgRepo)
+	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
+	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo)
+	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()
-	routes.NewCreateTask(db, logger, createTask).Mount(mux)
-	routes.NewConfirmTask(db, logger, confirmTask).Mount(mux)
+	routes.NewCreateMessage(db, logger, createMessage).Mount(mux)
+	routes.NewConfirmMessage(db, logger, confirmMessage).Mount(mux)
 	routes.NewTakeWork(db, logger, takeWork).Mount(mux)
 	routes.NewFinishWork(db, logger, finishWork).Mount(mux)
-	routes.NewCheckTask(db, logger, checkTask).Mount(mux)
+	routes.NewCheckMessage(db, logger, checkMessage).Mount(mux)
 
 	return &App{
 		Clock:  clock,
 		Logger: logger,
 		DB:     db,
 
-		TaskRepo:         taskRepo,
-		ArchivedTaskRepo: archivedTaskRepo,
+		MsgRepo:         msgRepo,
+		ArchivedMsgRepo: archivedMsgRepo,
 
 		EventBus: eventBus,
 
 		RequestScopeFactory: requestScopeFactory,
 
-		CreateTask:       createTask,
-		ConfirmTask:      confirmTask,
+		CreateMessage:    createMessage,
+		ConfirmMessage:   confirmMessage,
 		TakeWork:         takeWork,
 		FinishWork:       finishWork,
-		CheckTask:        checkTask,
-		ArchiveTasks:     archiveTasks,
+		CheckMessage:     checkMessage,
+		ArchiveMessages:  archiveMessages,
 		ExpireProcessing: expireProcessing,
 		ResumeDelayed:    resumeDelayed,
 

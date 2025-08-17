@@ -8,33 +8,34 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"server/internal/usecases"
 	"time"
+
+	"server/internal/usecases"
 )
 
-type CreateTask struct {
+type CreateMessage struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.CreateTask
+	useCase *usecases.CreateMessage
 }
 
-func NewCreateTask(
+func NewCreateMessage(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.CreateTask,
-) *CreateTask {
-	return &CreateTask{
+	useCase *usecases.CreateMessage,
+) *CreateMessage {
+	return &CreateMessage{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *CreateTask) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/task/create", a.handler)
+func (a *CreateMessage) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/message/create", a.handler)
 }
 
-func (a *CreateTask) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *CreateMessage) handler(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodPost {
 		a.writeError(writer, errors.New("method POST expected"))
 		return
@@ -51,22 +52,22 @@ func (a *CreateTask) handler(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	var jobData struct {
+	var msgData struct {
 		Kind        string          `json:"kind"`
 		Payload     json.RawMessage `json:"payload"`
 		Priority    *int            `json:"priority"`
 		AutoConfirm bool            `json:"auto_confirm"`
 		StartAt     string          `json:"start_at"`
 	}
-	err = json.Unmarshal(bodyBytes, &jobData)
+	err = json.Unmarshal(bodyBytes, &msgData)
 	if err != nil {
 		a.writeError(writer, fmt.Errorf("json.Unmarshal: %w (%s)", err, string(bodyBytes)))
 		return
 	}
 
 	var startAt *time.Time
-	if jobData.StartAt != "" {
-		t, err := time.Parse(time.RFC3339, jobData.StartAt)
+	if msgData.StartAt != "" {
+		t, err := time.Parse(time.RFC3339, msgData.StartAt)
 		if err != nil {
 			a.writeError(writer, errors.New("can`t parse start_at, expected format is RFC3339"))
 			return
@@ -75,20 +76,20 @@ func (a *CreateTask) handler(writer http.ResponseWriter, request *http.Request) 
 	}
 
 	priority := 100
-	if jobData.Priority != nil {
-		priority = *jobData.Priority
+	if msgData.Priority != nil {
+		priority = *msgData.Priority
 		if priority < 0 || priority > 255 {
 			a.writeError(writer, errors.New("priority must be between 0 and 255"))
 			return
 		}
 	}
 
-	taskID, err := a.useCase.Do(
+	msgID, err := a.useCase.Do(
 		request.Context(),
-		jobData.Kind,
-		jobData.Payload,
+		msgData.Kind,
+		msgData.Payload,
 		priority,
-		jobData.AutoConfirm,
+		msgData.AutoConfirm,
 		startAt,
 	)
 	if err != nil {
@@ -96,10 +97,10 @@ func (a *CreateTask) handler(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	a.writeSuccess(taskID, writer)
+	a.writeSuccess(msgID, writer)
 }
 
-func (a *CreateTask) writeError(writer http.ResponseWriter, err error) {
+func (a *CreateMessage) writeError(writer http.ResponseWriter, err error) {
 	writer.WriteHeader(http.StatusBadRequest)
 
 	err = json.NewEncoder(writer).Encode(map[string]any{
@@ -112,11 +113,11 @@ func (a *CreateTask) writeError(writer http.ResponseWriter, err error) {
 	}
 }
 
-func (a *CreateTask) writeSuccess(taskID string, writer http.ResponseWriter) {
+func (a *CreateMessage) writeSuccess(msgID string, writer http.ResponseWriter) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
 		"result": map[string]any{
-			"id": taskID,
+			"id": msgID,
 		},
 		"error": nil,
 	})

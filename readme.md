@@ -1,19 +1,19 @@
-# Task queue
+# Message queue
 Currently work in progress.
 
-A simple, reliable, and modern task queue built on top of PostgreSQL.
+A simple, reliable, and modern message queue built on top of PostgreSQL.
 
 Also serves as a **real-world example of applying Domain-Driven Design (DDD) principles in Go**.
 
 ## TODO
-- ☑ Archival of finalized tasks
-- ☑ Task prioritization
-- ☐ Make task types configurable (config file)
+- ☑ Archival of finalized messages
+- ☑ Message prioritization
+- ☐ Make message types configurable (config file)
   - ☐ Configurable retries and timeouts and archive retention period
 - ☐ Add authentication (config files, users.yaml, and tokens.yaml)
 - ☐ Tries history (and attempt ID)
 - ☐ Configurable retries strategies
-- ☐ Removal of old tasks
+- ☐ Removal of old messages
 - ☐ Metrics
 - ☐ Implement webhooks
 - ☑ Some kind of long-polling for workers
@@ -31,9 +31,9 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 
 ## ✨ Features
 
-- ✅ **Task Prioritization** – High-priority tasks are picked first.
-- ✅ **Retries & Backoff** – Failed tasks are retried automatically.
-- ✅ **Long-polling** – Workers can efficiently wait until a task comes.
+- ✅ **Message Prioritization** – High-priority messages are picked first.
+- ✅ **Retries & Backoff** – Failed messages are retried automatically.
+- ✅ **Long-polling** – Workers can efficiently wait until a message comes.
 
 ## 📦 When to Use
 
@@ -45,7 +45,7 @@ This queue is perfect when you:
 
 ## 🚫 When *Not* to Use
 
-- Your system processes **millions of events per second**
+- Your system processes **millions of messages per second**
 
 ## 👷‍♂️ Contributing
 

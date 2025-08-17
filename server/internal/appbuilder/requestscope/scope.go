@@ -2,12 +2,12 @@ package requestscope
 
 import (
 	"server/internal/domain"
-	"server/internal/taskreadiness"
+	"server/internal/msgreadiness"
 )
 
 type Scope struct {
-	Dispatcher        domain.EventDispatcher
-	TaskReadyNotifier *taskreadiness.Notifier
+	Dispatcher       domain.EventDispatcher
+	MsgReadyNotifier *msgreadiness.Notifier
 }
 
 type Factory interface {

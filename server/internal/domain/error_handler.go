@@ -1,14 +1,15 @@
 package domain
 
 import (
-	"server/internal/utils/timeutils"
 	"time"
+
+	"server/internal/utils/timeutils"
 )
 
 const maxRetries = 10
 
 type ErrorHandlers interface {
-	HandleError(task *Task, errorCode string) error
+	HandleError(msg *Message, errorCode string) error
 }
 
 type ExponentialErrorHandler struct {
@@ -19,12 +20,12 @@ func NewExponentialErrorHandler(clock timeutils.Clock) *ExponentialErrorHandler 
 	return &ExponentialErrorHandler{clock}
 }
 
-func (eh *ExponentialErrorHandler) HandleError(task *Task, errorCode string) error {
-	if task.Retries() >= maxRetries {
-		return task.Fail(eh.clock)
+func (eh *ExponentialErrorHandler) HandleError(msg *Message, errorCode string) error {
+	if msg.Retries() >= maxRetries {
+		return msg.Fail(eh.clock)
 	}
 
-	return task.Delay(eh.clock, eh.getDelayTime(task.Retries()))
+	return msg.Delay(eh.clock, eh.getDelayTime(msg.Retries()))
 }
 
 func (eh *ExponentialErrorHandler) getDelayTime(retries int) time.Time {

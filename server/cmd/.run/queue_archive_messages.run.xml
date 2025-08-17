@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="queue_archive_tasks" type="GoApplicationRunConfiguration" factoryName="Go Application">
-    <module name="task-queue" />
+  <configuration default="false" name="queue_archive_messages" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="message-queue" />
     <working_directory value="$PROJECT_DIR$/server" />
-    <parameters value="archive-tasks" />
+    <parameters value="archive-messages" />
     <kind value="PACKAGE" />
     <package value="server/cmd" />
     <directory value="$PROJECT_DIR$" />

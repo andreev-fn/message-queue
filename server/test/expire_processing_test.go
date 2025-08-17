@@ -15,13 +15,13 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
 	const (
-		taskKind     = "test"
-		taskPayload  = `{"arg": 123}`
-		taskPriority = 100
+		msgKind     = "test"
+		msgPayload  = `{"arg": 123}`
+		msgPriority = 100
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgKind, msgPayload, msgPriority)
 	clock.Set(clock.Now().Add(6 * time.Minute))
 
 	// Act
@@ -31,24 +31,24 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 	// Assert
 	require.Equal(t, 1, affected)
 
-	updatedTask, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	updatedMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, domain.TaskStatusDelayed, updatedTask.Status())
-	require.Equal(t, 1, updatedTask.Retries())
+	require.Equal(t, domain.MsgStatusDelayed, updatedMsg.Status())
+	require.Equal(t, 1, updatedMsg.Retries())
 }
 
 func TestExpireProcessingBeforeTimeout(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
 	const (
-		taskKind     = "test"
-		taskPayload  = `{"arg": 123}`
-		taskPriority = 100
+		msgKind     = "test"
+		msgPayload  = `{"arg": 123}`
+		msgPriority = 100
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgKind, msgPayload, msgPriority)
 	clock.Set(clock.Now().Add(3 * time.Minute))
 
 	// Act
@@ -58,9 +58,9 @@ func TestExpireProcessingBeforeTimeout(t *testing.T) {
 	// Assert
 	require.Equal(t, 0, affected)
 
-	unchangedTask, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	unchangedMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, domain.TaskStatusProcessing, unchangedTask.Status())
-	require.Equal(t, 0, unchangedTask.Retries())
+	require.Equal(t, domain.MsgStatusProcessing, unchangedMsg.Status())
+	require.Equal(t, 0, unchangedMsg.Retries())
 }

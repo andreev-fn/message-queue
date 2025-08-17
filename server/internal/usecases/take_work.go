@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"time"
+
 	"server/internal/eventbus"
+	"server/internal/msgreadiness"
 	"server/internal/storage"
-	"server/internal/taskreadiness"
 	"server/internal/utils/dbutils"
 	"server/internal/utils/timeutils"
-	"time"
 )
 
-type TaskToWork struct {
+type MessageToWork struct {
 	ID      string
 	Payload json.RawMessage
 }
@@ -23,7 +24,7 @@ type TakeWork struct {
 	logger   *slog.Logger
 	clock    timeutils.Clock
 	db       *sql.DB
-	taskRepo *storage.TaskRepository
+	msgRepo  *storage.MessageRepository
 	eventBus *eventbus.EventBus
 }
 
@@ -31,21 +32,21 @@ func NewTakeWork(
 	logger *slog.Logger,
 	clock timeutils.Clock,
 	db *sql.DB,
-	taskRepo *storage.TaskRepository,
+	msgRepo *storage.MessageRepository,
 	eventBus *eventbus.EventBus,
 ) *TakeWork {
 	return &TakeWork{
 		logger:   logger,
 		clock:    clock,
 		db:       db,
-		taskRepo: taskRepo,
+		msgRepo:  msgRepo,
 		eventBus: eventBus,
 	}
 }
 
-func (uc *TakeWork) Do(ctx context.Context, kinds []string, limit int, poll time.Duration) ([]TaskToWork, error) {
+func (uc *TakeWork) Do(ctx context.Context, kinds []string, limit int, poll time.Duration) ([]MessageToWork, error) {
 	// fast path first
-	result, err := uc.takeTasks(ctx, kinds, limit)
+	result, err := uc.takeMessages(ctx, kinds, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +55,12 @@ func (uc *TakeWork) Do(ctx context.Context, kinds []string, limit int, poll time
 		return result, nil
 	}
 
-	poller := taskreadiness.NewPoller(kinds, poll)
-	unsubscribe := uc.eventBus.Subscribe(eventbus.ChannelTaskReady, poller.HandleEvent)
+	poller := msgreadiness.NewPoller(kinds, poll)
+	unsubscribe := uc.eventBus.Subscribe(eventbus.ChannelMsgReady, poller.HandleEvent)
 	defer unsubscribe()
 
 	for {
-		result, err = uc.takeTasks(ctx, kinds, limit)
+		result, err = uc.takeMessages(ctx, kinds, limit)
 		if err != nil {
 			return nil, err
 		}
@@ -70,30 +71,30 @@ func (uc *TakeWork) Do(ctx context.Context, kinds []string, limit int, poll time
 
 		poller.WaitForNextAttempt(ctx)
 		if poller.IsTimedOut() {
-			return []TaskToWork{}, nil
+			return []MessageToWork{}, nil
 		}
 	}
 }
 
-func (uc *TakeWork) takeTasks(ctx context.Context, kinds []string, limit int) ([]TaskToWork, error) {
+func (uc *TakeWork) takeMessages(ctx context.Context, kinds []string, limit int) ([]MessageToWork, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
-	tasks, err := uc.taskRepo.GetReadyWithLock(ctx, tx, kinds, limit)
+	messages, err := uc.msgRepo.GetReadyWithLock(ctx, tx, kinds, limit)
 	if err != nil {
-		return nil, fmt.Errorf("taskRepo.GetReadyWithLock: %w", err)
+		return nil, fmt.Errorf("msgRepo.GetReadyWithLock: %w", err)
 	}
 
-	for _, task := range tasks {
-		if err := task.StartProcessing(uc.clock); err != nil {
-			return nil, fmt.Errorf("task.StartProcessing: %w", err)
+	for _, message := range messages {
+		if err := message.StartProcessing(uc.clock); err != nil {
+			return nil, fmt.Errorf("message.StartProcessing: %w", err)
 		}
 
-		if err := uc.taskRepo.Save(ctx, tx, task); err != nil {
-			return nil, fmt.Errorf("taskRepo.Save: %w", err)
+		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {
+			return nil, fmt.Errorf("msgRepo.Save: %w", err)
 		}
 	}
 
@@ -101,12 +102,12 @@ func (uc *TakeWork) takeTasks(ctx context.Context, kinds []string, limit int) ([
 		return nil, fmt.Errorf("tx.Commit: %w", err)
 	}
 
-	var result []TaskToWork
+	var result []MessageToWork
 
-	for _, task := range tasks {
-		result = append(result, TaskToWork{
-			ID:      task.ID().String(),
-			Payload: task.Payload(),
+	for _, message := range messages {
+		result = append(result, MessageToWork{
+			ID:      message.ID().String(),
+			Payload: message.Payload(),
 		})
 	}
 

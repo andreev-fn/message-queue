@@ -1,4 +1,4 @@
-package taskreadiness
+package msgreadiness
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 type Poller struct {
 	kinds       []string
-	taskReadyCh chan struct{}
+	msgReadyCh  chan struct{}
 	pollTimeout <-chan time.Time
 	timedOut    bool
 }
@@ -16,7 +16,7 @@ type Poller struct {
 func NewPoller(kinds []string, poll time.Duration) *Poller {
 	return &Poller{
 		kinds:       kinds,
-		taskReadyCh: make(chan struct{}, 1),
+		msgReadyCh:  make(chan struct{}, 1),
 		pollTimeout: time.After(poll),
 	}
 }
@@ -24,7 +24,7 @@ func NewPoller(kinds []string, poll time.Duration) *Poller {
 func (p *Poller) HandleEvent(message string) {
 	if slices.Contains(p.kinds, message) {
 		select {
-		case p.taskReadyCh <- struct{}{}:
+		case p.msgReadyCh <- struct{}{}:
 		default:
 		}
 	}
@@ -37,7 +37,7 @@ func (p *Poller) WaitForNextAttempt(ctx context.Context) {
 	case <-p.pollTimeout:
 		p.timedOut = true
 	case <-time.After(time.Second * 3):
-	case <-p.taskReadyCh:
+	case <-p.msgReadyCh:
 	}
 }
 

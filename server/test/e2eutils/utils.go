@@ -54,16 +54,16 @@ func BuildTestApp(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
 func CleanupDatabase(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	if _, err := db.Exec("DELETE FROM tasks"); err != nil {
+	if _, err := db.Exec("DELETE FROM messages"); err != nil {
 		require.NoError(t, err)
 	}
-	if _, err := db.Exec("DELETE FROM task_payloads"); err != nil {
+	if _, err := db.Exec("DELETE FROM message_payloads"); err != nil {
 		require.NoError(t, err)
 	}
-	if _, err := db.Exec("DELETE FROM task_results"); err != nil {
+	if _, err := db.Exec("DELETE FROM message_results"); err != nil {
 		require.NoError(t, err)
 	}
-	if _, err := db.Exec("DELETE FROM archived_tasks"); err != nil {
+	if _, err := db.Exec("DELETE FROM archived_messages"); err != nil {
 		require.NoError(t, err)
 	}
 }

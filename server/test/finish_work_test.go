@@ -18,19 +18,19 @@ func TestFinishSuccessfulWork(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		taskKind     = "test"
-		taskPayload  = `{"arg": 123}`
-		taskPriority = 100
-		taskResult   = `{"result":"success"}`
+		msgKind     = "test"
+		msgPayload  = `{"arg": 123}`
+		msgPriority = 100
+		msgResult   = `{"result":"success"}`
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgKind, msgPayload, msgPriority)
 
 	// Act
 	requestBody := map[string]interface{}{
-		"id":     taskID,
-		"report": taskResult,
+		"id":     msgID,
+		"report": msgResult,
 		"error":  nil,
 	}
 	body, err := json.Marshal(requestBody)
@@ -55,29 +55,29 @@ func TestFinishSuccessfulWork(t *testing.T) {
 	require.Nil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	// Assert task in DB
-	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	// Assert the message in DB
+	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
-	require.Equal(t, domain.TaskStatusCompleted, task.Status())
-	require.NotNil(t, task.Result())
-	require.JSONEq(t, taskResult, string(*task.Result()))
+	require.Equal(t, domain.MsgStatusCompleted, message.Status())
+	require.NotNil(t, message.Result())
+	require.JSONEq(t, msgResult, string(*message.Result()))
 }
 
 func TestFinishUnsuccessfulWork(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		taskKind     = "test"
-		taskPayload  = `{"arg": 123}`
-		taskPriority = 100
+		msgKind     = "test"
+		msgPayload  = `{"arg": 123}`
+		msgPriority = 100
 	)
 
 	// Arrange
-	taskID := e2eutils.CreateProcessingTask(t, app, taskKind, taskPayload, taskPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgKind, msgPayload, msgPriority)
 
 	// Act
 	requestBody := map[string]interface{}{
-		"id":     taskID,
+		"id":     msgID,
 		"report": nil,
 		"error": map[string]interface{}{
 			"code":            "timeout_error",
@@ -107,13 +107,13 @@ func TestFinishUnsuccessfulWork(t *testing.T) {
 	require.Nil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	// Assert task in DB
-	task, err := app.TaskRepo.GetTaskByID(context.Background(), app.DB, taskID)
+	// Assert the message in DB
+	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
-	require.Equal(t, domain.TaskStatusDelayed, task.Status())
+	require.Equal(t, domain.MsgStatusDelayed, message.Status())
 }
 
-func TestFinishWorkUnknownTask(t *testing.T) {
+func TestFinishWorkUnknownMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	// Act
@@ -143,5 +143,5 @@ func TestFinishWorkUnknownTask(t *testing.T) {
 	require.False(t, respWrapper.Success)
 	require.Nil(t, respWrapper.Result)
 	require.NotNil(t, respWrapper.Error)
-	require.Contains(t, *respWrapper.Error, "task not found")
+	require.Contains(t, *respWrapper.Error, "message not found")
 }

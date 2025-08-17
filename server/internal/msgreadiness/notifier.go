@@ -1,4 +1,4 @@
-package taskreadiness
+package msgreadiness
 
 import (
 	"server/internal/domain"
@@ -18,7 +18,7 @@ func NewNotifier(eventBus *eventbus.EventBus) *Notifier {
 }
 
 func (h *Notifier) HandleEvent(event domain.Event) {
-	ev, ok := event.(domain.TaskReadyEvent)
+	ev, ok := event.(domain.MsgReadyEvent)
 	if !ok {
 		return
 	}
@@ -28,7 +28,7 @@ func (h *Notifier) HandleEvent(event domain.Event) {
 
 func (h *Notifier) Flush() error {
 	for kind := range h.readyKinds {
-		if err := h.eventBus.Publish(eventbus.ChannelTaskReady, kind); err != nil {
+		if err := h.eventBus.Publish(eventbus.ChannelMsgReady, kind); err != nil {
 			return err
 		}
 	}
