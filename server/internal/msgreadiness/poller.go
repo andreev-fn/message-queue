@@ -7,22 +7,22 @@ import (
 )
 
 type Poller struct {
-	kinds       []string
+	queues      []string
 	msgReadyCh  chan struct{}
 	pollTimeout <-chan time.Time
 	timedOut    bool
 }
 
-func NewPoller(kinds []string, poll time.Duration) *Poller {
+func NewPoller(queues []string, poll time.Duration) *Poller {
 	return &Poller{
-		kinds:       kinds,
+		queues:      queues,
 		msgReadyCh:  make(chan struct{}, 1),
 		pollTimeout: time.After(poll),
 	}
 }
 
 func (p *Poller) HandleEvent(message string) {
-	if slices.Contains(p.kinds, message) {
+	if slices.Contains(p.queues, message) {
 		select {
 		case p.msgReadyCh <- struct{}{}:
 		default:

@@ -15,7 +15,7 @@ import (
 
 const selectAll = `
 	SELECT 
-		m.id, m.kind, m.created_at, m.finalized_at, m.status, m.status_changed_at,
+		m.id, m.queue, m.created_at, m.finalized_at, m.status, m.status_changed_at,
 		m.delayed_until, m.timeout_at, m.priority, m.retries, m.version,
 		p.payload,
 		r.result
@@ -36,7 +36,7 @@ func scanRows(rows *sql.Rows) ([]*domain.Message, error) {
 
 		if err := rows.Scan(
 			&message.ID,
-			&message.Kind,
+			&message.Queue,
 			&message.CreatedAt,
 			&message.FinalizedAt,
 			&message.Status,
@@ -134,7 +134,7 @@ func (r *MessageRepository) create(
 ) error {
 	query := `
 		INSERT INTO messages (
-			id, kind, created_at, finalized_at, status, status_changed_at, 
+			id, queue, created_at, finalized_at, status, status_changed_at, 
 		    delayed_until, timeout_at, priority, retries, version
    		) VALUES (
 			$1, $2, $3, $4, $5, $6, 
@@ -145,7 +145,7 @@ func (r *MessageRepository) create(
 		ctx,
 		query,
 		msgDTO.ID,
-		msgDTO.Kind,
+		msgDTO.Queue,
 		msgDTO.CreatedAt,
 		msgDTO.FinalizedAt,
 		msgDTO.Status,
@@ -177,7 +177,7 @@ func (r *MessageRepository) update(
 	conn dbutils.Querier,
 	msgDTO *domain.MessageDTO,
 ) error {
-	// We know that `kind` and `created_at` never change, so we can safely skip updating them.
+	// We know that `queue` and `created_at` never change, so we can safely skip updating them.
 	query := `
 		UPDATE messages
 		SET finalized_at = $2,
@@ -240,20 +240,20 @@ func (r *MessageRepository) GetByID(
 func (r *MessageRepository) GetReadyWithLock(
 	ctx context.Context,
 	conn dbutils.Querier,
-	kinds []string,
+	queues []string,
 	limit int,
 ) ([]*domain.Message, error) {
-	if len(kinds) == 0 {
+	if len(queues) == 0 {
 		return []*domain.Message{}, nil
 	}
 
 	query := selectAll + `
-		WHERE kind IN (:kinds) AND status = $1
+		WHERE queue IN (:queues) AND status = $1
 		ORDER BY priority DESC, status_changed_at ASC
 		LIMIT $2
 		FOR UPDATE OF m SKIP LOCKED
 	`
-	query = strings.ReplaceAll(query, ":kinds", "'"+strings.Join(kinds, "','")+"'")
+	query = strings.ReplaceAll(query, ":queues", "'"+strings.Join(queues, "','")+"'")
 	rows, err := conn.QueryContext(ctx, query, domain.MsgStatusReady, limit)
 	if err != nil {
 		return nil, err

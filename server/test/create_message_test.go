@@ -18,14 +18,14 @@ func TestCreateMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		msgKind     = "test"
+		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 100
 	)
 
 	// Act
 	body, err := json.Marshal(map[string]any{
-		"kind":    msgKind,
+		"queue":   msgQueue,
 		"payload": json.RawMessage(msgPayload),
 	})
 	require.NoError(t, err)
@@ -59,7 +59,7 @@ func TestCreateMessage(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO.ID)
 	require.NoError(t, err)
 
-	require.Equal(t, msgKind, message.Kind())
+	require.Equal(t, msgQueue, message.Queue())
 	require.JSONEq(t, msgPayload, string(message.Payload()))
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusCreated, message.Status())
@@ -70,14 +70,14 @@ func TestCreateMessageWithPriorityAndConfirm(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		msgKind     = "test"
+		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 5
 	)
 
 	// Act
 	body, err := json.Marshal(map[string]any{
-		"kind":         msgKind,
+		"queue":        msgQueue,
 		"payload":      json.RawMessage(msgPayload),
 		"auto_confirm": true,
 		"priority":     msgPriority,
@@ -113,7 +113,7 @@ func TestCreateMessageWithPriorityAndConfirm(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO.ID)
 	require.NoError(t, err)
 
-	require.Equal(t, msgKind, message.Kind())
+	require.Equal(t, msgQueue, message.Queue())
 	require.JSONEq(t, msgPayload, string(message.Payload()))
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusReady, message.Status())

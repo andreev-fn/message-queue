@@ -53,7 +53,7 @@ func (a *CreateMessage) handler(writer http.ResponseWriter, request *http.Reques
 	}
 
 	var msgData struct {
-		Kind        string          `json:"kind"`
+		Queue       string          `json:"queue"`
 		Payload     json.RawMessage `json:"payload"`
 		Priority    *int            `json:"priority"`
 		AutoConfirm bool            `json:"auto_confirm"`
@@ -86,7 +86,7 @@ func (a *CreateMessage) handler(writer http.ResponseWriter, request *http.Reques
 
 	msgID, err := a.useCase.Do(
 		request.Context(),
-		msgData.Kind,
+		msgData.Queue,
 		msgData.Payload,
 		priority,
 		msgData.AutoConfirm,

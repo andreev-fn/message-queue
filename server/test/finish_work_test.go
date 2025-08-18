@@ -18,14 +18,14 @@ func TestFinishSuccessfulWork(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		msgKind     = "test"
+		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 100
 		msgResult   = `{"result":"success"}`
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(t, app, msgKind, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	requestBody := map[string]interface{}{
@@ -67,13 +67,13 @@ func TestFinishUnsuccessfulWork(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		msgKind     = "test"
+		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 100
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(t, app, msgKind, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	requestBody := map[string]interface{}{

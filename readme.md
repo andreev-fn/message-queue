@@ -21,7 +21,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☐ Batch operations
 - ☐ Single-process mode
 - ☐ gRPC
-- ☐ ValueObjects for kind, priority
+- ☐ ValueObjects for queue name, priority
 - ☐ Decrease priority after some time
 - ☐ Distributed tracing support
 - ☐ Document

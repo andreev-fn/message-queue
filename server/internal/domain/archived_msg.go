@@ -13,7 +13,7 @@ import (
 
 type ArchivedMsg struct {
 	id          uuid.UUID
-	kind        string
+	queue       string
 	payload     json.RawMessage
 	createdAt   time.Time
 	finalizedAt time.Time
@@ -35,7 +35,7 @@ func NewArchivedMsg(msg *Message) (*ArchivedMsg, error) {
 
 	return &ArchivedMsg{
 		id:          msg.ID(),
-		kind:        msg.Kind(),
+		queue:       msg.Queue(),
 		payload:     msg.Payload(),
 		createdAt:   msg.CreatedAt(),
 		finalizedAt: *finalizedAt,
@@ -47,7 +47,7 @@ func NewArchivedMsg(msg *Message) (*ArchivedMsg, error) {
 }
 
 func (m *ArchivedMsg) ID() uuid.UUID            { return m.id }
-func (m *ArchivedMsg) Kind() string             { return m.kind }
+func (m *ArchivedMsg) Queue() string            { return m.queue }
 func (m *ArchivedMsg) Payload() json.RawMessage { return slices.Clone(m.payload) }
 func (m *ArchivedMsg) CreatedAt() time.Time     { return m.createdAt }
 func (m *ArchivedMsg) FinalizedAt() time.Time   { return m.finalizedAt }

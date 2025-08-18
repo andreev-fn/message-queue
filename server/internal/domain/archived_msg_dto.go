@@ -10,7 +10,7 @@ import (
 // ArchivedMsgDTO supposed to be used only for storage, don't change values manually
 type ArchivedMsgDTO struct {
 	ID          uuid.UUID
-	Kind        string
+	Queue       string
 	Payload     json.RawMessage
 	CreatedAt   time.Time
 	FinalizedAt time.Time
@@ -23,7 +23,7 @@ type ArchivedMsgDTO struct {
 func ArchivedMsgFromDTO(dto *ArchivedMsgDTO) *ArchivedMsg {
 	return &ArchivedMsg{
 		id:          dto.ID,
-		kind:        dto.Kind,
+		queue:       dto.Queue,
 		payload:     dto.Payload,
 		createdAt:   dto.CreatedAt,
 		finalizedAt: dto.FinalizedAt,
@@ -37,7 +37,7 @@ func ArchivedMsgFromDTO(dto *ArchivedMsgDTO) *ArchivedMsg {
 func (m *ArchivedMsg) ToDTO() *ArchivedMsgDTO {
 	return &ArchivedMsgDTO{
 		ID:          m.id,
-		Kind:        m.kind,
+		Queue:       m.queue,
 		Payload:     m.payload,
 		CreatedAt:   m.createdAt,
 		FinalizedAt: m.finalizedAt,

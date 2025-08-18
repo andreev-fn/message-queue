@@ -25,7 +25,7 @@ const (
 
 type Message struct {
 	id              uuid.UUID
-	kind            string
+	queue           string
 	payload         json.RawMessage
 	createdAt       time.Time
 	finalizedAt     *time.Time
@@ -45,7 +45,7 @@ type Message struct {
 func NewMessage(
 	clock timeutils.Clock,
 	id uuid.UUID,
-	kind string,
+	queue string,
 	payload json.RawMessage,
 	priority int,
 	startAt *time.Time,
@@ -55,7 +55,7 @@ func NewMessage(
 	}
 	return &Message{
 		id:              id,
-		kind:            kind,
+		queue:           queue,
 		payload:         payload,
 		createdAt:       clock.Now(),
 		finalizedAt:     nil,
@@ -73,7 +73,7 @@ func NewMessage(
 }
 
 func (m *Message) ID() uuid.UUID            { return m.id }
-func (m *Message) Kind() string             { return m.kind }
+func (m *Message) Queue() string            { return m.queue }
 func (m *Message) Payload() json.RawMessage { return slices.Clone(m.payload) }
 func (m *Message) CreatedAt() time.Time     { return m.createdAt }
 func (m *Message) Status() MessageStatus    { return m.status }
@@ -103,7 +103,7 @@ func (m *Message) Confirm(clock timeutils.Clock, ed EventDispatcher) error {
 		m.setStatus(clock, MsgStatusDelayed)
 	} else {
 		m.setStatus(clock, MsgStatusReady)
-		ed.Dispatch(NewMsgReadyEvent(m.kind))
+		ed.Dispatch(NewMsgReadyEvent(m.queue))
 	}
 
 	return nil
@@ -149,7 +149,7 @@ func (m *Message) Resume(clock timeutils.Clock, ed EventDispatcher) error {
 	m.delayedUntil = nil // cleanup after DELAYED status
 
 	m.setStatus(clock, MsgStatusReady)
-	ed.Dispatch(NewMsgReadyEvent(m.kind))
+	ed.Dispatch(NewMsgReadyEvent(m.queue))
 
 	return nil
 }

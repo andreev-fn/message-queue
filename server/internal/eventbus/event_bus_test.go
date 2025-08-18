@@ -5,10 +5,11 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"server/internal/eventbus"
-	"server/internal/utils/timeutils"
 	"testing"
 	"time"
+
+	"server/internal/eventbus"
+	"server/internal/utils/timeutils"
 )
 
 type publishedEvent struct {
@@ -109,10 +110,10 @@ func TestEventBus_Run_DispatchesToSubscribers(t *testing.T) {
 		t.Fatal("Listen did not start in time")
 	}
 
-	md.Trigger(eventbus.ChannelMsgReady, "kind-A")
+	md.Trigger(eventbus.ChannelMsgReady, "hello")
 
 	// expect both handlers to receive it (order not guaranteed)
-	want := map[string]bool{"h1:kind-A": false, "h2:kind-A": false}
+	want := map[string]bool{"h1:hello": false, "h2:hello": false}
 	for i := 0; i < 2; i++ {
 		select {
 		case m := <-got:

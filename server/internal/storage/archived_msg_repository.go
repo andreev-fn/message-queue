@@ -25,11 +25,11 @@ func (r *ArchivedMsgRepository) Upsert(
 
 	query := `
 		INSERT INTO archived_messages (
-			id, kind, created_at, finalized_at, status, priority, retries, payload, result
+			id, queue, created_at, finalized_at, status, priority, retries, payload, result
    		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (id) DO UPDATE SET 
-		    kind = $2, 
+		    queue = $2, 
 		    created_at = $3, 
 		    finalized_at = $4, 
 		    status = $5, 
@@ -42,7 +42,7 @@ func (r *ArchivedMsgRepository) Upsert(
 		ctx,
 		query,
 		msgDTO.ID,
-		msgDTO.Kind,
+		msgDTO.Queue,
 		msgDTO.CreatedAt,
 		msgDTO.FinalizedAt,
 		msgDTO.Status,
@@ -63,7 +63,7 @@ func (r *ArchivedMsgRepository) GetByID(
 	id string,
 ) (*domain.ArchivedMsg, error) {
 	query := `
-		SELECT id, kind, created_at, finalized_at, status, priority, retries, payload, result
+		SELECT id, queue, created_at, finalized_at, status, priority, retries, payload, result
 		FROM archived_messages
 		WHERE id = $1
 	`
@@ -81,7 +81,7 @@ func (r *ArchivedMsgRepository) GetByID(
 
 		if err := rows.Scan(
 			&msg.ID,
-			&msg.Kind,
+			&msg.Queue,
 			&msg.CreatedAt,
 			&msg.FinalizedAt,
 			&msg.Status,

@@ -77,7 +77,7 @@ func (a *CheckMessage) writeSuccess(writer http.ResponseWriter, result *usecases
 		"success": true,
 		"result": map[string]any{
 			"id":           result.ID,
-			"kind":         result.Kind,
+			"queue":        result.Queue,
 			"created_at":   result.CreatedAt,
 			"finalized_at": result.FinalizedAt,
 			"status":       result.Status,

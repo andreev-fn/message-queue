@@ -6,7 +6,7 @@ POST http://localhost:8060/message/create
 Content-Type: application/json
 
 {
-  "kind": "test",
+  "queue": "test",
   "payload": {
     "arg": "1234"
   },
@@ -18,7 +18,7 @@ POST http://localhost:8060/message/create
 Content-Type: application/json
 
 {
-  "kind": "test",
+  "queue": "test",
   "payload": {
     "arg": "1234"
   }
@@ -37,10 +37,10 @@ GET http://localhost:8060/message/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fca
 GET http://localhost:8060/message/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fcb
 
 ### get messages to work
-POST http://localhost:8060/work/take?kind=test&limit=3
+POST http://localhost:8060/work/take?queue=test&limit=3
 
 ### get messages to work (with poll)
-POST http://localhost:8060/work/take?kind=test&limit=3&poll=25
+POST http://localhost:8060/work/take?queue=test&limit=3&poll=25
 
 ### save message result (success)
 POST http://localhost:8060/work/finish

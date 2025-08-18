@@ -42,7 +42,7 @@ func NewCreateMessage(
 
 func (uc *CreateMessage) Do(
 	ctx context.Context,
-	kind string,
+	queue string,
 	payload json.RawMessage,
 	priority int,
 	autoConfirm bool,
@@ -50,7 +50,7 @@ func (uc *CreateMessage) Do(
 ) (string, error) {
 	scope := uc.scopeFactory.New()
 
-	message, err := domain.NewMessage(uc.clock, uuid.New(), kind, payload, priority, startAt)
+	message, err := domain.NewMessage(uc.clock, uuid.New(), queue, payload, priority, startAt)
 	if err != nil {
 		return "", err
 	}

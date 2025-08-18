@@ -16,13 +16,13 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
 	const (
-		msgKind    = "test"
+		msgQueue   = "test"
 		msgPayload = `{"arg": 123}`
 		msgResult  = `{"result":"success"}`
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateCompletedMsg(t, app, msgKind, msgPayload, msgResult)
+	msgID := e2eutils.CreateCompletedMsg(t, app, msgQueue, msgPayload, msgResult)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
@@ -39,7 +39,7 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, domain.MsgStatusCompleted, archivedMsg.Status())
-	require.Equal(t, msgKind, archivedMsg.Kind())
+	require.Equal(t, msgQueue, archivedMsg.Queue())
 	require.JSONEq(t, msgPayload, string(archivedMsg.Payload()))
 	require.NotNil(t, archivedMsg.Result())
 	require.JSONEq(t, msgResult, string(*archivedMsg.Result()))
@@ -49,13 +49,13 @@ func TestArchiveMessagesNotFinal(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
 	const (
-		msgKind     = "test"
+		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 100
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(t, app, msgKind, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act

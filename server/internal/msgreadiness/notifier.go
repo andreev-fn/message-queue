@@ -6,14 +6,14 @@ import (
 )
 
 type Notifier struct {
-	eventBus   *eventbus.EventBus
-	readyKinds map[string]struct{}
+	eventBus    *eventbus.EventBus
+	readyQueues map[string]struct{}
 }
 
 func NewNotifier(eventBus *eventbus.EventBus) *Notifier {
 	return &Notifier{
-		eventBus:   eventBus,
-		readyKinds: make(map[string]struct{}),
+		eventBus:    eventBus,
+		readyQueues: make(map[string]struct{}),
 	}
 }
 
@@ -23,12 +23,12 @@ func (h *Notifier) HandleEvent(event domain.Event) {
 		return
 	}
 
-	h.readyKinds[ev.Kind()] = struct{}{}
+	h.readyQueues[ev.Queue()] = struct{}{}
 }
 
 func (h *Notifier) Flush() error {
-	for kind := range h.readyKinds {
-		if err := h.eventBus.Publish(eventbus.ChannelMsgReady, kind); err != nil {
+	for queue := range h.readyQueues {
+		if err := h.eventBus.Publish(eventbus.ChannelMsgReady, queue); err != nil {
 			return err
 		}
 	}

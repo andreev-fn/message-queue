@@ -17,13 +17,13 @@ func TestCheckExistingMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		msgKind     = "test"
+		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 100
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateMsg(t, app, msgKind, msgPayload, msgPriority)
+	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	req, err := http.NewRequest(http.MethodGet, "/message/check?id="+msgID, nil)
@@ -45,7 +45,7 @@ func TestCheckExistingMessage(t *testing.T) {
 
 	var respDTO struct {
 		ID        string           `json:"id"`
-		Kind      string           `json:"kind"`
+		Queue     string           `json:"queue"`
 		CreatedAt time.Time        `json:"created_at"`
 		Status    string           `json:"status"`
 		Retries   int              `json:"retries"`
@@ -56,7 +56,7 @@ func TestCheckExistingMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, msgID, respDTO.ID)
-	require.Equal(t, msgKind, respDTO.Kind)
+	require.Equal(t, msgQueue, respDTO.Queue)
 	require.Equal(t, app.Clock.Now(), respDTO.CreatedAt)
 	require.Equal(t, string(domain.MsgStatusCreated), respDTO.Status)
 	require.Equal(t, 0, respDTO.Retries)

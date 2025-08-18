@@ -5,12 +5,12 @@ const (
 )
 
 type MsgReadyEvent struct {
-	kind string
+	queue string
 }
 
-func NewMsgReadyEvent(kind string) MsgReadyEvent {
-	return MsgReadyEvent{kind}
+func NewMsgReadyEvent(queue string) MsgReadyEvent {
+	return MsgReadyEvent{queue}
 }
 
-func (e MsgReadyEvent) Name() string { return MsgReadyEventName }
-func (e MsgReadyEvent) Kind() string { return e.kind }
+func (e MsgReadyEvent) Name() string  { return MsgReadyEventName }
+func (e MsgReadyEvent) Queue() string { return e.queue }

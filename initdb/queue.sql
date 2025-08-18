@@ -2,7 +2,7 @@ CREATE TYPE message_status AS ENUM ('CREATED', 'READY', 'PROCESSING', 'DELAYED',
 
 CREATE TABLE messages (
     id uuid PRIMARY KEY,
-    kind varchar(255) NOT NULL,
+    queue varchar(255) NOT NULL,
     created_at timestamptz NOT NULL,
     finalized_at timestamptz NULL,
     status message_status NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE messages (
     version int NOT NULL
 );
 
-CREATE INDEX ON messages (kind, status, priority DESC, status_changed_at ASC) WHERE status = 'READY';
+CREATE INDEX ON messages (queue, status, priority DESC, status_changed_at ASC) WHERE status = 'READY';
 CREATE INDEX ON messages (status, delayed_until) WHERE status = 'DELAYED';
 CREATE INDEX ON messages (status, timeout_at) WHERE status = 'PROCESSING';
 CREATE INDEX ON messages (status, finalized_at) WHERE status IN ('COMPLETED', 'FAILED');
@@ -32,7 +32,7 @@ CREATE TABLE message_results (
 
 CREATE TABLE archived_messages (
     id uuid PRIMARY KEY,
-    kind varchar(255) NOT NULL,
+    queue varchar(255) NOT NULL,
     created_at timestamptz NOT NULL,
     finalized_at timestamptz NOT NULL,
     status message_status NOT NULL,

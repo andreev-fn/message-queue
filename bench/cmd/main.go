@@ -109,7 +109,7 @@ func createMessages(ctx context.Context, threadNum int) {
 
 func createMessage(arg string) error {
 	requestBody, err := json.Marshal(map[string]any{
-		"kind": "test",
+		"queue": "test",
 		"payload": map[string]any{
 			"arg": arg,
 		},
@@ -184,7 +184,7 @@ func consumeMessage() error {
 }
 
 func takeWork() ([]Message, error) {
-	request, err := http.NewRequest(http.MethodPost, baseURL+"/work/take?kind=test&limit=100", nil)
+	request, err := http.NewRequest(http.MethodPost, baseURL+"/work/take?queue=test&limit=100", nil)
 	if err != nil {
 		return nil, err
 	}

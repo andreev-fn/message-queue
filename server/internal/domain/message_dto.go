@@ -10,7 +10,7 @@ import (
 // MessageDTO supposed to be used only for storage, don't change values manually
 type MessageDTO struct {
 	ID              uuid.UUID
-	Kind            string
+	Queue           string
 	Payload         json.RawMessage
 	CreatedAt       time.Time
 	FinalizedAt     *time.Time
@@ -29,7 +29,7 @@ type MessageDTO struct {
 func FromDTO(dto *MessageDTO) *Message {
 	return &Message{
 		id:              dto.ID,
-		kind:            dto.Kind,
+		queue:           dto.Queue,
 		payload:         dto.Payload,
 		createdAt:       dto.CreatedAt,
 		finalizedAt:     dto.FinalizedAt,
@@ -49,7 +49,7 @@ func FromDTO(dto *MessageDTO) *Message {
 func (m *Message) ToDTO() *MessageDTO {
 	return &MessageDTO{
 		ID:              m.id,
-		Kind:            m.kind,
+		Queue:           m.queue,
 		Payload:         m.payload,
 		CreatedAt:       m.createdAt,
 		FinalizedAt:     m.finalizedAt,

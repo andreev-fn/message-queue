@@ -14,7 +14,7 @@ import (
 
 type CheckMsgResult struct {
 	ID          string
-	Kind        string
+	Queue       string
 	CreatedAt   time.Time
 	FinalizedAt *time.Time
 	Status      string
@@ -52,7 +52,7 @@ func (uc *CheckMessage) Do(ctx context.Context, id string) (*CheckMsgResult, err
 
 	return &CheckMsgResult{
 		ID:          message.ID().String(),
-		Kind:        message.Kind(),
+		Queue:       message.Queue(),
 		Payload:     message.Payload(),
 		CreatedAt:   message.CreatedAt(),
 		FinalizedAt: message.FinalizedAt(),
@@ -70,7 +70,7 @@ func (uc *CheckMessage) checkArchived(ctx context.Context, id string) (*CheckMsg
 
 	return &CheckMsgResult{
 		ID:          archivedMsg.ID().String(),
-		Kind:        archivedMsg.Kind(),
+		Queue:       archivedMsg.Queue(),
 		Payload:     archivedMsg.Payload(),
 		CreatedAt:   archivedMsg.CreatedAt(),
 		FinalizedAt: utils.P(archivedMsg.FinalizedAt()),

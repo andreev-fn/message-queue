@@ -17,13 +17,13 @@ func TestConfirmMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		msgKind     = "test"
+		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 100
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateMsg(t, app, msgKind, msgPayload, msgPriority)
+	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	req, err := http.NewRequest(http.MethodPost, "/message/confirm?id="+msgID, nil)
@@ -47,7 +47,7 @@ func TestConfirmMessage(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, msgKind, message.Kind())
+	require.Equal(t, msgQueue, message.Queue())
 	require.JSONEq(t, msgPayload, string(message.Payload()))
 	require.Equal(t, msgPriority, message.Priority())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())

@@ -11,12 +11,12 @@ import (
 	"server/internal/utils"
 )
 
-func CreateMsg(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
+func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
 	t.Helper()
 
 	msgID, err := app.CreateMessage.Do(
 		context.Background(),
-		kind,
+		queue,
 		json.RawMessage(payload),
 		priority,
 		false,
@@ -27,10 +27,10 @@ func CreateMsg(t *testing.T, app *appbuilder.App, kind string, payload string, p
 	return msgID
 }
 
-func CreateReadyMsg(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
+func CreateReadyMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
 	t.Helper()
 
-	msgID := CreateMsg(t, app, kind, payload, priority)
+	msgID := CreateMsg(t, app, queue, payload, priority)
 
 	err := app.ConfirmMessage.Do(context.Background(), msgID)
 	require.NoError(t, err)
@@ -38,12 +38,12 @@ func CreateReadyMsg(t *testing.T, app *appbuilder.App, kind string, payload stri
 	return msgID
 }
 
-func CreateProcessingMsg(t *testing.T, app *appbuilder.App, kind string, payload string, priority int) string {
+func CreateProcessingMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
 	t.Helper()
 
-	msgID := CreateReadyMsg(t, app, kind, payload, priority)
+	msgID := CreateReadyMsg(t, app, queue, payload, priority)
 
-	result, err := app.TakeWork.Do(context.Background(), []string{kind}, 1, 0)
+	result, err := app.TakeWork.Do(context.Background(), []string{queue}, 1, 0)
 	require.NoError(t, err)
 
 	require.Len(t, result, 1)
@@ -52,10 +52,10 @@ func CreateProcessingMsg(t *testing.T, app *appbuilder.App, kind string, payload
 	return msgID
 }
 
-func CreateDelayedMsg(t *testing.T, app *appbuilder.App, kind string, payload string) string {
+func CreateDelayedMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
 	t.Helper()
 
-	msgID := CreateProcessingMsg(t, app, kind, payload, 100)
+	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
 	err := app.FinishWork.Do(context.Background(), msgID, nil, utils.P("timeout_error"))
 	require.NoError(t, err)
@@ -63,10 +63,10 @@ func CreateDelayedMsg(t *testing.T, app *appbuilder.App, kind string, payload st
 	return msgID
 }
 
-func CreateCompletedMsg(t *testing.T, app *appbuilder.App, kind string, payload string, result string) string {
+func CreateCompletedMsg(t *testing.T, app *appbuilder.App, queue string, payload string, result string) string {
 	t.Helper()
 
-	msgID := CreateProcessingMsg(t, app, kind, payload, 100)
+	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
 	err := app.FinishWork.Do(context.Background(), msgID, json.RawMessage(result), nil)
 	require.NoError(t, err)
