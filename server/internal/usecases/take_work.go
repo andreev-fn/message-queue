@@ -44,9 +44,9 @@ func NewTakeWork(
 	}
 }
 
-func (uc *TakeWork) Do(ctx context.Context, queues []string, limit int, poll time.Duration) ([]MessageToWork, error) {
+func (uc *TakeWork) Do(ctx context.Context, queue string, limit int, poll time.Duration) ([]MessageToWork, error) {
 	// fast path first
-	result, err := uc.takeMessages(ctx, queues, limit)
+	result, err := uc.takeMessages(ctx, queue, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +55,12 @@ func (uc *TakeWork) Do(ctx context.Context, queues []string, limit int, poll tim
 		return result, nil
 	}
 
-	poller := msgreadiness.NewPoller(queues, poll)
+	poller := msgreadiness.NewPoller(queue, poll)
 	unsubscribe := uc.eventBus.Subscribe(eventbus.ChannelMsgReady, poller.HandleEvent)
 	defer unsubscribe()
 
 	for {
-		result, err = uc.takeMessages(ctx, queues, limit)
+		result, err = uc.takeMessages(ctx, queue, limit)
 		if err != nil {
 			return nil, err
 		}
@@ -76,14 +76,14 @@ func (uc *TakeWork) Do(ctx context.Context, queues []string, limit int, poll tim
 	}
 }
 
-func (uc *TakeWork) takeMessages(ctx context.Context, queues []string, limit int) ([]MessageToWork, error) {
+func (uc *TakeWork) takeMessages(ctx context.Context, queue string, limit int) ([]MessageToWork, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
-	messages, err := uc.msgRepo.GetReadyWithLock(ctx, tx, queues, limit)
+	messages, err := uc.msgRepo.GetReadyWithLock(ctx, tx, queue, limit)
 	if err != nil {
 		return nil, fmt.Errorf("msgRepo.GetReadyWithLock: %w", err)
 	}

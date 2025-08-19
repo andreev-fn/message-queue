@@ -2,27 +2,26 @@ package msgreadiness
 
 import (
 	"context"
-	"slices"
 	"time"
 )
 
 type Poller struct {
-	queues      []string
+	queue       string
 	msgReadyCh  chan struct{}
 	pollTimeout <-chan time.Time
 	timedOut    bool
 }
 
-func NewPoller(queues []string, poll time.Duration) *Poller {
+func NewPoller(queue string, poll time.Duration) *Poller {
 	return &Poller{
-		queues:      queues,
+		queue:       queue,
 		msgReadyCh:  make(chan struct{}, 1),
 		pollTimeout: time.After(poll),
 	}
 }
 
 func (p *Poller) HandleEvent(message string) {
-	if slices.Contains(p.queues, message) {
+	if message == p.queue {
 		select {
 		case p.msgReadyCh <- struct{}{}:
 		default:

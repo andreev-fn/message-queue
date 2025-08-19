@@ -43,7 +43,7 @@ func CreateProcessingMsg(t *testing.T, app *appbuilder.App, queue string, payloa
 
 	msgID := CreateReadyMsg(t, app, queue, payload, priority)
 
-	result, err := app.TakeWork.Do(context.Background(), []string{queue}, 1, 0)
+	result, err := app.TakeWork.Do(context.Background(), queue, 1, 0)
 	require.NoError(t, err)
 
 	require.Len(t, result, 1)

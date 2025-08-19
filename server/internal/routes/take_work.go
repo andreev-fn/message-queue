@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"server/internal/usecases"
@@ -44,12 +43,11 @@ func (a *TakeWork) handler(writer http.ResponseWriter, request *http.Request) {
 
 	params := request.URL.Query()
 
-	queueStr := params.Get("queue")
-	if queueStr == "" {
+	queue := params.Get("queue")
+	if queue == "" {
 		a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'queue' required"))
 		return
 	}
-	queues := strings.Split(queueStr, ",")
 
 	limit := 1
 	if params.Has("limit") {
@@ -79,7 +77,7 @@ func (a *TakeWork) handler(writer http.ResponseWriter, request *http.Request) {
 		poll = time.Duration(customPoll) * time.Second
 	}
 
-	messages, err := a.useCase.Do(request.Context(), queues, limit, poll)
+	messages, err := a.useCase.Do(request.Context(), queue, limit, poll)
 	if err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return

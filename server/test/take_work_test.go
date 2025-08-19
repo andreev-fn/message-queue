@@ -17,26 +17,25 @@ func TestTakeWork(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
-		msg1Queue    = "test1"
+		msgQueue = "test"
+
 		msg1Payload  = `{"arg": 123}`
 		msg1Priority = 10
 
-		msg2Queue    = "test2"
 		msg2Payload  = `{"arg": 213}`
 		msg2Priority = 200
 
-		msg3Queue    = "test3"
 		msg3Payload  = `{"arg": 321}`
 		msg3Priority = 100
 	)
 
 	// Arrange
-	msg1ID := e2eutils.CreateReadyMsg(t, app, msg1Queue, msg1Payload, msg1Priority)
-	msg2ID := e2eutils.CreateReadyMsg(t, app, msg2Queue, msg2Payload, msg2Priority)
-	msg3ID := e2eutils.CreateReadyMsg(t, app, msg3Queue, msg3Payload, msg3Priority)
+	msg1ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg1Payload, msg1Priority)
+	msg2ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg2Payload, msg2Priority)
+	msg3ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg3Payload, msg3Priority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/work/take?queue=test1,test2,test3&limit=1", nil)
+	req, err := http.NewRequest(http.MethodPost, "/work/take?queue=test&limit=1", nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()

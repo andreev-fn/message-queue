@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"server/internal/domain"
 	"server/internal/utils/dbutils"
@@ -225,21 +224,16 @@ func (r *MessageRepository) GetByID(
 func (r *MessageRepository) GetReadyWithLock(
 	ctx context.Context,
 	conn dbutils.Querier,
-	queues []string,
+	queue string,
 	limit int,
 ) ([]*domain.Message, error) {
-	if len(queues) == 0 {
-		return []*domain.Message{}, nil
-	}
-
 	query := selectAll + `
-		WHERE queue IN (:queues) AND status = $1
+		WHERE queue = $1 AND status = $2
 		ORDER BY priority DESC, status_changed_at ASC
-		LIMIT $2
+		LIMIT $3
 		FOR UPDATE OF m SKIP LOCKED
 	`
-	query = strings.ReplaceAll(query, ":queues", "'"+strings.Join(queues, "','")+"'")
-	rows, err := conn.QueryContext(ctx, query, domain.MsgStatusReady, limit)
+	rows, err := conn.QueryContext(ctx, query, queue, domain.MsgStatusReady, limit)
 	if err != nil {
 		return nil, err
 	}
