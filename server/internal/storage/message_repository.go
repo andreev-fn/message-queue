@@ -17,11 +17,9 @@ const selectAll = `
 	SELECT 
 		m.id, m.queue, m.created_at, m.finalized_at, m.status, m.status_changed_at,
 		m.delayed_until, m.timeout_at, m.priority, m.retries, m.version,
-		p.payload,
-		r.result
+		p.payload
 	FROM messages m
 	LEFT JOIN message_payloads p ON p.msg_id = m.id
-	LEFT JOIN message_results r ON r.msg_id = m.id
 `
 
 var ErrMsgNotFound = errors.New("message not found")
@@ -47,7 +45,6 @@ func scanRows(rows *sql.Rows) ([]*domain.Message, error) {
 			&message.Retries,
 			&message.Version,
 			&message.Payload,
-			&message.Result,
 		); err != nil {
 			return nil, err
 		}
@@ -108,18 +105,6 @@ func (r *MessageRepository) Save(
 		}
 	} else {
 		if err := r.update(ctx, tx, msgDTO); err != nil {
-			return err
-		}
-	}
-
-	if msgDTO.IsResultNew {
-		query := `INSERT INTO message_results (msg_id, result) VALUES ($1, $2)`
-		if _, err := tx.ExecContext(
-			ctx,
-			query,
-			msgDTO.ID,
-			msgDTO.Result,
-		); err != nil {
 			return err
 		}
 	}
@@ -355,11 +340,6 @@ func (r *MessageRepository) Delete(
 	}
 
 	query = `DELETE FROM message_payloads WHERE msg_id = $1`
-	if _, err := tx.ExecContext(ctx, query, msg.ID()); err != nil {
-		return err
-	}
-
-	query = `DELETE FROM message_results WHERE msg_id = $1`
 	if _, err := tx.ExecContext(ctx, query, msg.ID()); err != nil {
 		return err
 	}

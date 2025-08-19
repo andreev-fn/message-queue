@@ -48,7 +48,6 @@ Content-Type: application/json
 
 {
   "id": "af88f155-3d13-47a5-9be3-73f829abec0c",
-  "report": "{\"result\":\"success\"}",
   "error": null
 }
 
@@ -58,7 +57,6 @@ Content-Type: application/json
 
 {
   "id": "af88f155-3d13-47a5-9be3-73f829abec0c",
-  "report": null,
   "error": {
     "code": "timeout_error",
     "message": "shit happened",

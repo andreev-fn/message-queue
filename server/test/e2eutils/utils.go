@@ -60,9 +60,6 @@ func CleanupDatabase(t *testing.T, db *sql.DB) {
 	if _, err := db.Exec("DELETE FROM message_payloads"); err != nil {
 		require.NoError(t, err)
 	}
-	if _, err := db.Exec("DELETE FROM message_results"); err != nil {
-		require.NoError(t, err)
-	}
 	if _, err := db.Exec("DELETE FROM archived_messages"); err != nil {
 		require.NoError(t, err)
 	}

@@ -35,11 +35,9 @@ type Message struct {
 	timeoutAt       *time.Time
 	priority        int
 	retries         int
-	result          *json.RawMessage
 
-	version     int  // for optimistic locking
-	isNew       bool // to distinguish between insert and update
-	isResultNew bool // save the result only when necessary
+	version int  // for optimistic locking
+	isNew   bool // to distinguish between insert and update
 }
 
 func NewMessage(
@@ -65,10 +63,8 @@ func NewMessage(
 		timeoutAt:       nil,
 		priority:        priority,
 		retries:         0,
-		result:          nil,
 		version:         0,
 		isNew:           true,
-		isResultNew:     false,
 	}, nil
 }
 
@@ -85,13 +81,6 @@ func (m *Message) FinalizedAt() *time.Time {
 		return nil
 	}
 	return utils.P(*m.finalizedAt)
-}
-
-func (m *Message) Result() *json.RawMessage {
-	if m.result == nil {
-		return nil
-	}
-	return utils.P(slices.Clone(*m.result))
 }
 
 func (m *Message) Confirm(clock timeutils.Clock, ed EventDispatcher) error {
@@ -154,7 +143,7 @@ func (m *Message) Resume(clock timeutils.Clock, ed EventDispatcher) error {
 	return nil
 }
 
-func (m *Message) Complete(clock timeutils.Clock, result json.RawMessage) error {
+func (m *Message) Complete(clock timeutils.Clock) error {
 	if m.status != MsgStatusProcessing {
 		return errors.New("message must be in PROCESSING status")
 	}
@@ -163,8 +152,6 @@ func (m *Message) Complete(clock timeutils.Clock, result json.RawMessage) error 
 
 	m.setStatus(clock, MsgStatusCompleted)
 	m.finalizedAt = utils.P(clock.Now())
-	m.result = utils.P(result)
-	m.isResultNew = true
 
 	return nil
 }

@@ -20,7 +20,6 @@ type CheckMsgResult struct {
 	Status      string
 	Retries     int
 	Payload     json.RawMessage
-	Result      *json.RawMessage
 }
 
 type CheckMessage struct {
@@ -58,7 +57,6 @@ func (uc *CheckMessage) Do(ctx context.Context, id string) (*CheckMsgResult, err
 		FinalizedAt: message.FinalizedAt(),
 		Status:      string(message.Status()),
 		Retries:     message.Retries(),
-		Result:      message.Result(),
 	}, nil
 }
 
@@ -76,6 +74,5 @@ func (uc *CheckMessage) checkArchived(ctx context.Context, id string) (*CheckMsg
 		FinalizedAt: utils.P(archivedMsg.FinalizedAt()),
 		Status:      string(archivedMsg.Status()),
 		Retries:     archivedMsg.Retries(),
-		Result:      archivedMsg.Result(),
 	}, nil
 }

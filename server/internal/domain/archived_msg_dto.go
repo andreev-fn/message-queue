@@ -17,7 +17,6 @@ type ArchivedMsgDTO struct {
 	Status      MessageStatus
 	Priority    int
 	Retries     int
-	Result      *json.RawMessage
 }
 
 func ArchivedMsgFromDTO(dto *ArchivedMsgDTO) *ArchivedMsg {
@@ -30,7 +29,6 @@ func ArchivedMsgFromDTO(dto *ArchivedMsgDTO) *ArchivedMsg {
 		status:      dto.Status,
 		priority:    dto.Priority,
 		retries:     dto.Retries,
-		result:      dto.Result,
 	}
 }
 
@@ -44,6 +42,5 @@ func (m *ArchivedMsg) ToDTO() *ArchivedMsgDTO {
 		Status:      m.status,
 		Priority:    m.priority,
 		Retries:     m.retries,
-		Result:      m.result,
 	}
 }

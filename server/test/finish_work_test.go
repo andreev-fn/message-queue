@@ -21,7 +21,6 @@ func TestFinishSuccessfulWork(t *testing.T) {
 		msgQueue    = "test"
 		msgPayload  = `{"arg": 123}`
 		msgPriority = 100
-		msgResult   = `{"result":"success"}`
 	)
 
 	// Arrange
@@ -29,9 +28,8 @@ func TestFinishSuccessfulWork(t *testing.T) {
 
 	// Act
 	requestBody := map[string]interface{}{
-		"id":     msgID,
-		"report": msgResult,
-		"error":  nil,
+		"id":    msgID,
+		"error": nil,
 	}
 	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
@@ -59,8 +57,6 @@ func TestFinishSuccessfulWork(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 	require.Equal(t, domain.MsgStatusCompleted, message.Status())
-	require.NotNil(t, message.Result())
-	require.JSONEq(t, msgResult, string(*message.Result()))
 }
 
 func TestFinishUnsuccessfulWork(t *testing.T) {
@@ -77,8 +73,7 @@ func TestFinishUnsuccessfulWork(t *testing.T) {
 
 	// Act
 	requestBody := map[string]interface{}{
-		"id":     msgID,
-		"report": nil,
+		"id": msgID,
 		"error": map[string]interface{}{
 			"code":            "timeout_error",
 			"message":         "operation timed out",
@@ -118,9 +113,8 @@ func TestFinishWorkUnknownMessage(t *testing.T) {
 
 	// Act
 	requestBody := map[string]interface{}{
-		"id":     "d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2",
-		"report": `{"result":"success"}`,
-		"error":  nil,
+		"id":    "d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2",
+		"error": nil,
 	}
 	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)

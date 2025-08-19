@@ -3,8 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -34,11 +32,7 @@ func NewFinishWork(
 	}
 }
 
-func (uc *FinishWork) Do(ctx context.Context, id string, msgResult json.RawMessage, errorCode *string) error {
-	if msgResult == nil && errorCode == nil {
-		return errors.New("exactly one of result or error expected")
-	}
-
+func (uc *FinishWork) Do(ctx context.Context, id string, errorCode *string) error {
 	message, err := uc.msgRepo.GetByID(ctx, uc.db, id)
 	if err != nil {
 		return fmt.Errorf("msgRepo.GetByID: %w", err)
@@ -52,7 +46,7 @@ func (uc *FinishWork) Do(ctx context.Context, id string, msgResult json.RawMessa
 			return err
 		}
 	} else {
-		if err := message.Complete(uc.clock, msgResult); err != nil {
+		if err := message.Complete(uc.clock); err != nil {
 			return fmt.Errorf("message.Complete: %w", err)
 		}
 	}

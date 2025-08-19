@@ -20,10 +20,8 @@ type MessageDTO struct {
 	TimeoutAt       *time.Time
 	Priority        int
 	Retries         int
-	Result          *json.RawMessage
 	Version         int
 	IsNew           bool
-	IsResultNew     bool
 }
 
 func FromDTO(dto *MessageDTO) *Message {
@@ -39,10 +37,8 @@ func FromDTO(dto *MessageDTO) *Message {
 		timeoutAt:       dto.TimeoutAt,
 		priority:        dto.Priority,
 		retries:         dto.Retries,
-		result:          dto.Result,
 		version:         dto.Version,
 		isNew:           dto.IsNew,
-		isResultNew:     dto.IsResultNew,
 	}
 }
 
@@ -59,9 +55,7 @@ func (m *Message) ToDTO() *MessageDTO {
 		TimeoutAt:       m.timeoutAt,
 		Priority:        m.priority,
 		Retries:         m.retries,
-		Result:          m.result,
 		Version:         m.version,
 		IsNew:           m.isNew,
-		IsResultNew:     m.isResultNew,
 	}
 }

@@ -18,11 +18,10 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	const (
 		msgQueue   = "test"
 		msgPayload = `{"arg": 123}`
-		msgResult  = `{"result":"success"}`
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateCompletedMsg(t, app, msgQueue, msgPayload, msgResult)
+	msgID := e2eutils.CreateCompletedMsg(t, app, msgQueue, msgPayload)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
@@ -41,8 +40,6 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	require.Equal(t, domain.MsgStatusCompleted, archivedMsg.Status())
 	require.Equal(t, msgQueue, archivedMsg.Queue())
 	require.JSONEq(t, msgPayload, string(archivedMsg.Payload()))
-	require.NotNil(t, archivedMsg.Result())
-	require.JSONEq(t, msgResult, string(*archivedMsg.Result()))
 }
 
 func TestArchiveMessagesNotFinal(t *testing.T) {

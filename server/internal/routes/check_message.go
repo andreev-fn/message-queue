@@ -83,7 +83,6 @@ func (a *CheckMessage) writeSuccess(writer http.ResponseWriter, result *usecases
 			"status":       result.Status,
 			"retries":      result.Retries,
 			"payload":      result.Payload,
-			"result":       result.Result,
 		},
 		"error": nil,
 	})

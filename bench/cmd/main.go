@@ -229,8 +229,8 @@ func takeWork() ([]Message, error) {
 
 func finishWork(id string) error {
 	requestBody, err := json.Marshal(map[string]any{
-		"id":     id,
-		"report": "{\"result\":\"success\"}",
+		"id":    id,
+		"error": nil,
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)

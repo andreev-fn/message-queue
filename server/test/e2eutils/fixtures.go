@@ -57,18 +57,18 @@ func CreateDelayedMsg(t *testing.T, app *appbuilder.App, queue string, payload s
 
 	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
-	err := app.FinishWork.Do(context.Background(), msgID, nil, utils.P("timeout_error"))
+	err := app.FinishWork.Do(context.Background(), msgID, utils.P("timeout_error"))
 	require.NoError(t, err)
 
 	return msgID
 }
 
-func CreateCompletedMsg(t *testing.T, app *appbuilder.App, queue string, payload string, result string) string {
+func CreateCompletedMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
 	t.Helper()
 
 	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
-	err := app.FinishWork.Do(context.Background(), msgID, json.RawMessage(result), nil)
+	err := app.FinishWork.Do(context.Background(), msgID, nil)
 	require.NoError(t, err)
 
 	return msgID

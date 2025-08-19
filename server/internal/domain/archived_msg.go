@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	"server/internal/utils"
 )
 
 type ArchivedMsg struct {
@@ -20,7 +18,6 @@ type ArchivedMsg struct {
 	status      MessageStatus
 	priority    int
 	retries     int
-	result      *json.RawMessage
 }
 
 func NewArchivedMsg(msg *Message) (*ArchivedMsg, error) {
@@ -42,7 +39,6 @@ func NewArchivedMsg(msg *Message) (*ArchivedMsg, error) {
 		status:      msg.Status(),
 		priority:    msg.Priority(),
 		retries:     msg.Retries(),
-		result:      msg.Result(),
 	}, nil
 }
 
@@ -54,10 +50,3 @@ func (m *ArchivedMsg) FinalizedAt() time.Time   { return m.finalizedAt }
 func (m *ArchivedMsg) Status() MessageStatus    { return m.status }
 func (m *ArchivedMsg) Priority() int            { return m.priority }
 func (m *ArchivedMsg) Retries() int             { return m.retries }
-
-func (m *ArchivedMsg) Result() *json.RawMessage {
-	if m.result == nil {
-		return m.result
-	}
-	return utils.P(slices.Clone(*m.result))
-}

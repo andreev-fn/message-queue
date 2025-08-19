@@ -25,9 +25,9 @@ func (r *ArchivedMsgRepository) Upsert(
 
 	query := `
 		INSERT INTO archived_messages (
-			id, queue, created_at, finalized_at, status, priority, retries, payload, result
+			id, queue, created_at, finalized_at, status, priority, retries, payload
    		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT (id) DO UPDATE SET 
 		    queue = $2, 
 		    created_at = $3, 
@@ -35,8 +35,7 @@ func (r *ArchivedMsgRepository) Upsert(
 		    status = $5, 
 		    priority = $6, 
 		    retries = $7, 
-		    payload = $8, 
-		    result = $9
+		    payload = $8
     `
 	if _, err := conn.ExecContext(
 		ctx,
@@ -49,7 +48,6 @@ func (r *ArchivedMsgRepository) Upsert(
 		msgDTO.Priority,
 		msgDTO.Retries,
 		msgDTO.Payload,
-		msgDTO.Result,
 	); err != nil {
 		return err
 	}
@@ -63,7 +61,7 @@ func (r *ArchivedMsgRepository) GetByID(
 	id string,
 ) (*domain.ArchivedMsg, error) {
 	query := `
-		SELECT id, queue, created_at, finalized_at, status, priority, retries, payload, result
+		SELECT id, queue, created_at, finalized_at, status, priority, retries, payload
 		FROM archived_messages
 		WHERE id = $1
 	`
@@ -88,7 +86,6 @@ func (r *ArchivedMsgRepository) GetByID(
 			&msg.Priority,
 			&msg.Retries,
 			&msg.Payload,
-			&msg.Result,
 		); err != nil {
 			return nil, err
 		}

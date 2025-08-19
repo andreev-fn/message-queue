@@ -19,17 +19,13 @@ type ErrorDTO struct {
 }
 
 type SaveResultDTO struct {
-	ID     string    `json:"id"`
-	Report *string   `json:"report"`
-	Error  *ErrorDTO `json:"error"`
+	ID    string    `json:"id"`
+	Error *ErrorDTO `json:"error"`
 }
 
 func (d SaveResultDTO) Validate() error {
 	if d.ID == "" {
 		return errors.New("field 'id' is required")
-	}
-	if (d.Report != nil && d.Error != nil) || (d.Report == nil && d.Error == nil) {
-		return errors.New("exactly one of 'error' or 'report' fields must be present")
 	}
 	if d.Error != nil && d.Error.Code == "" {
 		return errors.New("error code is required")
@@ -94,15 +90,7 @@ func (a *FinishWork) handler(writer http.ResponseWriter, request *http.Request) 
 		errorCode = &requestDTO.Error.Code
 	}
 
-	var report json.RawMessage
-	if requestDTO.Report != nil {
-		if err := json.Unmarshal([]byte(*requestDTO.Report), &report); err != nil {
-			a.writeError(writer, http.StatusBadRequest, fmt.Errorf("json.Unmarshal: %w", err))
-			return
-		}
-	}
-
-	if err := a.useCase.Do(request.Context(), requestDTO.ID, report, errorCode); err != nil {
+	if err := a.useCase.Do(request.Context(), requestDTO.ID, errorCode); err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return
 	}

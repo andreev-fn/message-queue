@@ -25,11 +25,6 @@ CREATE TABLE message_payloads (
     payload jsonb NOT NULL
 );
 
-CREATE TABLE message_results (
-    msg_id uuid PRIMARY KEY,
-    result jsonb NOT NULL
-);
-
 CREATE TABLE archived_messages (
     id uuid PRIMARY KEY,
     queue varchar(255) NOT NULL,
@@ -38,6 +33,5 @@ CREATE TABLE archived_messages (
     status message_status NOT NULL,
     priority smallint NOT NULL,
     retries int NOT NULL,
-    payload jsonb NOT NULL,
-    result jsonb NULL
+    payload jsonb NOT NULL
 );
