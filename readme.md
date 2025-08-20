@@ -8,9 +8,12 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 ## TODO
 - ☑ Archival of finalized messages
 - ☑ Message prioritization
-- ☐ Make message types configurable (config file)
-  - ☐ Configurable retries and timeouts and archive retention period
-- ☐ Add authentication (config files, users.yaml, and tokens.yaml)
+- ☐ Atomic Ack + Publish
+- ☐ Permanent nack
+- ☐ Configurable queues (config file)
+- ☐ Dead-letter queues
+- ☐ Add authentication (config file)
+- ☐ Message forwarding
 - ☐ Tries history (and attempt ID)
 - ☐ Configurable retries strategies
 - ☐ Removal of old messages
