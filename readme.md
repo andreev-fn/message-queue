@@ -16,7 +16,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☐ Removal of old messages
 - ☐ Metrics
 - ☐ Implement webhooks
-- ☑ Some kind of long-polling for workers
+- ☑ Some kind of long-polling for consumers
 - ☐ Rate-limited queues
 - ☐ Batch operations
 - ☐ Single-process mode
@@ -33,7 +33,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 
 - ✅ **Message Prioritization** – High-priority messages are picked first.
 - ✅ **Retries & Backoff** – Failed messages are retried automatically.
-- ✅ **Long-polling** – Workers can efficiently wait until a message comes.
+- ✅ **Long-polling** – Consumers can efficiently wait until a message comes.
 
 ## 📦 When to Use
 

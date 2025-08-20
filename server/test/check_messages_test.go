@@ -26,7 +26,7 @@ func TestCheckExistingMessage(t *testing.T) {
 	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodGet, "/message/check?id="+msgID, nil)
+	req, err := http.NewRequest(http.MethodGet, "/messages/check?id="+msgID, nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()
@@ -70,7 +70,7 @@ func TestCheckNonExistentMessage(t *testing.T) {
 	const nonExistentID = "00000000-0000-0000-0000-000000000002"
 
 	// Act
-	req, err := http.NewRequest(http.MethodGet, "/message/check?id="+nonExistentID, nil)
+	req, err := http.NewRequest(http.MethodGet, "/messages/check?id="+nonExistentID, nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()

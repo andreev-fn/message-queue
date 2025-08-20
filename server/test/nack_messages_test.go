@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 	"server/test/e2eutils"
 )
 
-func TestConfirmMessage(t *testing.T) {
+func TestNackMessages(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
@@ -23,11 +24,19 @@ func TestConfirmMessage(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/message/confirm?id="+msgID, nil)
+	requestBody := map[string]interface{}{
+		"ids": []string{msgID},
+	}
+	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/messages/nack", bytes.NewBuffer(body))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
@@ -46,10 +55,5 @@ func TestConfirmMessage(t *testing.T) {
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
-
-	require.Equal(t, msgQueue, message.Queue())
-	require.JSONEq(t, msgPayload, string(message.Payload()))
-	require.Equal(t, msgPriority, message.Priority())
-	require.Equal(t, app.Clock.Now(), message.CreatedAt())
-	require.Equal(t, domain.MsgStatusReady, message.Status())
+	require.Equal(t, domain.MsgStatusDelayed, message.Status())
 }

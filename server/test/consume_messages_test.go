@@ -13,7 +13,7 @@ import (
 	"server/test/e2eutils"
 )
 
-func TestTakeWork(t *testing.T) {
+func TestConsumeMessages(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
@@ -35,7 +35,7 @@ func TestTakeWork(t *testing.T) {
 	msg3ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg3Payload, msg3Priority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/work/take?queue=test&limit=1", nil)
+	req, err := http.NewRequest(http.MethodPost, "/messages/consume?queue=test&limit=1", nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()
@@ -77,11 +77,11 @@ func TestTakeWork(t *testing.T) {
 	require.Equal(t, domain.MsgStatusReady, msg3.Status())
 }
 
-func TestTakeWorkEmptyQueue(t *testing.T) {
+func TestConsumeMessagesEmptyQueue(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/work/take?queue=test&limit=1", nil)
+	req, err := http.NewRequest(http.MethodPost, "/messages/consume?queue=test&limit=1", nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()

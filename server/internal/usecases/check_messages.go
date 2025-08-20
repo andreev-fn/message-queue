@@ -22,25 +22,25 @@ type CheckMsgResult struct {
 	Payload     json.RawMessage
 }
 
-type CheckMessage struct {
+type CheckMessages struct {
 	db              *sql.DB
 	msgRepo         *storage.MessageRepository
 	archivedMsgRepo *storage.ArchivedMsgRepository
 }
 
-func NewCheckMessage(
+func NewCheckMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	archivedMsgRepo *storage.ArchivedMsgRepository,
-) *CheckMessage {
-	return &CheckMessage{
+) *CheckMessages {
+	return &CheckMessages{
 		db:              db,
 		msgRepo:         msgRepo,
 		archivedMsgRepo: archivedMsgRepo,
 	}
 }
 
-func (uc *CheckMessage) Do(ctx context.Context, id string) (*CheckMsgResult, error) {
+func (uc *CheckMessages) Do(ctx context.Context, id string) (*CheckMsgResult, error) {
 	message, err := uc.msgRepo.GetByID(ctx, uc.db, id)
 	if err != nil {
 		if errors.Is(err, storage.ErrMsgNotFound) {
@@ -60,7 +60,7 @@ func (uc *CheckMessage) Do(ctx context.Context, id string) (*CheckMsgResult, err
 	}, nil
 }
 
-func (uc *CheckMessage) checkArchived(ctx context.Context, id string) (*CheckMsgResult, error) {
+func (uc *CheckMessages) checkArchived(ctx context.Context, id string) (*CheckMsgResult, error) {
 	archivedMsg, err := uc.archivedMsgRepo.GetByID(ctx, uc.db, id)
 	if err != nil {
 		return nil, fmt.Errorf("msgRepo.GetByID: %w", err)

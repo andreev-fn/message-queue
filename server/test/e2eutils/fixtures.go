@@ -8,13 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/appbuilder"
-	"server/internal/utils"
 )
 
 func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
 	t.Helper()
 
-	msgID, err := app.CreateMessage.Do(
+	msgID, err := app.PublishMessages.Do(
 		context.Background(),
 		queue,
 		json.RawMessage(payload),
@@ -32,7 +31,7 @@ func CreateReadyMsg(t *testing.T, app *appbuilder.App, queue string, payload str
 
 	msgID := CreateMsg(t, app, queue, payload, priority)
 
-	err := app.ConfirmMessage.Do(context.Background(), msgID)
+	err := app.ConfirmMessages.Do(context.Background(), msgID)
 	require.NoError(t, err)
 
 	return msgID
@@ -43,7 +42,7 @@ func CreateProcessingMsg(t *testing.T, app *appbuilder.App, queue string, payloa
 
 	msgID := CreateReadyMsg(t, app, queue, payload, priority)
 
-	result, err := app.TakeWork.Do(context.Background(), queue, 1, 0)
+	result, err := app.ConsumeMessages.Do(context.Background(), queue, 1, 0)
 	require.NoError(t, err)
 
 	require.Len(t, result, 1)
@@ -57,7 +56,7 @@ func CreateDelayedMsg(t *testing.T, app *appbuilder.App, queue string, payload s
 
 	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
-	err := app.FinishWork.Do(context.Background(), msgID, utils.P("timeout_error"))
+	err := app.NackMessages.Do(context.Background(), []string{msgID})
 	require.NoError(t, err)
 
 	return msgID
@@ -68,7 +67,7 @@ func CreateCompletedMsg(t *testing.T, app *appbuilder.App, queue string, payload
 
 	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
-	err := app.FinishWork.Do(context.Background(), msgID, nil)
+	err := app.AckMessages.Do(context.Background(), []string{msgID})
 	require.NoError(t, err)
 
 	return msgID

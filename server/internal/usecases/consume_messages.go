@@ -15,12 +15,12 @@ import (
 	"server/internal/utils/timeutils"
 )
 
-type MessageToWork struct {
+type MessageToConsume struct {
 	ID      string
 	Payload json.RawMessage
 }
 
-type TakeWork struct {
+type ConsumeMessages struct {
 	logger   *slog.Logger
 	clock    timeutils.Clock
 	db       *sql.DB
@@ -28,14 +28,14 @@ type TakeWork struct {
 	eventBus *eventbus.EventBus
 }
 
-func NewTakeWork(
+func NewConsumeMessages(
 	logger *slog.Logger,
 	clock timeutils.Clock,
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	eventBus *eventbus.EventBus,
-) *TakeWork {
-	return &TakeWork{
+) *ConsumeMessages {
+	return &ConsumeMessages{
 		logger:   logger,
 		clock:    clock,
 		db:       db,
@@ -44,7 +44,7 @@ func NewTakeWork(
 	}
 }
 
-func (uc *TakeWork) Do(ctx context.Context, queue string, limit int, poll time.Duration) ([]MessageToWork, error) {
+func (uc *ConsumeMessages) Do(ctx context.Context, queue string, limit int, poll time.Duration) ([]MessageToConsume, error) {
 	// fast path first
 	result, err := uc.takeMessages(ctx, queue, limit)
 	if err != nil {
@@ -71,12 +71,12 @@ func (uc *TakeWork) Do(ctx context.Context, queue string, limit int, poll time.D
 
 		poller.WaitForNextAttempt(ctx)
 		if poller.IsTimedOut() {
-			return []MessageToWork{}, nil
+			return []MessageToConsume{}, nil
 		}
 	}
 }
 
-func (uc *TakeWork) takeMessages(ctx context.Context, queue string, limit int) ([]MessageToWork, error) {
+func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue string, limit int) ([]MessageToConsume, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -102,10 +102,10 @@ func (uc *TakeWork) takeMessages(ctx context.Context, queue string, limit int) (
 		return nil, fmt.Errorf("tx.Commit: %w", err)
 	}
 
-	var result []MessageToWork
+	var result []MessageToConsume
 
 	for _, message := range messages {
-		result = append(result, MessageToWork{
+		result = append(result, MessageToConsume{
 			ID:      message.ID().String(),
 			Payload: message.Payload(),
 		})

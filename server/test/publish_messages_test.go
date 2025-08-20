@@ -30,7 +30,7 @@ func TestCreateMessage(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req, err := http.NewRequest(http.MethodPost, "/message/create", bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, "/messages/prepare", bytes.NewBuffer(body))
 	require.NoError(t, err)
 
 	req.Header.Set("Content-Type", "application/json")
@@ -66,7 +66,7 @@ func TestCreateMessage(t *testing.T) {
 	require.Equal(t, msgPriority, message.Priority())
 }
 
-func TestCreateMessageWithPriorityAndConfirm(t *testing.T) {
+func TestPublishMessageWithPriority(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
@@ -77,14 +77,13 @@ func TestCreateMessageWithPriorityAndConfirm(t *testing.T) {
 
 	// Act
 	body, err := json.Marshal(map[string]any{
-		"queue":        msgQueue,
-		"payload":      json.RawMessage(msgPayload),
-		"auto_confirm": true,
-		"priority":     msgPriority,
+		"queue":    msgQueue,
+		"payload":  json.RawMessage(msgPayload),
+		"priority": msgPriority,
 	})
 	require.NoError(t, err)
 
-	req, err := http.NewRequest(http.MethodPost, "/message/create", bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, "/messages/publish", bytes.NewBuffer(body))
 	require.NoError(t, err)
 
 	req.Header.Set("Content-Type", "application/json")

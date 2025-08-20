@@ -13,29 +13,34 @@ import (
 	"server/internal/usecases"
 )
 
-type CreateMessage struct {
+type PublishMessages struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.CreateMessage
+	useCase *usecases.PublishMessages
 }
 
-func NewCreateMessage(
+func NewPublishMessages(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.CreateMessage,
-) *CreateMessage {
-	return &CreateMessage{
+	useCase *usecases.PublishMessages,
+) *PublishMessages {
+	return &PublishMessages{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *CreateMessage) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/message/create", a.handler)
+func (a *PublishMessages) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/messages/publish", func(w http.ResponseWriter, r *http.Request) {
+		a.handler(w, r, true)
+	})
+	srv.HandleFunc("/messages/prepare", func(w http.ResponseWriter, r *http.Request) {
+		a.handler(w, r, false)
+	})
 }
 
-func (a *CreateMessage) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *PublishMessages) handler(writer http.ResponseWriter, request *http.Request, autoConfirm bool) {
 	if request.Method != http.MethodPost {
 		a.writeError(writer, errors.New("method POST expected"))
 		return
@@ -53,11 +58,10 @@ func (a *CreateMessage) handler(writer http.ResponseWriter, request *http.Reques
 	}
 
 	var msgData struct {
-		Queue       string          `json:"queue"`
-		Payload     json.RawMessage `json:"payload"`
-		Priority    *int            `json:"priority"`
-		AutoConfirm bool            `json:"auto_confirm"`
-		StartAt     string          `json:"start_at"`
+		Queue    string          `json:"queue"`
+		Payload  json.RawMessage `json:"payload"`
+		Priority *int            `json:"priority"`
+		StartAt  string          `json:"start_at"`
 	}
 	err = json.Unmarshal(bodyBytes, &msgData)
 	if err != nil {
@@ -89,7 +93,7 @@ func (a *CreateMessage) handler(writer http.ResponseWriter, request *http.Reques
 		msgData.Queue,
 		msgData.Payload,
 		priority,
-		msgData.AutoConfirm,
+		autoConfirm,
 		startAt,
 	)
 	if err != nil {
@@ -100,7 +104,7 @@ func (a *CreateMessage) handler(writer http.ResponseWriter, request *http.Reques
 	a.writeSuccess(msgID, writer)
 }
 
-func (a *CreateMessage) writeError(writer http.ResponseWriter, err error) {
+func (a *PublishMessages) writeError(writer http.ResponseWriter, err error) {
 	writer.WriteHeader(http.StatusBadRequest)
 
 	err = json.NewEncoder(writer).Encode(map[string]any{
@@ -113,7 +117,7 @@ func (a *CreateMessage) writeError(writer http.ResponseWriter, err error) {
 	}
 }
 
-func (a *CreateMessage) writeSuccess(msgID string, writer http.ResponseWriter) {
+func (a *PublishMessages) writeSuccess(msgID string, writer http.ResponseWriter) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
 		"result": map[string]any{

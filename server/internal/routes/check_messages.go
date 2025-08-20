@@ -10,29 +10,29 @@ import (
 	"server/internal/usecases"
 )
 
-type CheckMessage struct {
+type CheckMessages struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.CheckMessage
+	useCase *usecases.CheckMessages
 }
 
-func NewCheckMessage(
+func NewCheckMessages(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.CheckMessage,
-) *CheckMessage {
-	return &CheckMessage{
+	useCase *usecases.CheckMessages,
+) *CheckMessages {
+	return &CheckMessages{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *CheckMessage) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/message/check", a.handler)
+func (a *CheckMessages) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/messages/check", a.handler)
 }
 
-func (a *CheckMessage) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *CheckMessages) handler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/json")
 
 	if request.Method != http.MethodGet {
@@ -55,9 +55,9 @@ func (a *CheckMessage) handler(writer http.ResponseWriter, request *http.Request
 	a.writeSuccess(writer, result)
 }
 
-func (a *CheckMessage) writeError(writer http.ResponseWriter, code int, err error) {
+func (a *CheckMessages) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("get messages by id failed", "error", err)
+		a.logger.Error("check messages use case failed", "error", err)
 	}
 
 	writer.WriteHeader(code)
@@ -72,7 +72,7 @@ func (a *CheckMessage) writeError(writer http.ResponseWriter, code int, err erro
 	}
 }
 
-func (a *CheckMessage) writeSuccess(writer http.ResponseWriter, result *usecases.CheckMsgResult) {
+func (a *CheckMessages) writeSuccess(writer http.ResponseWriter, result *usecases.CheckMsgResult) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
 		"result": map[string]any{

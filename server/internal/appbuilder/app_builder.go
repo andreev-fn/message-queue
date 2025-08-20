@@ -41,11 +41,12 @@ type App struct {
 
 	RequestScopeFactory requestscope.Factory
 
-	CreateMessage    *usecases.CreateMessage
-	ConfirmMessage   *usecases.ConfirmMessage
-	TakeWork         *usecases.TakeWork
-	FinishWork       *usecases.FinishWork
-	CheckMessage     *usecases.CheckMessage
+	PublishMessages  *usecases.PublishMessages
+	ConfirmMessages  *usecases.ConfirmMessages
+	ConsumeMessages  *usecases.ConsumeMessages
+	AckMessages      *usecases.AckMessages
+	NackMessages     *usecases.NackMessages
+	CheckMessages    *usecases.CheckMessages
 	ArchiveMessages  *usecases.ArchiveMessages
 	ExpireProcessing *usecases.ExpireProcessing
 	ResumeDelayed    *usecases.ResumeDelayed
@@ -87,21 +88,23 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 
 	requestScopeFactory := NewRequestScopeFactory(eventBus)
 
-	createMessage := usecases.NewCreateMessage(logger, clock, db, msgRepo, requestScopeFactory)
-	confirmMessage := usecases.NewConfirmMessage(logger, clock, db, msgRepo, requestScopeFactory)
-	takeWork := usecases.NewTakeWork(logger, clock, db, msgRepo, eventBus)
-	finishWork := usecases.NewFinishWork(clock, logger, db, msgRepo)
-	checkMessage := usecases.NewCheckMessage(db, msgRepo, archivedMsgRepo)
+	publishMessages := usecases.NewPublishMessages(logger, clock, db, msgRepo, requestScopeFactory)
+	confirmMessages := usecases.NewConfirmMessages(logger, clock, db, msgRepo, requestScopeFactory)
+	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus)
+	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo)
+	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo)
+	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo)
 	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
 	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo)
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()
-	routes.NewCreateMessage(db, logger, createMessage).Mount(mux)
-	routes.NewConfirmMessage(db, logger, confirmMessage).Mount(mux)
-	routes.NewTakeWork(db, logger, takeWork).Mount(mux)
-	routes.NewFinishWork(db, logger, finishWork).Mount(mux)
-	routes.NewCheckMessage(db, logger, checkMessage).Mount(mux)
+	routes.NewPublishMessages(db, logger, publishMessages).Mount(mux)
+	routes.NewConfirmMessages(db, logger, confirmMessages).Mount(mux)
+	routes.NewConsumeMessages(db, logger, consumeMessages).Mount(mux)
+	routes.NewAckMessages(db, logger, ackMessages).Mount(mux)
+	routes.NewNackMessages(db, logger, nackMessages).Mount(mux)
+	routes.NewCheckMessages(db, logger, checkMessages).Mount(mux)
 
 	return &App{
 		Clock:  clock,
@@ -115,11 +118,12 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 
 		RequestScopeFactory: requestScopeFactory,
 
-		CreateMessage:    createMessage,
-		ConfirmMessage:   confirmMessage,
-		TakeWork:         takeWork,
-		FinishWork:       finishWork,
-		CheckMessage:     checkMessage,
+		PublishMessages:  publishMessages,
+		ConfirmMessages:  confirmMessages,
+		ConsumeMessages:  consumeMessages,
+		AckMessages:      ackMessages,
+		NackMessages:     nackMessages,
+		CheckMessages:    checkMessages,
 		ArchiveMessages:  archiveMessages,
 		ExpireProcessing: expireProcessing,
 		ResumeDelayed:    resumeDelayed,

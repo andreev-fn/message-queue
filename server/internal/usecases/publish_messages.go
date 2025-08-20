@@ -3,15 +3,20 @@ package usecases
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"time"
+
+	"github.com/google/uuid"
 
 	"server/internal/appbuilder/requestscope"
+	"server/internal/domain"
 	"server/internal/storage"
 	"server/internal/utils/timeutils"
 )
 
-type ConfirmMessage struct {
+type PublishMessages struct {
 	logger       *slog.Logger
 	clock        timeutils.Clock
 	db           *sql.DB
@@ -19,14 +24,14 @@ type ConfirmMessage struct {
 	scopeFactory requestscope.Factory
 }
 
-func NewConfirmMessage(
+func NewPublishMessages(
 	logger *slog.Logger,
 	clock timeutils.Clock,
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	scopeFactory requestscope.Factory,
-) *ConfirmMessage {
-	return &ConfirmMessage{
+) *PublishMessages {
+	return &PublishMessages{
 		logger:       logger,
 		clock:        clock,
 		db:           db,
@@ -35,25 +40,34 @@ func NewConfirmMessage(
 	}
 }
 
-func (uc *ConfirmMessage) Do(ctx context.Context, id string) error {
+func (uc *PublishMessages) Do(
+	ctx context.Context,
+	queue string,
+	payload json.RawMessage,
+	priority int,
+	autoConfirm bool,
+	startAt *time.Time,
+) (string, error) {
 	scope := uc.scopeFactory.New()
 
-	message, err := uc.msgRepo.GetByID(ctx, uc.db, id)
+	message, err := domain.NewMessage(uc.clock, uuid.New(), queue, payload, priority, startAt)
 	if err != nil {
-		return fmt.Errorf("msgRepo.GetByID: %w", err)
+		return "", err
 	}
 
-	if err := message.Confirm(uc.clock, scope.Dispatcher); err != nil {
-		return fmt.Errorf("message.Confirm: %w", err)
+	if autoConfirm {
+		if err := message.Confirm(uc.clock, scope.Dispatcher); err != nil {
+			return "", fmt.Errorf("message.Confirm: %w", err)
+		}
 	}
 
 	if err := uc.msgRepo.SaveInNewTransaction(ctx, uc.db, message); err != nil {
-		return fmt.Errorf("msgRepo.SaveInNewTransaction: %w", err)
+		return "", fmt.Errorf("msgRepo.SaveInNewTransaction: %w", err)
 	}
 
 	if err := scope.MsgReadyNotifier.Flush(); err != nil {
 		uc.logger.Error("scope.MsgReadyNotifier.Flush", "error", err)
 	}
 
-	return nil
+	return message.ID().String(), nil
 }

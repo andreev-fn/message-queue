@@ -12,50 +12,45 @@ import (
 	"server/internal/usecases"
 )
 
-type ErrorDTO struct {
-	Code    string         `json:"code"`
-	Message string         `json:"message"`
-	Info    map[string]any `json:"additional_info"`
+type NackMessagesDTO struct {
+	IDs []string `json:"ids"`
 }
 
-type SaveResultDTO struct {
-	ID    string    `json:"id"`
-	Error *ErrorDTO `json:"error"`
-}
-
-func (d SaveResultDTO) Validate() error {
-	if d.ID == "" {
-		return errors.New("field 'id' is required")
+func (d NackMessagesDTO) Validate() error {
+	if len(d.IDs) == 0 {
+		return errors.New("array 'ids' must not be empty")
 	}
-	if d.Error != nil && d.Error.Code == "" {
-		return errors.New("error code is required")
+	for _, id := range d.IDs {
+		if id == "" {
+			return errors.New("every 'id' inside ids must be non-empty string")
+		}
 	}
 	return nil
 }
 
-type FinishWork struct {
+type NackMessages struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.FinishWork
+	useCase *usecases.NackMessages
 }
 
-func NewFinishWork(
+func NewNackMessages(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.FinishWork,
-) *FinishWork {
-	return &FinishWork{
+	useCase *usecases.NackMessages,
+) *NackMessages {
+	return &NackMessages{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *FinishWork) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/work/finish", a.handler)
+func (a *NackMessages) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/messages/nack", a.handler)
 }
 
-func (a *FinishWork) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *NackMessages) handler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/json")
 	if request.Method != http.MethodPost {
 		a.writeError(writer, http.StatusBadRequest, errors.New("method POST expected"))
@@ -73,7 +68,7 @@ func (a *FinishWork) handler(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	var requestDTO SaveResultDTO
+	var requestDTO NackMessagesDTO
 	err = json.Unmarshal(bodyBytes, &requestDTO)
 	if err != nil {
 		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("json.Unmarshal: %w (%s)", err, string(bodyBytes)))
@@ -85,12 +80,7 @@ func (a *FinishWork) handler(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	var errorCode *string
-	if requestDTO.Error != nil {
-		errorCode = &requestDTO.Error.Code
-	}
-
-	if err := a.useCase.Do(request.Context(), requestDTO.ID, errorCode); err != nil {
+	if err := a.useCase.Do(request.Context(), requestDTO.IDs); err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return
 	}
@@ -98,9 +88,9 @@ func (a *FinishWork) handler(writer http.ResponseWriter, request *http.Request) 
 	a.writeSuccess(writer)
 }
 
-func (a *FinishWork) writeError(writer http.ResponseWriter, code int, err error) {
+func (a *NackMessages) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("save message result use case failed", "error", err)
+		a.logger.Error("nack messages use case failed", "error", err)
 	}
 
 	writer.WriteHeader(code)
@@ -115,7 +105,7 @@ func (a *FinishWork) writeError(writer http.ResponseWriter, code int, err error)
 	}
 }
 
-func (a *FinishWork) writeSuccess(writer http.ResponseWriter) {
+func (a *NackMessages) writeSuccess(writer http.ResponseWriter) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
 		"error":   nil,

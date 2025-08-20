@@ -13,29 +13,29 @@ import (
 	"server/internal/usecases"
 )
 
-type TakeWork struct {
+type ConsumeMessages struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.TakeWork
+	useCase *usecases.ConsumeMessages
 }
 
-func NewTakeWork(
+func NewConsumeMessages(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.TakeWork,
-) *TakeWork {
-	return &TakeWork{
+	useCase *usecases.ConsumeMessages,
+) *ConsumeMessages {
+	return &ConsumeMessages{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *TakeWork) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/work/take", a.handler)
+func (a *ConsumeMessages) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/messages/consume", a.handler)
 }
 
-func (a *TakeWork) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *ConsumeMessages) handler(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodPost {
 		a.writeError(writer, http.StatusBadRequest, errors.New("method POST expected"))
 		return
@@ -86,9 +86,9 @@ func (a *TakeWork) handler(writer http.ResponseWriter, request *http.Request) {
 	a.writeSuccess(writer, messages)
 }
 
-func (a *TakeWork) writeError(writer http.ResponseWriter, code int, err error) {
+func (a *ConsumeMessages) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("get messages use case failed", "error", err)
+		a.logger.Error("consume messages use case failed", "error", err)
 	}
 
 	writer.WriteHeader(code)
@@ -103,7 +103,7 @@ func (a *TakeWork) writeError(writer http.ResponseWriter, code int, err error) {
 	}
 }
 
-func (a *TakeWork) writeSuccess(writer http.ResponseWriter, messages []usecases.MessageToWork) {
+func (a *ConsumeMessages) writeSuccess(writer http.ResponseWriter, messages []usecases.MessageToConsume) {
 	result := make([]any, 0, len(messages))
 
 	for _, message := range messages {

@@ -21,7 +21,7 @@ import (
 const threadsCountW = 24
 const threadsCountR = 32
 
-var createdCount atomic.Int32
+var publishedCount atomic.Int32
 var consumedCount atomic.Int32
 
 var httpClient = &http.Client{
@@ -36,10 +36,10 @@ func main() {
 	defer cancel()
 
 	for i := 0; i < threadsCountW; i++ {
-		go createMessages(ctx, i)
+		go runPublisher(ctx, i)
 	}
 	for i := 0; i < threadsCountR; i++ {
-		go consumeMessages(ctx)
+		go runConsumer(ctx)
 	}
 
 	go printStats(ctx)
@@ -48,7 +48,7 @@ func main() {
 }
 
 func printStats(ctx context.Context) {
-	prevCreated := int32(0)
+	prevPublished := int32(0)
 	prevConsumed := int32(0)
 	prevTime := time.Now()
 
@@ -59,20 +59,20 @@ func printStats(ctx context.Context) {
 
 		time.Sleep(time.Second * 5)
 
-		created := createdCount.Load()
+		published := publishedCount.Load()
 		consumed := consumedCount.Load()
 		elapsed := time.Since(prevTime)
 
-		createRate := float64(created-prevCreated) / elapsed.Seconds()
+		publishRate := float64(published-prevPublished) / elapsed.Seconds()
 		consumeRate := float64(consumed-prevConsumed) / elapsed.Seconds()
 
-		prevCreated = created
+		prevPublished = published
 		prevConsumed = consumed
 		prevTime = time.Now()
 
 		log.Printf(
-			"created %d messages (%.1f t/s), consumed %d messages (%.1f t/s)",
-			created, createRate, consumed, consumeRate,
+			"published %d messages (%.1f t/s), consumed %d messages (%.1f t/s)",
+			published, publishRate, consumed, consumeRate,
 		)
 	}
 }
@@ -83,7 +83,7 @@ type Message struct {
 	ID string `json:"id"`
 }
 
-func createMessages(ctx context.Context, threadNum int) {
+func runPublisher(ctx context.Context, threadNum int) {
 	if threadNum > 99 {
 		panic("too many threads")
 	}
@@ -98,22 +98,21 @@ func createMessages(ctx context.Context, threadNum int) {
 		arg := fmt.Sprintf("%.2d%.10d", threadNum, i)
 		i += 1
 
-		if err := createMessage(arg); err != nil {
+		if err := publishMessage(arg); err != nil {
 			log.Println(err)
 			continue
 		}
 
-		createdCount.Add(1)
+		publishedCount.Add(1)
 	}
 }
 
-func createMessage(arg string) error {
+func publishMessage(arg string) error {
 	requestBody, err := json.Marshal(map[string]any{
 		"queue": "test",
 		"payload": map[string]any{
 			"arg": arg,
 		},
-		"auto_confirm": true,
 	})
 	if err != nil {
 		return err
@@ -121,7 +120,7 @@ func createMessage(arg string) error {
 
 	request, err := http.NewRequest(
 		http.MethodPost,
-		baseURL+"/message/create",
+		baseURL+"/messages/publish",
 		bytes.NewReader(requestBody),
 	)
 	if err != nil {
@@ -153,38 +152,31 @@ func createMessage(arg string) error {
 	return nil
 }
 
-func consumeMessages(ctx context.Context) {
+func runConsumer(ctx context.Context) {
 	for {
 		if ctx.Err() != nil {
 			break
 		}
 
-		if err := consumeMessage(); err != nil {
+		messages, err := consumeMessages()
+		if err != nil {
 			log.Println("consume message error:", err)
 			continue
 		}
-	}
-}
 
-func consumeMessage() error {
-	messages, err := takeWork()
-	if err != nil {
-		return fmt.Errorf("takeWork: %w", err)
-	}
+		for _, message := range messages {
+			if err := ackMessage(message.ID); err != nil {
+				log.Println("ack message error:", err)
+				continue
+			}
 
-	for _, message := range messages {
-		if err := finishWork(message.ID); err != nil {
-			return fmt.Errorf("finishWork: %w", err)
+			consumedCount.Add(1)
 		}
-
-		consumedCount.Add(1)
 	}
-
-	return nil
 }
 
-func takeWork() ([]Message, error) {
-	request, err := http.NewRequest(http.MethodPost, baseURL+"/work/take?queue=test&limit=100", nil)
+func consumeMessages() ([]Message, error) {
+	request, err := http.NewRequest(http.MethodPost, baseURL+"/messages/consume?queue=test&limit=100", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -227,10 +219,9 @@ func takeWork() ([]Message, error) {
 	return responseDTO.Result, nil
 }
 
-func finishWork(id string) error {
+func ackMessage(id string) error {
 	requestBody, err := json.Marshal(map[string]any{
-		"id":    id,
-		"error": nil,
+		"ids": []string{id},
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
@@ -238,7 +229,7 @@ func finishWork(id string) error {
 
 	request, err := http.NewRequest(
 		http.MethodPost,
-		baseURL+"/work/finish",
+		baseURL+"/messages/ack",
 		bytes.NewReader(requestBody),
 	)
 	if err != nil {
