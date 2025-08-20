@@ -83,7 +83,7 @@ func (m *Message) FinalizedAt() *time.Time {
 	return utils.P(*m.finalizedAt)
 }
 
-func (m *Message) Confirm(clock timeutils.Clock, ed EventDispatcher) error {
+func (m *Message) Release(clock timeutils.Clock, ed EventDispatcher) error {
 	if m.status != MsgStatusCreated {
 		return errors.New("message must be in CREATED status")
 	}

@@ -42,7 +42,7 @@ type App struct {
 	RequestScopeFactory requestscope.Factory
 
 	PublishMessages  *usecases.PublishMessages
-	ConfirmMessages  *usecases.ConfirmMessages
+	ReleaseMessages  *usecases.ReleaseMessages
 	ConsumeMessages  *usecases.ConsumeMessages
 	AckMessages      *usecases.AckMessages
 	NackMessages     *usecases.NackMessages
@@ -89,9 +89,9 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 	requestScopeFactory := NewRequestScopeFactory(eventBus)
 
 	publishMessages := usecases.NewPublishMessages(logger, clock, db, msgRepo, requestScopeFactory)
-	confirmMessages := usecases.NewConfirmMessages(logger, clock, db, msgRepo, requestScopeFactory)
+	releaseMessages := usecases.NewReleaseMessages(logger, clock, db, msgRepo, requestScopeFactory)
 	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus)
-	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo)
+	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory)
 	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo)
 	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo)
 	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
@@ -100,7 +100,7 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 
 	mux := http.NewServeMux()
 	routes.NewPublishMessages(db, logger, publishMessages).Mount(mux)
-	routes.NewConfirmMessages(db, logger, confirmMessages).Mount(mux)
+	routes.NewReleaseMessages(db, logger, releaseMessages).Mount(mux)
 	routes.NewConsumeMessages(db, logger, consumeMessages).Mount(mux)
 	routes.NewAckMessages(db, logger, ackMessages).Mount(mux)
 	routes.NewNackMessages(db, logger, nackMessages).Mount(mux)
@@ -119,7 +119,7 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 		RequestScopeFactory: requestScopeFactory,
 
 		PublishMessages:  publishMessages,
-		ConfirmMessages:  confirmMessages,
+		ReleaseMessages:  releaseMessages,
 		ConsumeMessages:  consumeMessages,
 		AckMessages:      ackMessages,
 		NackMessages:     nackMessages,

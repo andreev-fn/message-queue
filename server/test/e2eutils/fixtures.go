@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/appbuilder"
+	"server/internal/usecases"
 )
 
 func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
@@ -31,7 +32,7 @@ func CreateReadyMsg(t *testing.T, app *appbuilder.App, queue string, payload str
 
 	msgID := CreateMsg(t, app, queue, payload, priority)
 
-	err := app.ConfirmMessages.Do(context.Background(), msgID)
+	err := app.ReleaseMessages.Do(context.Background(), msgID)
 	require.NoError(t, err)
 
 	return msgID
@@ -67,7 +68,7 @@ func CreateCompletedMsg(t *testing.T, app *appbuilder.App, queue string, payload
 
 	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
-	err := app.AckMessages.Do(context.Background(), []string{msgID})
+	err := app.AckMessages.Do(context.Background(), []usecases.AckParams{{ID: msgID}})
 	require.NoError(t, err)
 
 	return msgID

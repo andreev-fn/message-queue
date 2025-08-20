@@ -10,29 +10,29 @@ import (
 	"server/internal/usecases"
 )
 
-type ConfirmMessages struct {
+type ReleaseMessages struct {
 	db      *sql.DB
 	logger  *slog.Logger
-	useCase *usecases.ConfirmMessages
+	useCase *usecases.ReleaseMessages
 }
 
-func NewConfirmMessages(
+func NewReleaseMessages(
 	db *sql.DB,
 	logger *slog.Logger,
-	useCase *usecases.ConfirmMessages,
-) *ConfirmMessages {
-	return &ConfirmMessages{
+	useCase *usecases.ReleaseMessages,
+) *ReleaseMessages {
+	return &ReleaseMessages{
 		db:      db,
 		logger:  logger,
 		useCase: useCase,
 	}
 }
 
-func (a *ConfirmMessages) Mount(srv *http.ServeMux) {
-	srv.HandleFunc("/messages/confirm", a.handler)
+func (a *ReleaseMessages) Mount(srv *http.ServeMux) {
+	srv.HandleFunc("/messages/release", a.handler)
 }
 
-func (a *ConfirmMessages) handler(writer http.ResponseWriter, request *http.Request) {
+func (a *ReleaseMessages) handler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/json")
 
 	if request.Method != http.MethodPost {
@@ -54,9 +54,9 @@ func (a *ConfirmMessages) handler(writer http.ResponseWriter, request *http.Requ
 	a.writeSuccess(writer)
 }
 
-func (a *ConfirmMessages) writeError(writer http.ResponseWriter, code int, err error) {
+func (a *ReleaseMessages) writeError(writer http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError {
-		a.logger.Error("confirm messages use case failed", "error", err)
+		a.logger.Error("release messages use case failed", "error", err)
 	}
 
 	writer.WriteHeader(code)
@@ -71,7 +71,7 @@ func (a *ConfirmMessages) writeError(writer http.ResponseWriter, code int, err e
 	}
 }
 
-func (a *ConfirmMessages) writeSuccess(writer http.ResponseWriter) {
+func (a *ReleaseMessages) writeSuccess(writer http.ResponseWriter) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
 		"result":  nil,

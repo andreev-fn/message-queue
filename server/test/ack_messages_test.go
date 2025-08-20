@@ -27,8 +27,10 @@ func TestAckMessages(t *testing.T) {
 	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	requestBody := map[string]interface{}{
-		"ids": []string{msgID},
+	requestBody := []any{
+		map[string]any{
+			"id": msgID,
+		},
 	}
 	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
@@ -37,7 +39,6 @@ func TestAckMessages(t *testing.T) {
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 
-	// Execute request
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
 
@@ -58,12 +59,69 @@ func TestAckMessages(t *testing.T) {
 	require.Equal(t, domain.MsgStatusCompleted, message.Status())
 }
 
+func TestAckMessagesAtomicRelease(t *testing.T) {
+	app, _ := e2eutils.Prepare(t)
+
+	const (
+		msgToAckQueue    = "test"
+		msgToAckPayload  = `{"a": 2, "b": 2}`
+		msgToAckPriority = 100
+
+		msgToReleaseQueue    = "test.result"
+		msgToReleasePayload  = `{"sum": 4}`
+		msgToReleasePriority = 100
+	)
+
+	// Arrange
+	msgToAckID := e2eutils.CreateProcessingMsg(t, app, msgToAckQueue, msgToAckPayload, msgToAckPriority)
+	msgToReleaseID := e2eutils.CreateMsg(t, app, msgToReleaseQueue, msgToReleasePayload, msgToReleasePriority)
+
+	// Act
+	requestBody := []any{
+		map[string]any{
+			"id":      msgToAckID,
+			"release": []string{msgToReleaseID},
+		},
+	}
+	body, err := json.Marshal(requestBody)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/messages/ack", bytes.NewBuffer(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp := httptest.NewRecorder()
+	app.Router.ServeHTTP(resp, req)
+
+	// Assert response
+	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
+
+	var respWrapper e2eutils.ResponseWrapper
+	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
+	require.NoError(t, err)
+
+	require.True(t, respWrapper.Success)
+	require.Nil(t, respWrapper.Result)
+	require.Nil(t, respWrapper.Error)
+
+	// Assert messages in DB
+	ackedMessage, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgToAckID)
+	require.NoError(t, err)
+	require.Equal(t, domain.MsgStatusCompleted, ackedMessage.Status())
+
+	releasedMessage, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgToReleaseID)
+	require.NoError(t, err)
+	require.Equal(t, domain.MsgStatusReady, releasedMessage.Status())
+}
+
 func TestAckUnknownMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	// Act
-	requestBody := map[string]interface{}{
-		"ids": []string{"d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2"},
+	requestBody := []any{
+		map[string]any{
+			"id": "d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2",
+		},
 	}
 	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)

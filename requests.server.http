@@ -17,14 +17,14 @@ POST http://localhost:8060/messages/prepare
 Content-Type: application/json
 
 {
-  "queue": "test",
+  "queue": "test.result",
   "payload": {
     "arg": "1234"
   }
 }
 
-### confirm message
-POST http://localhost:8060/messages/confirm?id=af88f155-3d13-47a5-9be3-73f829abec0c
+### release message
+POST http://localhost:8060/messages/release?id=af88f155-3d13-47a5-9be3-73f829abec0c
 
 ### check message 1
 GET http://localhost:8060/messages/check?id=35643438-12ca-4f28-ab8e-1215f92c221f
@@ -39,15 +39,18 @@ GET http://localhost:8060/messages/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fcb
 POST http://localhost:8060/messages/consume?queue=test&limit=3
 
 ### consume messages (with poll)
-POST http://localhost:8060/messages/consume?queue=test&limit=3&poll=25
+POST http://localhost:8060/messages/consume?queue=test.result&limit=3&poll=25
 
 ### ack message
 POST http://localhost:8060/messages/ack
 Content-Type: application/json
 
-{
-  "ids": ["af88f155-3d13-47a5-9be3-73f829abec0c"]
-}
+[
+  {
+    "id": "117fd1c3-cce8-4afe-ae0e-8a0d28a62a4f",
+    "release": []
+  }
+]
 
 ### nack message
 POST http://localhost:8060/messages/nack

@@ -40,7 +40,7 @@ func (a *PublishMessages) Mount(srv *http.ServeMux) {
 	})
 }
 
-func (a *PublishMessages) handler(writer http.ResponseWriter, request *http.Request, autoConfirm bool) {
+func (a *PublishMessages) handler(writer http.ResponseWriter, request *http.Request, autoRelease bool) {
 	if request.Method != http.MethodPost {
 		a.writeError(writer, errors.New("method POST expected"))
 		return
@@ -93,7 +93,7 @@ func (a *PublishMessages) handler(writer http.ResponseWriter, request *http.Requ
 		msgData.Queue,
 		msgData.Payload,
 		priority,
-		autoConfirm,
+		autoRelease,
 		startAt,
 	)
 	if err != nil {

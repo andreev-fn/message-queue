@@ -13,7 +13,7 @@ import (
 	"server/test/e2eutils"
 )
 
-func TestConfirmMessage(t *testing.T) {
+func TestReleaseMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	const (
@@ -26,7 +26,7 @@ func TestConfirmMessage(t *testing.T) {
 	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/messages/confirm?id="+msgID, nil)
+	req, err := http.NewRequest(http.MethodPost, "/messages/release?id="+msgID, nil)
 	require.NoError(t, err)
 
 	resp := httptest.NewRecorder()

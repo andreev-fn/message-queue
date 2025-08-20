@@ -45,7 +45,7 @@ func (uc *PublishMessages) Do(
 	queue string,
 	payload json.RawMessage,
 	priority int,
-	autoConfirm bool,
+	autoRelease bool,
 	startAt *time.Time,
 ) (string, error) {
 	scope := uc.scopeFactory.New()
@@ -55,9 +55,9 @@ func (uc *PublishMessages) Do(
 		return "", err
 	}
 
-	if autoConfirm {
-		if err := message.Confirm(uc.clock, scope.Dispatcher); err != nil {
-			return "", fmt.Errorf("message.Confirm: %w", err)
+	if autoRelease {
+		if err := message.Release(uc.clock, scope.Dispatcher); err != nil {
+			return "", fmt.Errorf("message.Release: %w", err)
 		}
 	}
 

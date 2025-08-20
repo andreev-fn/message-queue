@@ -11,7 +11,7 @@ import (
 	"server/internal/utils/timeutils"
 )
 
-type ConfirmMessages struct {
+type ReleaseMessages struct {
 	logger       *slog.Logger
 	clock        timeutils.Clock
 	db           *sql.DB
@@ -19,14 +19,14 @@ type ConfirmMessages struct {
 	scopeFactory requestscope.Factory
 }
 
-func NewConfirmMessages(
+func NewReleaseMessages(
 	logger *slog.Logger,
 	clock timeutils.Clock,
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	scopeFactory requestscope.Factory,
-) *ConfirmMessages {
-	return &ConfirmMessages{
+) *ReleaseMessages {
+	return &ReleaseMessages{
 		logger:       logger,
 		clock:        clock,
 		db:           db,
@@ -35,7 +35,7 @@ func NewConfirmMessages(
 	}
 }
 
-func (uc *ConfirmMessages) Do(ctx context.Context, id string) error {
+func (uc *ReleaseMessages) Do(ctx context.Context, id string) error {
 	scope := uc.scopeFactory.New()
 
 	message, err := uc.msgRepo.GetByID(ctx, uc.db, id)
@@ -43,8 +43,8 @@ func (uc *ConfirmMessages) Do(ctx context.Context, id string) error {
 		return fmt.Errorf("msgRepo.GetByID: %w", err)
 	}
 
-	if err := message.Confirm(uc.clock, scope.Dispatcher); err != nil {
-		return fmt.Errorf("message.Confirm: %w", err)
+	if err := message.Release(uc.clock, scope.Dispatcher); err != nil {
+		return fmt.Errorf("message.Release: %w", err)
 	}
 
 	if err := uc.msgRepo.SaveInNewTransaction(ctx, uc.db, message); err != nil {

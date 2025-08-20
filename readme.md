@@ -8,7 +8,8 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 ## TODO
 - ☑ Archival of finalized messages
 - ☑ Message prioritization
-- ☐ Atomic Ack + Publish
+- ☑ Some kind of long-polling for consumers
+- ☑ Atomic Ack + Publish
 - ☐ Permanent nack
 - ☐ Configurable queues (config file)
 - ☐ Dead-letter queues
@@ -19,7 +20,6 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☐ Removal of old messages
 - ☐ Metrics
 - ☐ Implement webhooks
-- ☑ Some kind of long-polling for consumers
 - ☐ Rate-limited queues
 - ☐ Batch operations
 - ☐ Single-process mode
@@ -37,6 +37,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ✅ **Message Prioritization** – High-priority messages are picked first.
 - ✅ **Retries & Backoff** – Failed messages are retried automatically.
 - ✅ **Long-polling** – Consumers can efficiently wait until a message comes.
+- ✅ **Atomic Ack + Publish** – Consumers can publish messages atomically with Ack.
 
 ## 📦 When to Use
 

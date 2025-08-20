@@ -12,19 +12,24 @@ import (
 	"server/internal/usecases"
 )
 
-type AckMessagesDTO struct {
-	IDs []string `json:"ids"`
+type AckMessagesDTO []struct {
+	ID      string   `json:"id"`
+	Release []string `json:"release"`
 }
 
 func (d AckMessagesDTO) Validate() error {
-	if len(d.IDs) == 0 {
-		return errors.New("array 'ids' must not be empty")
-	}
-	for _, id := range d.IDs {
-		if id == "" {
-			return errors.New("every 'id' inside ids must be non-empty string")
+	for _, element := range d {
+		if element.ID == "" {
+			return errors.New("field 'id' must not be empty")
+		}
+
+		for _, id := range element.Release {
+			if id == "" {
+				return errors.New("every element inside 'release' must be non-empty string")
+			}
 		}
 	}
+
 	return nil
 }
 
@@ -80,7 +85,15 @@ func (a *AckMessages) handler(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	if err := a.useCase.Do(request.Context(), requestDTO.IDs); err != nil {
+	var ackParams []usecases.AckParams
+	for _, param := range requestDTO {
+		ackParams = append(ackParams, usecases.AckParams{
+			ID:      param.ID,
+			Release: param.Release,
+		})
+	}
+
+	if err := a.useCase.Do(request.Context(), ackParams); err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return
 	}
