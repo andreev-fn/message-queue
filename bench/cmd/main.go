@@ -220,8 +220,10 @@ func consumeMessages() ([]Message, error) {
 }
 
 func ackMessage(id string) error {
-	requestBody, err := json.Marshal(map[string]any{
-		"ids": []string{id},
+	requestBody, err := json.Marshal([]any{
+		map[string]any{
+			"id": id,
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
