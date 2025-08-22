@@ -8,19 +8,15 @@ import (
 
 const maxRetries = 10
 
-type ErrorHandlers interface {
-	HandleError(msg *Message, errorCode string) error
-}
-
-type ExponentialErrorHandler struct {
+type RedeliveryService struct {
 	clock timeutils.Clock
 }
 
-func NewExponentialErrorHandler(clock timeutils.Clock) *ExponentialErrorHandler {
-	return &ExponentialErrorHandler{clock}
+func NewRedeliveryService(clock timeutils.Clock) *RedeliveryService {
+	return &RedeliveryService{clock}
 }
 
-func (eh *ExponentialErrorHandler) HandleError(msg *Message, errorCode string) error {
+func (eh *RedeliveryService) HandleNack(msg *Message) error {
 	if msg.Retries() >= maxRetries {
 		return msg.Fail(eh.clock)
 	}
@@ -28,7 +24,7 @@ func (eh *ExponentialErrorHandler) HandleError(msg *Message, errorCode string) e
 	return msg.Delay(eh.clock, eh.getDelayTime(msg.Retries()))
 }
 
-func (eh *ExponentialErrorHandler) getDelayTime(retries int) time.Time {
+func (eh *RedeliveryService) getDelayTime(retries int) time.Time {
 	if retries < 5 {
 		return eh.clock.Now().Add(2 * time.Minute)
 	}

@@ -18,12 +18,16 @@ type AckMessagesDTO []struct {
 }
 
 func (d AckMessagesDTO) Validate() error {
-	for _, element := range d {
-		if element.ID == "" {
+	if len(d) == 0 {
+		return errors.New("at least one message must be specified")
+	}
+
+	for _, el := range d {
+		if el.ID == "" {
 			return errors.New("field 'id' must not be empty")
 		}
 
-		for _, id := range element.Release {
+		for _, id := range el.Release {
 			if id == "" {
 				return errors.New("every element inside 'release' must be non-empty string")
 			}

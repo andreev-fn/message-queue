@@ -56,6 +56,9 @@ Content-Type: application/json
 POST http://localhost:8060/messages/nack
 Content-Type: application/json
 
-{
-  "ids": ["af88f155-3d13-47a5-9be3-73f829abec0c"]
-}
+[
+  {
+    "id": "af88f155-3d13-47a5-9be3-73f829abec0c",
+    "redeliver": false
+  }
+]

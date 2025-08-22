@@ -10,6 +10,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"server/internal/appbuilder/requestscope"
+	"server/internal/domain"
 	"server/internal/eventbus"
 	"server/internal/eventbus/postgres"
 	"server/internal/routes"
@@ -86,16 +87,18 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 
 	eventBus := eventbus.NewEventBus(logger, clock, postgres.NewPubSubDriver(db))
 
+	redeliveryService := domain.NewRedeliveryService(clock)
+
 	requestScopeFactory := NewRequestScopeFactory(eventBus)
 
 	publishMessages := usecases.NewPublishMessages(logger, clock, db, msgRepo, requestScopeFactory)
 	releaseMessages := usecases.NewReleaseMessages(logger, clock, db, msgRepo, requestScopeFactory)
 	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus)
 	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory)
-	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo)
+	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, redeliveryService)
 	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo)
 	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
-	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo)
+	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo, redeliveryService)
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()

@@ -12,11 +12,17 @@ import (
 	"server/internal/utils/timeutils"
 )
 
+type NackParams struct {
+	ID        string
+	Redeliver bool
+}
+
 type NackMessages struct {
-	clock   timeutils.Clock
-	logger  *slog.Logger
-	db      *sql.DB
-	msgRepo *storage.MessageRepository
+	clock        timeutils.Clock
+	logger       *slog.Logger
+	db           *sql.DB
+	msgRepo      *storage.MessageRepository
+	redeliverSvc *domain.RedeliveryService
 }
 
 func NewNackMessages(
@@ -24,33 +30,38 @@ func NewNackMessages(
 	logger *slog.Logger,
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
+	redeliverSvc *domain.RedeliveryService,
 ) *NackMessages {
 	return &NackMessages{
-		clock:   clock,
-		logger:  logger,
-		db:      db,
-		msgRepo: msgRepo,
+		clock:        clock,
+		logger:       logger,
+		db:           db,
+		msgRepo:      msgRepo,
+		redeliverSvc: redeliverSvc,
 	}
 }
 
-func (uc *NackMessages) Do(ctx context.Context, ids []string) error {
+func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
-	for _, id := range ids {
-		message, err := uc.msgRepo.GetByID(ctx, uc.db, id)
+	for _, nack := range nacks {
+		message, err := uc.msgRepo.GetByID(ctx, uc.db, nack.ID)
 		if err != nil {
 			return fmt.Errorf("msgRepo.GetByID: %w", err)
 		}
 
-		// todo: replace with factory
-		errorHandler := domain.NewExponentialErrorHandler(uc.clock)
-
-		if err := errorHandler.HandleError(message, "nack"); err != nil {
-			return err
+		if nack.Redeliver {
+			if err := uc.redeliverSvc.HandleNack(message); err != nil {
+				return err
+			}
+		} else {
+			if err := message.Fail(uc.clock); err != nil {
+				return fmt.Errorf("message.Fail: %w", err)
+			}
 		}
 
 		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {

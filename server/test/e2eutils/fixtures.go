@@ -57,7 +57,7 @@ func CreateDelayedMsg(t *testing.T, app *appbuilder.App, queue string, payload s
 
 	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
 
-	err := app.NackMessages.Do(context.Background(), []string{msgID})
+	err := app.NackMessages.Do(context.Background(), []usecases.NackParams{{ID: msgID, Redeliver: true}})
 	require.NoError(t, err)
 
 	return msgID

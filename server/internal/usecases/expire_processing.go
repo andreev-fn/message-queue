@@ -13,10 +13,11 @@ import (
 )
 
 type ExpireProcessing struct {
-	clock   timeutils.Clock
-	logger  *slog.Logger
-	db      *sql.DB
-	msgRepo *storage.MessageRepository
+	clock        timeutils.Clock
+	logger       *slog.Logger
+	db           *sql.DB
+	msgRepo      *storage.MessageRepository
+	redeliverSvc *domain.RedeliveryService
 }
 
 func NewExpireProcessing(
@@ -24,12 +25,14 @@ func NewExpireProcessing(
 	logger *slog.Logger,
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
+	redeliverSvc *domain.RedeliveryService,
 ) *ExpireProcessing {
 	return &ExpireProcessing{
-		clock:   clock,
-		logger:  logger,
-		db:      db,
-		msgRepo: msgRepo,
+		clock:        clock,
+		logger:       logger,
+		db:           db,
+		msgRepo:      msgRepo,
+		redeliverSvc: redeliverSvc,
 	}
 }
 
@@ -46,10 +49,7 @@ func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
 	for _, message := range messages {
-		// todo: replace with factory
-		errorHandler := domain.NewExponentialErrorHandler(uc.clock)
-
-		if err := errorHandler.HandleError(message, "timeout"); err != nil {
+		if err := uc.redeliverSvc.HandleNack(message); err != nil {
 			return 0, err
 		}
 

@@ -10,7 +10,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☑ Message prioritization
 - ☑ Some kind of long-polling for consumers
 - ☑ Atomic Ack + Publish
-- ☐ Permanent nack
+- ☑ Permanent nack
 - ☐ Configurable queues (config file)
 - ☐ Dead-letter queues
 - ☐ Add authentication (config file)

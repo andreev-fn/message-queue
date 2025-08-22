@@ -12,19 +12,22 @@ import (
 	"server/internal/usecases"
 )
 
-type NackMessagesDTO struct {
-	IDs []string `json:"ids"`
+type NackMessagesDTO []struct {
+	ID        string `json:"id"`
+	Redeliver *bool  `json:"redeliver"`
 }
 
 func (d NackMessagesDTO) Validate() error {
-	if len(d.IDs) == 0 {
-		return errors.New("array 'ids' must not be empty")
+	if len(d) == 0 {
+		return errors.New("at least one message must be specified")
 	}
-	for _, id := range d.IDs {
-		if id == "" {
-			return errors.New("every 'id' inside ids must be non-empty string")
+
+	for _, el := range d {
+		if el.ID == "" {
+			return errors.New("field 'id' must not be empty")
 		}
 	}
+
 	return nil
 }
 
@@ -80,7 +83,19 @@ func (a *NackMessages) handler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	if err := a.useCase.Do(request.Context(), requestDTO.IDs); err != nil {
+	var nackParams []usecases.NackParams
+	for _, param := range requestDTO {
+		redeliver := true
+		if param.Redeliver != nil {
+			redeliver = *param.Redeliver
+		}
+		nackParams = append(nackParams, usecases.NackParams{
+			ID:        param.ID,
+			Redeliver: redeliver,
+		})
+	}
+
+	if err := a.useCase.Do(request.Context(), nackParams); err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return
 	}
