@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -26,8 +27,14 @@ func TestCheckExistingMessage(t *testing.T) {
 	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodGet, "/messages/check?id="+msgID, nil)
+	requestBody := []string{msgID}
+	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/messages/check", bytes.NewBuffer(body))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
@@ -43,25 +50,24 @@ func TestCheckExistingMessage(t *testing.T) {
 	require.NotNil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	var respDTO struct {
-		ID        string           `json:"id"`
-		Queue     string           `json:"queue"`
-		CreatedAt time.Time        `json:"created_at"`
-		Status    string           `json:"status"`
-		Retries   int              `json:"retries"`
-		Payload   json.RawMessage  `json:"payload"`
-		Result    *json.RawMessage `json:"result"`
+	var respDTO []struct {
+		ID        string          `json:"id"`
+		Queue     string          `json:"queue"`
+		CreatedAt time.Time       `json:"created_at"`
+		Status    string          `json:"status"`
+		Retries   int             `json:"retries"`
+		Payload   json.RawMessage `json:"payload"`
 	}
 	err = json.Unmarshal(*respWrapper.Result, &respDTO)
 	require.NoError(t, err)
 
-	require.Equal(t, msgID, respDTO.ID)
-	require.Equal(t, msgQueue, respDTO.Queue)
-	require.Equal(t, app.Clock.Now(), respDTO.CreatedAt)
-	require.Equal(t, string(domain.MsgStatusCreated), respDTO.Status)
-	require.Equal(t, 0, respDTO.Retries)
-	require.JSONEq(t, msgPayload, string(respDTO.Payload))
-	require.Nil(t, respDTO.Result)
+	require.Len(t, respDTO, 1)
+	require.Equal(t, msgID, respDTO[0].ID)
+	require.Equal(t, msgQueue, respDTO[0].Queue)
+	require.Equal(t, app.Clock.Now(), respDTO[0].CreatedAt)
+	require.Equal(t, string(domain.MsgStatusCreated), respDTO[0].Status)
+	require.Equal(t, 0, respDTO[0].Retries)
+	require.JSONEq(t, msgPayload, string(respDTO[0].Payload))
 }
 
 func TestCheckNonExistentMessage(t *testing.T) {
@@ -70,8 +76,14 @@ func TestCheckNonExistentMessage(t *testing.T) {
 	const nonExistentID = "00000000-0000-0000-0000-000000000002"
 
 	// Act
-	req, err := http.NewRequest(http.MethodGet, "/messages/check?id="+nonExistentID, nil)
+	requestBody := []string{nonExistentID}
+	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/messages/check", bytes.NewBuffer(body))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)

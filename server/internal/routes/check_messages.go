@@ -4,11 +4,29 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 
 	"server/internal/usecases"
 )
+
+type CheckMessagesDTO []string
+
+func (d CheckMessagesDTO) Validate() error {
+	if len(d) == 0 {
+		return errors.New("at least one message must be specified")
+	}
+
+	for _, id := range d {
+		if id == "" {
+			return errors.New("id must not be empty string")
+		}
+	}
+
+	return nil
+}
 
 type CheckMessages struct {
 	db      *sql.DB
@@ -35,18 +53,35 @@ func (a *CheckMessages) Mount(srv *http.ServeMux) {
 func (a *CheckMessages) handler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/json")
 
-	if request.Method != http.MethodGet {
-		a.writeError(writer, http.StatusBadRequest, errors.New("method GET expected"))
+	if request.Method != http.MethodPost {
+		a.writeError(writer, http.StatusBadRequest, errors.New("method POST expected"))
 		return
 	}
 
-	msgID := request.URL.Query().Get("id")
-	if msgID == "" {
-		a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'id' required"))
+	if request.Header.Get("Content-Type") != "application/json" {
+		a.writeError(writer, http.StatusBadRequest, errors.New("json content type expected"))
 		return
 	}
 
-	result, err := a.useCase.Do(request.Context(), msgID)
+	bodyBytes, err := io.ReadAll(request.Body)
+	if err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("io.ReadAll: %w", err))
+		return
+	}
+
+	var requestDTO CheckMessagesDTO
+	err = json.Unmarshal(bodyBytes, &requestDTO)
+	if err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("json.Unmarshal: %w (%s)", err, string(bodyBytes)))
+		return
+	}
+
+	if err := requestDTO.Validate(); err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("requestDTO.Validate: %w", err))
+		return
+	}
+
+	result, err := a.useCase.Do(request.Context(), requestDTO)
 	if err != nil {
 		a.writeError(writer, http.StatusInternalServerError, err)
 		return
@@ -72,19 +107,24 @@ func (a *CheckMessages) writeError(writer http.ResponseWriter, code int, err err
 	}
 }
 
-func (a *CheckMessages) writeSuccess(writer http.ResponseWriter, result *usecases.CheckMsgResult) {
+func (a *CheckMessages) writeSuccess(writer http.ResponseWriter, result []usecases.CheckMsgResult) {
+	messages := make([]any, 0, len(result))
+	for _, msg := range result {
+		messages = append(messages, map[string]any{
+			"id":           msg.ID,
+			"queue":        msg.Queue,
+			"created_at":   msg.CreatedAt,
+			"finalized_at": msg.FinalizedAt,
+			"status":       msg.Status,
+			"retries":      msg.Retries,
+			"payload":      msg.Payload,
+		})
+	}
+
 	err := json.NewEncoder(writer).Encode(map[string]any{
 		"success": true,
-		"result": map[string]any{
-			"id":           result.ID,
-			"queue":        result.Queue,
-			"created_at":   result.CreatedAt,
-			"finalized_at": result.FinalizedAt,
-			"status":       result.Status,
-			"retries":      result.Retries,
-			"payload":      result.Payload,
-		},
-		"error": nil,
+		"result":  messages,
+		"error":   nil,
 	})
 	if err != nil {
 		a.logger.Error("json encode of success response failed", "error", err)

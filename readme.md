@@ -11,6 +11,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☑ Some kind of long-polling for consumers
 - ☑ Atomic Ack + Publish
 - ☑ Permanent nack
+- ☑ Batch operations
 - ☐ Configurable queues (config file)
 - ☐ Dead-letter queues
 - ☐ Add authentication (config file)
@@ -21,7 +22,6 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☐ Metrics
 - ☐ Implement webhooks
 - ☐ Rate-limited queues
-- ☐ Batch operations
 - ☐ Single-process mode
 - ☐ gRPC
 - ☐ ValueObjects for queue name, priority

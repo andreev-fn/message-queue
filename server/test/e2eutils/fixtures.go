@@ -14,17 +14,20 @@ import (
 func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
 	t.Helper()
 
-	msgID, err := app.PublishMessages.Do(
+	msgIDs, err := app.PublishMessages.Do(
 		context.Background(),
-		queue,
-		json.RawMessage(payload),
-		priority,
+		[]usecases.NewMessageParams{{
+			Queue:    queue,
+			Payload:  json.RawMessage(payload),
+			Priority: priority,
+			StartAt:  nil,
+		}},
 		false,
-		nil,
 	)
 	require.NoError(t, err)
+	require.Len(t, msgIDs, 1)
 
-	return msgID
+	return msgIDs[0]
 }
 
 func CreateReadyMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
@@ -32,7 +35,7 @@ func CreateReadyMsg(t *testing.T, app *appbuilder.App, queue string, payload str
 
 	msgID := CreateMsg(t, app, queue, payload, priority)
 
-	err := app.ReleaseMessages.Do(context.Background(), msgID)
+	err := app.ReleaseMessages.Do(context.Background(), []string{msgID})
 	require.NoError(t, err)
 
 	return msgID

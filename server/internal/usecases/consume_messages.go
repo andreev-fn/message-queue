@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -21,11 +22,12 @@ type MessageToConsume struct {
 }
 
 type ConsumeMessages struct {
-	logger   *slog.Logger
-	clock    timeutils.Clock
-	db       *sql.DB
-	msgRepo  *storage.MessageRepository
-	eventBus *eventbus.EventBus
+	logger       *slog.Logger
+	clock        timeutils.Clock
+	db           *sql.DB
+	msgRepo      *storage.MessageRepository
+	eventBus     *eventbus.EventBus
+	maxBatchSize int
 }
 
 func NewConsumeMessages(
@@ -34,17 +36,28 @@ func NewConsumeMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	eventBus *eventbus.EventBus,
+	maxBatchSize int,
 ) *ConsumeMessages {
 	return &ConsumeMessages{
-		logger:   logger,
-		clock:    clock,
-		db:       db,
-		msgRepo:  msgRepo,
-		eventBus: eventBus,
+		logger:       logger,
+		clock:        clock,
+		db:           db,
+		msgRepo:      msgRepo,
+		eventBus:     eventBus,
+		maxBatchSize: maxBatchSize,
 	}
 }
 
-func (uc *ConsumeMessages) Do(ctx context.Context, queue string, limit int, poll time.Duration) ([]MessageToConsume, error) {
+func (uc *ConsumeMessages) Do(
+	ctx context.Context,
+	queue string,
+	limit int,
+	poll time.Duration,
+) ([]MessageToConsume, error) {
+	if limit > uc.maxBatchSize {
+		return []MessageToConsume{}, errors.New("batch size limit exceeded")
+	}
+
 	// fast path first
 	result, err := uc.takeMessages(ctx, queue, limit)
 	if err != nil {

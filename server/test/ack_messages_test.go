@@ -37,6 +37,7 @@ func TestAckMessages(t *testing.T) {
 
 	req, err := http.NewRequest(http.MethodPost, "/messages/ack", bytes.NewBuffer(body))
 	require.NoError(t, err)
+
 	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()
@@ -88,6 +89,7 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 
 	req, err := http.NewRequest(http.MethodPost, "/messages/ack", bytes.NewBuffer(body))
 	require.NoError(t, err)
+
 	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()

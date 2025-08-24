@@ -5,13 +5,35 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 
 	"server/internal/usecases"
 )
+
+type ConsumeMessagesDTO struct {
+	Queue string `json:"queue"`
+	Limit *int   `json:"limit"`
+	Poll  *int   `json:"poll"`
+}
+
+func (d ConsumeMessagesDTO) Validate() error {
+	if d.Queue == "" {
+		return errors.New("parameter 'queue' required")
+	}
+
+	if d.Limit != nil && *d.Limit < 1 {
+		return errors.New("parameter 'limit' must be greater than 0")
+	}
+
+	if d.Poll != nil && *d.Poll < 0 {
+		return errors.New("parameter 'poll' must be >= 0")
+	}
+
+	return nil
+}
 
 type ConsumeMessages struct {
 	db      *sql.DB
@@ -41,43 +63,40 @@ func (a *ConsumeMessages) handler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	params := request.URL.Query()
+	if request.Header.Get("Content-Type") != "application/json" {
+		a.writeError(writer, http.StatusBadRequest, errors.New("json content type expected"))
+		return
+	}
 
-	queue := params.Get("queue")
-	if queue == "" {
-		a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'queue' required"))
+	bodyBytes, err := io.ReadAll(request.Body)
+	if err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("io.ReadAll: %w", err))
+		return
+	}
+
+	var requestDTO ConsumeMessagesDTO
+	err = json.Unmarshal(bodyBytes, &requestDTO)
+	if err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("json.Unmarshal: %w (%s)", err, string(bodyBytes)))
+		return
+	}
+
+	if err := requestDTO.Validate(); err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("requestDTO.Validate: %w", err))
 		return
 	}
 
 	limit := 1
-	if params.Has("limit") {
-		customLimit, err := strconv.Atoi(params.Get("limit"))
-		if err != nil {
-			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'limit' must be an integer"))
-			return
-		}
-		if customLimit < 1 {
-			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'limit' must be greater than 0"))
-			return
-		}
-		limit = customLimit
+	if requestDTO.Limit != nil {
+		limit = *requestDTO.Limit
 	}
 
 	poll := time.Duration(0)
-	if params.Has("poll") {
-		customPoll, err := strconv.Atoi(params.Get("poll"))
-		if err != nil {
-			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'poll' must be an integer"))
-			return
-		}
-		if customPoll < 0 {
-			a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'poll' must be >= 0"))
-			return
-		}
-		poll = time.Duration(customPoll) * time.Second
+	if requestDTO.Poll != nil {
+		poll = time.Duration(*requestDTO.Poll) * time.Second
 	}
 
-	messages, err := a.useCase.Do(request.Context(), queue, limit, poll)
+	messages, err := a.useCase.Do(request.Context(), requestDTO.Queue, limit, poll)
 	if err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return

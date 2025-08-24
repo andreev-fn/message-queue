@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -35,8 +36,17 @@ func TestConsumeMessages(t *testing.T) {
 	msg3ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg3Payload, msg3Priority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/messages/consume?queue=test&limit=1", nil)
+	requestBody := map[string]any{
+		"queue": msgQueue,
+		"limit": 1,
+	}
+	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/messages/consume", bytes.NewBuffer(body))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)
@@ -81,8 +91,17 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/messages/consume?queue=test&limit=1", nil)
+	requestBody := map[string]any{
+		"queue": "test",
+		"limit": 1,
+	}
+	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/messages/consume", bytes.NewBuffer(body))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)

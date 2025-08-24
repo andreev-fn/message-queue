@@ -4,11 +4,29 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 
 	"server/internal/usecases"
 )
+
+type ReleaseMessagesDTO []string
+
+func (d ReleaseMessagesDTO) Validate() error {
+	if len(d) == 0 {
+		return errors.New("at least one message must be specified")
+	}
+
+	for _, id := range d {
+		if id == "" {
+			return errors.New("id must not be empty string")
+		}
+	}
+
+	return nil
+}
 
 type ReleaseMessages struct {
 	db      *sql.DB
@@ -40,13 +58,30 @@ func (a *ReleaseMessages) handler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	msgID := request.URL.Query().Get("id")
-	if msgID == "" {
-		a.writeError(writer, http.StatusBadRequest, errors.New("parameter 'id' required"))
+	if request.Header.Get("Content-Type") != "application/json" {
+		a.writeError(writer, http.StatusBadRequest, errors.New("json content type expected"))
 		return
 	}
 
-	if err := a.useCase.Do(request.Context(), msgID); err != nil {
+	bodyBytes, err := io.ReadAll(request.Body)
+	if err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("io.ReadAll: %w", err))
+		return
+	}
+
+	var requestDTO ReleaseMessagesDTO
+	err = json.Unmarshal(bodyBytes, &requestDTO)
+	if err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("json.Unmarshal: %w (%s)", err, string(bodyBytes)))
+		return
+	}
+
+	if err := requestDTO.Validate(); err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("requestDTO.Validate: %w", err))
+		return
+	}
+
+	if err := a.useCase.Do(request.Context(), requestDTO); err != nil {
 		a.writeError(writer, http.StatusInternalServerError, err)
 		return
 	}

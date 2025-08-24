@@ -10,16 +10,28 @@ import (
 	"log"
 	"net/http"
 	"os/signal"
+	"slices"
 	"sync/atomic"
 	"syscall"
 	"time"
 )
 
-// 2024/12/26 02:03:17 created 500038 messages (4347.6 t/s), consumed 499732 messages (4344.9 t/s)
-// 2025/08/09 12:48:59 created 861166 messages (2562.8 t/s), consumed 860965 messages (2568.2 t/s)
+// batchSizePublish = 1, batchSizeConsume = 100, batchSizeAck = 1
+// 2024/12/26 02:03:17 published 500038 messages (4347.6 t/s), consumed 499732 messages (4344.9 t/s)
+// 2025/08/09 12:48:59 published 861166 messages (2562.8 t/s), consumed 860965 messages (2568.2 t/s)
+
+// batchSizePublish = 1, batchSizeConsume = 10, batchSizeAck = 1
+// 2025/08/23 17:35:48 published 710189 messages (2574.4 t/s), consumed 710066 messages (2576.4 t/s)
+
+// batchSizePublish = 100, batchSizeConsume = 100, batchSizeAck = 100
+// 2025/08/23 17:28:31 published 3874300 messages (12579.6 t/s), consumed 1694600 messages (5339.8 t/s)
 
 const threadsCountW = 24
 const threadsCountR = 32
+
+const batchSizePublish = 1
+const batchSizeConsume = 10
+const batchSizeAck = 1
 
 var publishedCount atomic.Int32
 var consumedCount atomic.Int32
@@ -88,32 +100,40 @@ func runPublisher(ctx context.Context, threadNum int) {
 		panic("too many threads")
 	}
 
-	i := 0
+	argSequence := 0
 
 	for {
 		if ctx.Err() != nil {
 			break
 		}
 
-		arg := fmt.Sprintf("%.2d%.10d", threadNum, i)
-		i += 1
+		args := make([]string, 0, batchSizePublish)
 
-		if err := publishMessage(arg); err != nil {
+		for i := 0; i < batchSizePublish; i++ {
+			args = append(args, fmt.Sprintf("%.2d%.10d", threadNum, argSequence))
+			argSequence += 1
+		}
+
+		if err := publishMessages(args); err != nil {
 			log.Println(err)
 			continue
 		}
 
-		publishedCount.Add(1)
+		publishedCount.Add(int32(len(args)))
 	}
 }
 
-func publishMessage(arg string) error {
-	requestBody, err := json.Marshal(map[string]any{
-		"queue": "test",
-		"payload": map[string]any{
-			"arg": arg,
-		},
-	})
+func publishMessages(args []string) error {
+	reqElements := make([]any, 0, len(args))
+	for _, arg := range args {
+		reqElements = append(reqElements, map[string]any{
+			"queue": "test",
+			"payload": map[string]any{
+				"arg": arg,
+			},
+		})
+	}
+	requestBody, err := json.Marshal(reqElements)
 	if err != nil {
 		return err
 	}
@@ -158,28 +178,44 @@ func runConsumer(ctx context.Context) {
 			break
 		}
 
-		messages, err := consumeMessages()
+		messages, err := consumeMessages(batchSizeConsume)
 		if err != nil {
 			log.Println("consume message error:", err)
 			continue
 		}
 
-		for _, message := range messages {
-			if err := ackMessage(message.ID); err != nil {
-				log.Println("ack message error:", err)
+		for chunk := range slices.Chunk(messages, batchSizeAck) {
+			ids := make([]string, 0, len(chunk))
+
+			for _, message := range chunk {
+				ids = append(ids, message.ID)
+			}
+
+			if err := ackMessages(ids); err != nil {
+				log.Println("ack messages error:", err)
 				continue
 			}
 
-			consumedCount.Add(1)
+			consumedCount.Add(int32(len(ids)))
 		}
 	}
 }
 
-func consumeMessages() ([]Message, error) {
-	request, err := http.NewRequest(http.MethodPost, baseURL+"/messages/consume?queue=test&limit=100", nil)
+func consumeMessages(limit int) ([]Message, error) {
+	requestBody, err := json.Marshal(map[string]any{
+		"queue": "test",
+		"limit": limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("json.Marshal: %w", err)
+	}
+
+	request, err := http.NewRequest(http.MethodPost, baseURL+"/messages/consume", bytes.NewReader(requestBody))
 	if err != nil {
 		return nil, err
 	}
+
+	request.Header.Set("Content-Type", "application/json")
 
 	httpResponse, err := httpClient.Do(request)
 	if err != nil {
@@ -219,21 +255,19 @@ func consumeMessages() ([]Message, error) {
 	return responseDTO.Result, nil
 }
 
-func ackMessage(id string) error {
-	requestBody, err := json.Marshal([]any{
-		map[string]any{
+func ackMessages(ids []string) error {
+	reqElements := make([]any, 0, len(ids))
+	for _, id := range ids {
+		reqElements = append(reqElements, map[string]any{
 			"id": id,
-		},
-	})
+		})
+	}
+	requestBody, err := json.Marshal(reqElements)
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
 
-	request, err := http.NewRequest(
-		http.MethodPost,
-		baseURL+"/messages/ack",
-		bytes.NewReader(requestBody),
-	)
+	request, err := http.NewRequest(http.MethodPost, baseURL+"/messages/ack", bytes.NewReader(requestBody))
 	if err != nil {
 		return err
 	}

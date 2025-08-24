@@ -43,6 +43,7 @@ func BuildTestApp(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
 		DatabaseUser:     "user",
 		DatabasePassword: "pass",
 		DatabaseName:     "queue",
+		MaxBatchSize:     100,
 	}, &appbuilder.Overrides{
 		Clock: clock,
 	})

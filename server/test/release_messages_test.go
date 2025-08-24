@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -26,8 +27,14 @@ func TestReleaseMessage(t *testing.T) {
 	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	req, err := http.NewRequest(http.MethodPost, "/messages/release?id="+msgID, nil)
+	requestBody := []string{msgID}
+	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/messages/release", bytes.NewBuffer(body))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp := httptest.NewRecorder()
 	app.Router.ServeHTTP(resp, req)

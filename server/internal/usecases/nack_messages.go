@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -23,6 +24,7 @@ type NackMessages struct {
 	db           *sql.DB
 	msgRepo      *storage.MessageRepository
 	redeliverSvc *domain.RedeliveryService
+	maxBatchSize int
 }
 
 func NewNackMessages(
@@ -31,6 +33,7 @@ func NewNackMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	redeliverSvc *domain.RedeliveryService,
+	maxBatchSize int,
 ) *NackMessages {
 	return &NackMessages{
 		clock:        clock,
@@ -38,10 +41,15 @@ func NewNackMessages(
 		db:           db,
 		msgRepo:      msgRepo,
 		redeliverSvc: redeliverSvc,
+		maxBatchSize: maxBatchSize,
 	}
 }
 
 func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
+	if len(nacks) > uc.maxBatchSize {
+		return errors.New("batch size limit exceeded")
+	}
+
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err

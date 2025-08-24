@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -23,6 +24,7 @@ type AckMessages struct {
 	db           *sql.DB
 	msgRepo      *storage.MessageRepository
 	scopeFactory requestscope.Factory
+	maxBatchSize int
 }
 
 func NewAckMessages(
@@ -31,6 +33,7 @@ func NewAckMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	scopeFactory requestscope.Factory,
+	maxBatchSize int,
 ) *AckMessages {
 	return &AckMessages{
 		clock:        clock,
@@ -38,10 +41,19 @@ func NewAckMessages(
 		db:           db,
 		msgRepo:      msgRepo,
 		scopeFactory: scopeFactory,
+		maxBatchSize: maxBatchSize,
 	}
 }
 
 func (uc *AckMessages) Do(ctx context.Context, acks []AckParams) error {
+	batchSize := len(acks)
+	for _, ack := range acks {
+		batchSize += len(ack.Release)
+	}
+	if batchSize > uc.maxBatchSize {
+		return errors.New("batch size limit exceeded")
+	}
+
 	scope := uc.scopeFactory.New()
 
 	tx, err := uc.db.BeginTx(ctx, nil)

@@ -5,41 +5,63 @@ GET http://localhost:8060/health
 POST http://localhost:8060/messages/publish
 Content-Type: application/json
 
-{
-  "queue": "test",
-  "payload": {
-    "arg": "1234"
+[
+  {
+    "queue": "test",
+    "payload": {
+      "arg": "1234"
+    }
   }
-}
+]
 
 ### prepare message
 POST http://localhost:8060/messages/prepare
 Content-Type: application/json
 
-{
-  "queue": "test.result",
-  "payload": {
-    "arg": "1234"
+[
+  {
+    "queue": "test.result",
+    "payload": {
+      "arg": "1234"
+    }
   }
-}
+]
 
 ### release message
-POST http://localhost:8060/messages/release?id=af88f155-3d13-47a5-9be3-73f829abec0c
+POST http://localhost:8060/messages/release
+Content-Type: application/json
 
-### check message 1
-GET http://localhost:8060/messages/check?id=35643438-12ca-4f28-ab8e-1215f92c221f
+[
+  "ad37b277-7e9d-43d5-bf6c-7b33ac7c3a50"
+]
 
-### check message 2
-GET http://localhost:8060/messages/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fca
+### check messages
+POST http://localhost:8060/messages/check
+Content-Type: application/json
 
-### check message not found
-GET http://localhost:8060/messages/check?id=d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fcb
+[
+  "70580c94-6b56-40b4-b022-299ef12786ea",
+  "ad37b277-7e9d-43d5-bf6c-7b33ac7c3a50"
+]
 
 ### consume messages
-POST http://localhost:8060/messages/consume?queue=test&limit=3
+POST http://localhost:8060/messages/consume
+Content-Type: application/json
+
+{
+  "queue": "test",
+  "limit": 3
+}
 
 ### consume messages (with poll)
-POST http://localhost:8060/messages/consume?queue=test.result&limit=3&poll=25
+POST http://localhost:8060/messages/consume
+Content-Type: application/json
+
+{
+  "queue": "test.result",
+  "limit": 3,
+  "poll": 25
+}
 
 ### ack message
 POST http://localhost:8060/messages/ack
@@ -47,7 +69,11 @@ Content-Type: application/json
 
 [
   {
-    "id": "117fd1c3-cce8-4afe-ae0e-8a0d28a62a4f",
+    "id": "1b62104d-19fa-4de0-a43e-7a08ab30d765",
+    "release": []
+  },
+  {
+    "id": "9fdc61fb-52bb-4617-aaf6-f992c7e40010",
     "release": []
   }
 ]
@@ -58,7 +84,7 @@ Content-Type: application/json
 
 [
   {
-    "id": "af88f155-3d13-47a5-9be3-73f829abec0c",
+    "id": "308a0c72-75b1-47c5-9e93-59f134241787",
     "redeliver": false
   }
 ]

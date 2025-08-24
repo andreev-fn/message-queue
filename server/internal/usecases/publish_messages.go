@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -13,8 +14,16 @@ import (
 	"server/internal/appbuilder/requestscope"
 	"server/internal/domain"
 	"server/internal/storage"
+	"server/internal/utils/dbutils"
 	"server/internal/utils/timeutils"
 )
+
+type NewMessageParams struct {
+	Queue    string
+	Payload  json.RawMessage
+	Priority int
+	StartAt  *time.Time
+}
 
 type PublishMessages struct {
 	logger       *slog.Logger
@@ -22,6 +31,7 @@ type PublishMessages struct {
 	db           *sql.DB
 	msgRepo      *storage.MessageRepository
 	scopeFactory requestscope.Factory
+	maxBatchSize int
 }
 
 func NewPublishMessages(
@@ -30,6 +40,7 @@ func NewPublishMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	scopeFactory requestscope.Factory,
+	maxBatchSize int,
 ) *PublishMessages {
 	return &PublishMessages{
 		logger:       logger,
@@ -37,37 +48,55 @@ func NewPublishMessages(
 		db:           db,
 		msgRepo:      msgRepo,
 		scopeFactory: scopeFactory,
+		maxBatchSize: maxBatchSize,
 	}
 }
 
 func (uc *PublishMessages) Do(
 	ctx context.Context,
-	queue string,
-	payload json.RawMessage,
-	priority int,
+	messages []NewMessageParams,
 	autoRelease bool,
-	startAt *time.Time,
-) (string, error) {
+) ([]string, error) {
+	if len(messages) > uc.maxBatchSize {
+		return []string{}, errors.New("batch size limit exceeded")
+	}
+
 	scope := uc.scopeFactory.New()
 
-	message, err := domain.NewMessage(uc.clock, uuid.New(), queue, payload, priority, startAt)
+	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	defer dbutils.RollbackWithLog(tx, uc.logger)
 
-	if autoRelease {
-		if err := message.Release(uc.clock, scope.Dispatcher); err != nil {
-			return "", fmt.Errorf("message.Release: %w", err)
+	result := make([]string, 0, len(messages))
+
+	for _, msg := range messages {
+		message, err := domain.NewMessage(uc.clock, uuid.New(), msg.Queue, msg.Payload, msg.Priority, msg.StartAt)
+		if err != nil {
+			return nil, err
 		}
+
+		if autoRelease {
+			if err := message.Release(uc.clock, scope.Dispatcher); err != nil {
+				return nil, fmt.Errorf("message.Release: %w", err)
+			}
+		}
+
+		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {
+			return nil, fmt.Errorf("msgRepo.Save: %w", err)
+		}
+
+		result = append(result, message.ID().String())
 	}
 
-	if err := uc.msgRepo.SaveInNewTransaction(ctx, uc.db, message); err != nil {
-		return "", fmt.Errorf("msgRepo.SaveInNewTransaction: %w", err)
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("tx.Commit: %w", err)
 	}
 
 	if err := scope.MsgReadyNotifier.Flush(); err != nil {
 		uc.logger.Error("scope.MsgReadyNotifier.Flush", "error", err)
 	}
 
-	return message.ID().String(), nil
+	return result, nil
 }

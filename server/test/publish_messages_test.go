@@ -24,9 +24,11 @@ func TestCreateMessage(t *testing.T) {
 	)
 
 	// Act
-	body, err := json.Marshal(map[string]any{
-		"queue":   msgQueue,
-		"payload": json.RawMessage(msgPayload),
+	body, err := json.Marshal([]any{
+		map[string]any{
+			"queue":   msgQueue,
+			"payload": json.RawMessage(msgPayload),
+		},
 	})
 	require.NoError(t, err)
 
@@ -49,14 +51,13 @@ func TestCreateMessage(t *testing.T) {
 	require.NotNil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	var respDTO struct {
-		ID string `json:"id"`
-	}
+	var respDTO []string
 	err = json.Unmarshal(*respWrapper.Result, &respDTO)
 	require.NoError(t, err)
+	require.Len(t, respDTO, 1)
 
 	// Assert the message in DB
-	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO.ID)
+	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO[0])
 	require.NoError(t, err)
 
 	require.Equal(t, msgQueue, message.Queue())
@@ -76,10 +77,12 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	)
 
 	// Act
-	body, err := json.Marshal(map[string]any{
-		"queue":    msgQueue,
-		"payload":  json.RawMessage(msgPayload),
-		"priority": msgPriority,
+	body, err := json.Marshal([]any{
+		map[string]any{
+			"queue":    msgQueue,
+			"payload":  json.RawMessage(msgPayload),
+			"priority": msgPriority,
+		},
 	})
 	require.NoError(t, err)
 
@@ -102,14 +105,13 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	require.NotNil(t, respWrapper.Result)
 	require.Nil(t, respWrapper.Error)
 
-	var respDTO struct {
-		ID string `json:"id"`
-	}
+	var respDTO []string
 	err = json.Unmarshal(*respWrapper.Result, &respDTO)
 	require.NoError(t, err)
+	require.Len(t, respDTO, 1)
 
 	// Assert the message in DB
-	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO.ID)
+	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO[0])
 	require.NoError(t, err)
 
 	require.Equal(t, msgQueue, message.Queue())

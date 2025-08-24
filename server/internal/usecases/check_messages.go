@@ -26,30 +26,51 @@ type CheckMessages struct {
 	db              *sql.DB
 	msgRepo         *storage.MessageRepository
 	archivedMsgRepo *storage.ArchivedMsgRepository
+	maxBatchSize    int
 }
 
 func NewCheckMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	archivedMsgRepo *storage.ArchivedMsgRepository,
+	maxBatchSize int,
 ) *CheckMessages {
 	return &CheckMessages{
 		db:              db,
 		msgRepo:         msgRepo,
 		archivedMsgRepo: archivedMsgRepo,
+		maxBatchSize:    maxBatchSize,
 	}
 }
 
-func (uc *CheckMessages) Do(ctx context.Context, id string) (*CheckMsgResult, error) {
+func (uc *CheckMessages) Do(ctx context.Context, ids []string) ([]CheckMsgResult, error) {
+	if len(ids) > uc.maxBatchSize {
+		return []CheckMsgResult{}, errors.New("batch size limit exceeded")
+	}
+
+	allResults := make([]CheckMsgResult, 0, len(ids))
+
+	for _, id := range ids {
+		result, err := uc.checkMessage(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		allResults = append(allResults, result)
+	}
+	return allResults, nil
+}
+
+func (uc *CheckMessages) checkMessage(ctx context.Context, id string) (CheckMsgResult, error) {
 	message, err := uc.msgRepo.GetByID(ctx, uc.db, id)
 	if err != nil {
 		if errors.Is(err, storage.ErrMsgNotFound) {
 			return uc.checkArchived(ctx, id)
 		}
-		return nil, fmt.Errorf("msgRepo.GetByID: %w", err)
+		return CheckMsgResult{}, fmt.Errorf("msgRepo.GetByID: %w", err)
 	}
 
-	return &CheckMsgResult{
+	return CheckMsgResult{
 		ID:          message.ID().String(),
 		Queue:       message.Queue(),
 		Payload:     message.Payload(),
@@ -60,13 +81,13 @@ func (uc *CheckMessages) Do(ctx context.Context, id string) (*CheckMsgResult, er
 	}, nil
 }
 
-func (uc *CheckMessages) checkArchived(ctx context.Context, id string) (*CheckMsgResult, error) {
+func (uc *CheckMessages) checkArchived(ctx context.Context, id string) (CheckMsgResult, error) {
 	archivedMsg, err := uc.archivedMsgRepo.GetByID(ctx, uc.db, id)
 	if err != nil {
-		return nil, fmt.Errorf("msgRepo.GetByID: %w", err)
+		return CheckMsgResult{}, fmt.Errorf("archivedMsgRepo.GetByID: %w", err)
 	}
 
-	return &CheckMsgResult{
+	return CheckMsgResult{
 		ID:          archivedMsg.ID().String(),
 		Queue:       archivedMsg.Queue(),
 		Payload:     archivedMsg.Payload(),

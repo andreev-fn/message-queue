@@ -24,6 +24,7 @@ type Config struct {
 	DatabaseUser     string
 	DatabasePassword string
 	DatabaseName     string
+	MaxBatchSize     int
 }
 
 type Overrides struct {
@@ -91,12 +92,12 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 
 	requestScopeFactory := NewRequestScopeFactory(eventBus)
 
-	publishMessages := usecases.NewPublishMessages(logger, clock, db, msgRepo, requestScopeFactory)
-	releaseMessages := usecases.NewReleaseMessages(logger, clock, db, msgRepo, requestScopeFactory)
-	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus)
-	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory)
-	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, redeliveryService)
-	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo)
+	publishMessages := usecases.NewPublishMessages(logger, clock, db, msgRepo, requestScopeFactory, conf.MaxBatchSize)
+	releaseMessages := usecases.NewReleaseMessages(logger, clock, db, msgRepo, requestScopeFactory, conf.MaxBatchSize)
+	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus, conf.MaxBatchSize)
+	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory, conf.MaxBatchSize)
+	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, redeliveryService, conf.MaxBatchSize)
+	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo, conf.MaxBatchSize)
 	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
 	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo, redeliveryService)
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)
