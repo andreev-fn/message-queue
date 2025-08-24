@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -19,7 +18,7 @@ type CheckMsgResult struct {
 	FinalizedAt *time.Time
 	Status      string
 	Retries     int
-	Payload     json.RawMessage
+	Payload     string
 }
 
 type CheckMessages struct {

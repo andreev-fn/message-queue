@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -20,7 +19,7 @@ import (
 
 type NewMessageParams struct {
 	Queue    string
-	Payload  json.RawMessage
+	Payload  string
 	Priority int
 	StartAt  *time.Time
 }

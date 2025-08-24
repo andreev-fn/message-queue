@@ -14,10 +14,10 @@ import (
 )
 
 type PublishMessagesDTO []struct {
-	Queue    string          `json:"queue"`
-	Payload  json.RawMessage `json:"payload"`
-	Priority *int            `json:"priority"`
-	StartAt  string          `json:"start_at"`
+	Queue    string `json:"queue"`
+	Payload  string `json:"payload"`
+	Priority *int   `json:"priority"`
+	StartAt  string `json:"start_at"`
 
 	parsedStartAt *time.Time
 }

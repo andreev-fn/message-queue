@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"encoding/json"
 	"errors"
 	"slices"
 	"time"
@@ -12,7 +11,7 @@ import (
 type ArchivedMsg struct {
 	id          uuid.UUID
 	queue       string
-	payload     json.RawMessage
+	payload     string
 	createdAt   time.Time
 	finalizedAt time.Time
 	status      MessageStatus
@@ -42,11 +41,11 @@ func NewArchivedMsg(msg *Message) (*ArchivedMsg, error) {
 	}, nil
 }
 
-func (m *ArchivedMsg) ID() uuid.UUID            { return m.id }
-func (m *ArchivedMsg) Queue() string            { return m.queue }
-func (m *ArchivedMsg) Payload() json.RawMessage { return slices.Clone(m.payload) }
-func (m *ArchivedMsg) CreatedAt() time.Time     { return m.createdAt }
-func (m *ArchivedMsg) FinalizedAt() time.Time   { return m.finalizedAt }
-func (m *ArchivedMsg) Status() MessageStatus    { return m.status }
-func (m *ArchivedMsg) Priority() int            { return m.priority }
-func (m *ArchivedMsg) Retries() int             { return m.retries }
+func (m *ArchivedMsg) ID() uuid.UUID          { return m.id }
+func (m *ArchivedMsg) Queue() string          { return m.queue }
+func (m *ArchivedMsg) Payload() string        { return m.payload }
+func (m *ArchivedMsg) CreatedAt() time.Time   { return m.createdAt }
+func (m *ArchivedMsg) FinalizedAt() time.Time { return m.finalizedAt }
+func (m *ArchivedMsg) Status() MessageStatus  { return m.status }
+func (m *ArchivedMsg) Priority() int          { return m.priority }
+func (m *ArchivedMsg) Retries() int           { return m.retries }

@@ -128,7 +128,7 @@ func (a *ConsumeMessages) writeSuccess(writer http.ResponseWriter, messages []us
 	for _, message := range messages {
 		result = append(result, map[string]any{
 			"id":      message.ID,
-			"payload": string(message.Payload),
+			"payload": message.Payload,
 		})
 	}
 

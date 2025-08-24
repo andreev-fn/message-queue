@@ -22,7 +22,7 @@ CREATE INDEX ON messages (created_at);
 
 CREATE TABLE message_payloads (
     msg_id uuid PRIMARY KEY,
-    payload jsonb NOT NULL
+    payload text NOT NULL
 );
 
 CREATE TABLE archived_messages (
@@ -33,5 +33,5 @@ CREATE TABLE archived_messages (
     status message_status NOT NULL,
     priority smallint NOT NULL,
     retries int NOT NULL,
-    payload jsonb NOT NULL
+    payload text NOT NULL
 );

@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,7 +10,7 @@ import (
 type ArchivedMsgDTO struct {
 	ID          uuid.UUID
 	Queue       string
-	Payload     json.RawMessage
+	Payload     string
 	CreatedAt   time.Time
 	FinalizedAt time.Time
 	Status      MessageStatus

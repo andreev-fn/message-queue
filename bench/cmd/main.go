@@ -127,10 +127,8 @@ func publishMessages(args []string) error {
 	reqElements := make([]any, 0, len(args))
 	for _, arg := range args {
 		reqElements = append(reqElements, map[string]any{
-			"queue": "test",
-			"payload": map[string]any{
-				"arg": arg,
-			},
+			"queue":   "test",
+			"payload": arg,
 		})
 	}
 	requestBody, err := json.Marshal(reqElements)

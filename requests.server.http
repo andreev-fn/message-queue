@@ -8,9 +8,7 @@ Content-Type: application/json
 [
   {
     "queue": "test",
-    "payload": {
-      "arg": "1234"
-    }
+    "payload": "{\"arg\": \"1234\"}"
   }
 ]
 
@@ -21,9 +19,7 @@ Content-Type: application/json
 [
   {
     "queue": "test.result",
-    "payload": {
-      "arg": "1234"
-    }
+    "payload": "{\"arg\": \"1234\"}"
   }
 ]
 

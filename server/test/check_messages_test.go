@@ -51,12 +51,12 @@ func TestCheckExistingMessage(t *testing.T) {
 	require.Nil(t, respWrapper.Error)
 
 	var respDTO []struct {
-		ID        string          `json:"id"`
-		Queue     string          `json:"queue"`
-		CreatedAt time.Time       `json:"created_at"`
-		Status    string          `json:"status"`
-		Retries   int             `json:"retries"`
-		Payload   json.RawMessage `json:"payload"`
+		ID        string    `json:"id"`
+		Queue     string    `json:"queue"`
+		CreatedAt time.Time `json:"created_at"`
+		Status    string    `json:"status"`
+		Retries   int       `json:"retries"`
+		Payload   string    `json:"payload"`
 	}
 	err = json.Unmarshal(*respWrapper.Result, &respDTO)
 	require.NoError(t, err)
@@ -67,7 +67,7 @@ func TestCheckExistingMessage(t *testing.T) {
 	require.Equal(t, app.Clock.Now(), respDTO[0].CreatedAt)
 	require.Equal(t, string(domain.MsgStatusCreated), respDTO[0].Status)
 	require.Equal(t, 0, respDTO[0].Retries)
-	require.JSONEq(t, msgPayload, string(respDTO[0].Payload))
+	require.Equal(t, msgPayload, respDTO[0].Payload)
 }
 
 func TestCheckNonExistentMessage(t *testing.T) {

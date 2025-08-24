@@ -27,7 +27,7 @@ func TestCreateMessage(t *testing.T) {
 	body, err := json.Marshal([]any{
 		map[string]any{
 			"queue":   msgQueue,
-			"payload": json.RawMessage(msgPayload),
+			"payload": msgPayload,
 		},
 	})
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestCreateMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, msgQueue, message.Queue())
-	require.JSONEq(t, msgPayload, string(message.Payload()))
+	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusCreated, message.Status())
 	require.Equal(t, msgPriority, message.Priority())
@@ -80,7 +80,7 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	body, err := json.Marshal([]any{
 		map[string]any{
 			"queue":    msgQueue,
-			"payload":  json.RawMessage(msgPayload),
+			"payload":  msgPayload,
 			"priority": msgPriority,
 		},
 	})
@@ -115,7 +115,7 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, msgQueue, message.Queue())
-	require.JSONEq(t, msgPayload, string(message.Payload()))
+	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusReady, message.Status())
 	require.Equal(t, msgPriority, message.Priority())

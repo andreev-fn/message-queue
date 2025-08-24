@@ -2,7 +2,6 @@ package e2eutils
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,7 +17,7 @@ func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, 
 		context.Background(),
 		[]usecases.NewMessageParams{{
 			Queue:    queue,
-			Payload:  json.RawMessage(payload),
+			Payload:  payload,
 			Priority: priority,
 			StartAt:  nil,
 		}},

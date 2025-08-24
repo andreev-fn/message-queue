@@ -71,7 +71,7 @@ func TestConsumeMessages(t *testing.T) {
 
 	require.Len(t, results, 1)
 	require.Equal(t, msg2ID, results[0].ID)
-	require.JSONEq(t, msg2Payload, results[0].Payload)
+	require.Equal(t, msg2Payload, results[0].Payload)
 
 	// Assert messages in DB
 	takenMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msg2ID)

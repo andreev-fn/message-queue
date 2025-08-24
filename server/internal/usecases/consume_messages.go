@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -18,7 +17,7 @@ import (
 
 type MessageToConsume struct {
 	ID      string
-	Payload json.RawMessage
+	Payload string
 }
 
 type ConsumeMessages struct {

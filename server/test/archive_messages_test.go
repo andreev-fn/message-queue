@@ -39,7 +39,7 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 
 	require.Equal(t, domain.MsgStatusCompleted, archivedMsg.Status())
 	require.Equal(t, msgQueue, archivedMsg.Queue())
-	require.JSONEq(t, msgPayload, string(archivedMsg.Payload()))
+	require.Equal(t, msgPayload, archivedMsg.Payload())
 }
 
 func TestArchiveMessagesNotFinal(t *testing.T) {
