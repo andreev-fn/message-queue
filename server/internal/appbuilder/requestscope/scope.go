@@ -2,12 +2,12 @@ package requestscope
 
 import (
 	"server/internal/domain"
-	"server/internal/msgreadiness"
+	"server/internal/msgavailability"
 )
 
 type Scope struct {
-	Dispatcher       domain.EventDispatcher
-	MsgReadyNotifier *msgreadiness.Notifier
+	Dispatcher              domain.EventDispatcher
+	MsgAvailabilityNotifier *msgavailability.Notifier
 }
 
 type Factory interface {

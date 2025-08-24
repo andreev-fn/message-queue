@@ -64,8 +64,8 @@ func (uc *ResumeDelayed) Do(ctx context.Context, limit int) (int, error) {
 		return 0, fmt.Errorf("tx.Commit: %w", err)
 	}
 
-	if err := scope.MsgReadyNotifier.Flush(); err != nil {
-		uc.logger.Error("scope.MsgReadyNotifier.Flush", "error", err)
+	if err := scope.MsgAvailabilityNotifier.Flush(); err != nil {
+		uc.logger.Error("scope.MsgAvailabilityNotifier.Flush", "error", err)
 	}
 
 	return len(messages), nil

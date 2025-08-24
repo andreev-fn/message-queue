@@ -18,7 +18,7 @@ func NewRedeliveryService(clock timeutils.Clock) *RedeliveryService {
 
 func (eh *RedeliveryService) HandleNack(msg *Message) error {
 	if msg.Retries() >= maxRetries {
-		return msg.Fail(eh.clock)
+		return msg.MarkUndeliverable(eh.clock)
 	}
 
 	return msg.Delay(eh.clock, eh.getDelayTime(msg.Retries()))

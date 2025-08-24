@@ -1,4 +1,4 @@
-CREATE TYPE message_status AS ENUM ('CREATED', 'READY', 'PROCESSING', 'DELAYED', 'COMPLETED', 'FAILED');
+CREATE TYPE message_status AS ENUM ('PREPARED', 'AVAILABLE', 'PROCESSING', 'DELAYED', 'DELIVERED', 'UNDELIVERABLE');
 
 CREATE TABLE messages (
     id uuid PRIMARY KEY,
@@ -14,10 +14,10 @@ CREATE TABLE messages (
     version int NOT NULL
 );
 
-CREATE INDEX ON messages (queue, status, priority DESC, status_changed_at ASC) WHERE status = 'READY';
+CREATE INDEX ON messages (queue, status, priority DESC, status_changed_at ASC) WHERE status = 'AVAILABLE';
 CREATE INDEX ON messages (status, delayed_until) WHERE status = 'DELAYED';
 CREATE INDEX ON messages (status, timeout_at) WHERE status = 'PROCESSING';
-CREATE INDEX ON messages (status, finalized_at) WHERE status IN ('COMPLETED', 'FAILED');
+CREATE INDEX ON messages (status, finalized_at) WHERE status IN ('DELIVERED', 'UNDELIVERABLE');
 CREATE INDEX ON messages (created_at);
 
 CREATE TABLE message_payloads (

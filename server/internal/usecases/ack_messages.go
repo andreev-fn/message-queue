@@ -68,8 +68,8 @@ func (uc *AckMessages) Do(ctx context.Context, acks []AckParams) error {
 			return fmt.Errorf("msgRepo.GetByID: %w", err)
 		}
 
-		if err := message.Complete(uc.clock); err != nil {
-			return fmt.Errorf("message.Complete: %w", err)
+		if err := message.MarkDelivered(uc.clock); err != nil {
+			return fmt.Errorf("message.MarkDelivered: %w", err)
 		}
 
 		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {
@@ -96,8 +96,8 @@ func (uc *AckMessages) Do(ctx context.Context, acks []AckParams) error {
 		return fmt.Errorf("tx.Commit: %w", err)
 	}
 
-	if err := scope.MsgReadyNotifier.Flush(); err != nil {
-		uc.logger.Error("scope.MsgReadyNotifier.Flush", "error", err)
+	if err := scope.MsgAvailabilityNotifier.Flush(); err != nil {
+		uc.logger.Error("scope.MsgAvailabilityNotifier.Flush", "error", err)
 	}
 
 	return nil

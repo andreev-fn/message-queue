@@ -63,7 +63,7 @@ func TestCreateMessage(t *testing.T) {
 	require.Equal(t, msgQueue, message.Queue())
 	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
-	require.Equal(t, domain.MsgStatusCreated, message.Status())
+	require.Equal(t, domain.MsgStatusPrepared, message.Status())
 	require.Equal(t, msgPriority, message.Priority())
 }
 
@@ -117,6 +117,6 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	require.Equal(t, msgQueue, message.Queue())
 	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
-	require.Equal(t, domain.MsgStatusReady, message.Status())
+	require.Equal(t, domain.MsgStatusAvailable, message.Status())
 	require.Equal(t, msgPriority, message.Priority())
 }

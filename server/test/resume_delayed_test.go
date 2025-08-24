@@ -33,7 +33,7 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 	updatedMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, domain.MsgStatusReady, updatedMsg.Status())
+	require.Equal(t, domain.MsgStatusAvailable, updatedMsg.Status())
 	require.Equal(t, 1, updatedMsg.Retries())
 }
 

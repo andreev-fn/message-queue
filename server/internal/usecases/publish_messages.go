@@ -93,8 +93,8 @@ func (uc *PublishMessages) Do(
 		return nil, fmt.Errorf("tx.Commit: %w", err)
 	}
 
-	if err := scope.MsgReadyNotifier.Flush(); err != nil {
-		uc.logger.Error("scope.MsgReadyNotifier.Flush", "error", err)
+	if err := scope.MsgAvailabilityNotifier.Flush(); err != nil {
+		uc.logger.Error("scope.MsgAvailabilityNotifier.Flush", "error", err)
 	}
 
 	return result, nil

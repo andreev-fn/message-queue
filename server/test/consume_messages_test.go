@@ -31,9 +31,9 @@ func TestConsumeMessages(t *testing.T) {
 	)
 
 	// Arrange
-	msg1ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg1Payload, msg1Priority)
-	msg2ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg2Payload, msg2Priority)
-	msg3ID := e2eutils.CreateReadyMsg(t, app, msgQueue, msg3Payload, msg3Priority)
+	msg1ID := e2eutils.CreateAvailableMsg(t, app, msgQueue, msg1Payload, msg1Priority)
+	msg2ID := e2eutils.CreateAvailableMsg(t, app, msgQueue, msg2Payload, msg2Priority)
+	msg3ID := e2eutils.CreateAvailableMsg(t, app, msgQueue, msg3Payload, msg3Priority)
 
 	// Act
 	requestBody := map[string]any{
@@ -80,11 +80,11 @@ func TestConsumeMessages(t *testing.T) {
 
 	msg1, err := app.MsgRepo.GetByID(context.Background(), app.DB, msg1ID)
 	require.NoError(t, err)
-	require.Equal(t, domain.MsgStatusReady, msg1.Status())
+	require.Equal(t, domain.MsgStatusAvailable, msg1.Status())
 
 	msg3, err := app.MsgRepo.GetByID(context.Background(), app.DB, msg3ID)
 	require.NoError(t, err)
-	require.Equal(t, domain.MsgStatusReady, msg3.Status())
+	require.Equal(t, domain.MsgStatusAvailable, msg3.Status())
 }
 
 func TestConsumeMessagesEmptyQueue(t *testing.T) {

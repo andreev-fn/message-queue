@@ -58,5 +58,5 @@ func TestReleaseMessage(t *testing.T) {
 	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, msgPriority, message.Priority())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
-	require.Equal(t, domain.MsgStatusReady, message.Status())
+	require.Equal(t, domain.MsgStatusAvailable, message.Status())
 }

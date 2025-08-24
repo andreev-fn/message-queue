@@ -1,4 +1,4 @@
-package msgreadiness
+package msgavailability
 
 import (
 	"context"
@@ -6,24 +6,24 @@ import (
 )
 
 type Poller struct {
-	queue       string
-	msgReadyCh  chan struct{}
-	pollTimeout <-chan time.Time
-	timedOut    bool
+	queue          string
+	msgAvailableCh chan struct{}
+	pollTimeout    <-chan time.Time
+	timedOut       bool
 }
 
 func NewPoller(queue string, poll time.Duration) *Poller {
 	return &Poller{
-		queue:       queue,
-		msgReadyCh:  make(chan struct{}, 1),
-		pollTimeout: time.After(poll),
+		queue:          queue,
+		msgAvailableCh: make(chan struct{}, 1),
+		pollTimeout:    time.After(poll),
 	}
 }
 
 func (p *Poller) HandleEvent(message string) {
 	if message == p.queue {
 		select {
-		case p.msgReadyCh <- struct{}{}:
+		case p.msgAvailableCh <- struct{}{}:
 		default:
 		}
 	}
@@ -36,7 +36,7 @@ func (p *Poller) WaitForNextAttempt(ctx context.Context) {
 	case <-p.pollTimeout:
 		p.timedOut = true
 	case <-time.After(time.Second * 3):
-	case <-p.msgReadyCh:
+	case <-p.msgAvailableCh:
 	}
 }
 

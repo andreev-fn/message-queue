@@ -67,8 +67,8 @@ func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
 				return err
 			}
 		} else {
-			if err := message.Fail(uc.clock); err != nil {
-				return fmt.Errorf("message.Fail: %w", err)
+			if err := message.MarkUndeliverable(uc.clock); err != nil {
+				return fmt.Errorf("message.MarkUndeliverable: %w", err)
 			}
 		}
 

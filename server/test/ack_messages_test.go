@@ -57,7 +57,7 @@ func TestAckMessages(t *testing.T) {
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
-	require.Equal(t, domain.MsgStatusCompleted, message.Status())
+	require.Equal(t, domain.MsgStatusDelivered, message.Status())
 }
 
 func TestAckMessagesAtomicRelease(t *testing.T) {
@@ -109,11 +109,11 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 	// Assert messages in DB
 	ackedMessage, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgToAckID)
 	require.NoError(t, err)
-	require.Equal(t, domain.MsgStatusCompleted, ackedMessage.Status())
+	require.Equal(t, domain.MsgStatusDelivered, ackedMessage.Status())
 
 	releasedMessage, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgToReleaseID)
 	require.NoError(t, err)
-	require.Equal(t, domain.MsgStatusReady, releasedMessage.Status())
+	require.Equal(t, domain.MsgStatusAvailable, releasedMessage.Status())
 }
 
 func TestAckUnknownMessage(t *testing.T) {

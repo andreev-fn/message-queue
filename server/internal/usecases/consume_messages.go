@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"server/internal/eventbus"
-	"server/internal/msgreadiness"
+	"server/internal/msgavailability"
 	"server/internal/storage"
 	"server/internal/utils/dbutils"
 	"server/internal/utils/timeutils"
@@ -67,8 +67,8 @@ func (uc *ConsumeMessages) Do(
 		return result, nil
 	}
 
-	poller := msgreadiness.NewPoller(queue, poll)
-	unsubscribe := uc.eventBus.Subscribe(eventbus.ChannelMsgReady, poller.HandleEvent)
+	poller := msgavailability.NewPoller(queue, poll)
+	unsubscribe := uc.eventBus.Subscribe(eventbus.ChannelMsgAvailable, poller.HandleEvent)
 	defer unsubscribe()
 
 	for {
@@ -95,9 +95,9 @@ func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue string, limit
 	}
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
-	messages, err := uc.msgRepo.GetReadyWithLock(ctx, tx, queue, limit)
+	messages, err := uc.msgRepo.GetNextAvailableWithLock(ctx, tx, queue, limit)
 	if err != nil {
-		return nil, fmt.Errorf("msgRepo.GetReadyWithLock: %w", err)
+		return nil, fmt.Errorf("msgRepo.GetNextAvailableWithLock: %w", err)
 	}
 
 	for _, message := range messages {

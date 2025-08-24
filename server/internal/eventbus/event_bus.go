@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ChannelMsgReady = "message_ready"
+	ChannelMsgAvailable = "message_available"
 )
 
 type EventHandler func(message string)
@@ -39,7 +39,7 @@ func (eb *EventBus) Run(ctx context.Context) error {
 	for {
 		lastAttempt := eb.clock.Now()
 
-		err := eb.driver.Listen(ctx, []string{ChannelMsgReady}, func(channel, message string) {
+		err := eb.driver.Listen(ctx, []string{ChannelMsgAvailable}, func(channel, message string) {
 			eb.dispatch(channel, message)
 		})
 		if err != nil {

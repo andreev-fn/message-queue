@@ -21,7 +21,7 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateCompletedMsg(t, app, msgQueue, msgPayload)
+	msgID := e2eutils.CreateDeliveredMsg(t, app, msgQueue, msgPayload)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
@@ -37,7 +37,7 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	archivedMsg, err := app.ArchivedMsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, domain.MsgStatusCompleted, archivedMsg.Status())
+	require.Equal(t, domain.MsgStatusDelivered, archivedMsg.Status())
 	require.Equal(t, msgQueue, archivedMsg.Queue())
 	require.Equal(t, msgPayload, archivedMsg.Payload())
 }

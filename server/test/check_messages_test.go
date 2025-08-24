@@ -65,7 +65,7 @@ func TestCheckExistingMessage(t *testing.T) {
 	require.Equal(t, msgID, respDTO[0].ID)
 	require.Equal(t, msgQueue, respDTO[0].Queue)
 	require.Equal(t, app.Clock.Now(), respDTO[0].CreatedAt)
-	require.Equal(t, string(domain.MsgStatusCreated), respDTO[0].Status)
+	require.Equal(t, string(domain.MsgStatusPrepared), respDTO[0].Status)
 	require.Equal(t, 0, respDTO[0].Retries)
 	require.Equal(t, msgPayload, respDTO[0].Payload)
 }

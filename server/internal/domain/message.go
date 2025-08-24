@@ -13,12 +13,12 @@ import (
 type MessageStatus string
 
 const (
-	MsgStatusCreated    MessageStatus = "CREATED"
-	MsgStatusReady      MessageStatus = "READY"
-	MsgStatusProcessing MessageStatus = "PROCESSING"
-	MsgStatusDelayed    MessageStatus = "DELAYED"
-	MsgStatusCompleted  MessageStatus = "COMPLETED"
-	MsgStatusFailed     MessageStatus = "FAILED"
+	MsgStatusPrepared      MessageStatus = "PREPARED"
+	MsgStatusAvailable     MessageStatus = "AVAILABLE"
+	MsgStatusProcessing    MessageStatus = "PROCESSING"
+	MsgStatusDelayed       MessageStatus = "DELAYED"
+	MsgStatusDelivered     MessageStatus = "DELIVERED"
+	MsgStatusUndeliverable MessageStatus = "UNDELIVERABLE"
 )
 
 type Message struct {
@@ -55,7 +55,7 @@ func NewMessage(
 		payload:         payload,
 		createdAt:       clock.Now(),
 		finalizedAt:     nil,
-		status:          MsgStatusCreated,
+		status:          MsgStatusPrepared,
 		statusChangedAt: clock.Now(),
 		delayedUntil:    startAt,
 		timeoutAt:       nil,
@@ -82,23 +82,23 @@ func (m *Message) FinalizedAt() *time.Time {
 }
 
 func (m *Message) Release(clock timeutils.Clock, ed EventDispatcher) error {
-	if m.status != MsgStatusCreated {
-		return errors.New("message must be in CREATED status")
+	if m.status != MsgStatusPrepared {
+		return errors.New("message must be in PREPARED status")
 	}
 
 	if m.delayedUntil != nil {
 		m.setStatus(clock, MsgStatusDelayed)
 	} else {
-		m.setStatus(clock, MsgStatusReady)
-		ed.Dispatch(NewMsgReadyEvent(m.queue))
+		m.setStatus(clock, MsgStatusAvailable)
+		ed.Dispatch(NewMsgAvailableEvent(m.queue))
 	}
 
 	return nil
 }
 
 func (m *Message) StartProcessing(clock timeutils.Clock) error {
-	if m.status != MsgStatusReady {
-		return errors.New("message must be in READY status")
+	if m.status != MsgStatusAvailable {
+		return errors.New("message must be in AVAILABLE status")
 	}
 
 	m.setStatus(clock, MsgStatusProcessing)
@@ -135,33 +135,33 @@ func (m *Message) Resume(clock timeutils.Clock, ed EventDispatcher) error {
 
 	m.delayedUntil = nil // cleanup after DELAYED status
 
-	m.setStatus(clock, MsgStatusReady)
-	ed.Dispatch(NewMsgReadyEvent(m.queue))
+	m.setStatus(clock, MsgStatusAvailable)
+	ed.Dispatch(NewMsgAvailableEvent(m.queue))
 
 	return nil
 }
 
-func (m *Message) Complete(clock timeutils.Clock) error {
+func (m *Message) MarkDelivered(clock timeutils.Clock) error {
 	if m.status != MsgStatusProcessing {
 		return errors.New("message must be in PROCESSING status")
 	}
 
 	m.timeoutAt = nil // cleanup after PROCESSING status
 
-	m.setStatus(clock, MsgStatusCompleted)
+	m.setStatus(clock, MsgStatusDelivered)
 	m.finalizedAt = utils.P(clock.Now())
 
 	return nil
 }
 
-func (m *Message) Fail(clock timeutils.Clock) error {
+func (m *Message) MarkUndeliverable(clock timeutils.Clock) error {
 	if m.status != MsgStatusProcessing {
 		return errors.New("message must be in PROCESSING status")
 	}
 
 	m.timeoutAt = nil // cleanup after PROCESSING status
 
-	m.setStatus(clock, MsgStatusFailed)
+	m.setStatus(clock, MsgStatusUndeliverable)
 	m.finalizedAt = utils.P(clock.Now())
 
 	return nil

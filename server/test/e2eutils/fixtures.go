@@ -29,7 +29,7 @@ func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, 
 	return msgIDs[0]
 }
 
-func CreateReadyMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
+func CreateAvailableMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
 	t.Helper()
 
 	msgID := CreateMsg(t, app, queue, payload, priority)
@@ -43,7 +43,7 @@ func CreateReadyMsg(t *testing.T, app *appbuilder.App, queue string, payload str
 func CreateProcessingMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
 	t.Helper()
 
-	msgID := CreateReadyMsg(t, app, queue, payload, priority)
+	msgID := CreateAvailableMsg(t, app, queue, payload, priority)
 
 	result, err := app.ConsumeMessages.Do(context.Background(), queue, 1, 0)
 	require.NoError(t, err)
@@ -65,7 +65,7 @@ func CreateDelayedMsg(t *testing.T, app *appbuilder.App, queue string, payload s
 	return msgID
 }
 
-func CreateCompletedMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
+func CreateDeliveredMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
 	t.Helper()
 
 	msgID := CreateProcessingMsg(t, app, queue, payload, 100)

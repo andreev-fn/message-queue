@@ -221,7 +221,7 @@ func (r *MessageRepository) GetByID(
 	return messages[0], nil
 }
 
-func (r *MessageRepository) GetReadyWithLock(
+func (r *MessageRepository) GetNextAvailableWithLock(
 	ctx context.Context,
 	conn dbutils.Querier,
 	queue string,
@@ -233,7 +233,7 @@ func (r *MessageRepository) GetReadyWithLock(
 		LIMIT $3
 		FOR UPDATE OF m SKIP LOCKED
 	`
-	rows, err := conn.QueryContext(ctx, query, queue, domain.MsgStatusReady, limit)
+	rows, err := conn.QueryContext(ctx, query, queue, domain.MsgStatusAvailable, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -290,8 +290,8 @@ func (r *MessageRepository) GetFinalizedToArchive(
 	rows, err := conn.QueryContext(
 		ctx,
 		query,
-		domain.MsgStatusCompleted,
-		domain.MsgStatusFailed,
+		domain.MsgStatusDelivered,
+		domain.MsgStatusUndeliverable,
 		limit,
 	)
 	if err != nil {

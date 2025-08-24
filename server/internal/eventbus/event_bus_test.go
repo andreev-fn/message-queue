@@ -91,9 +91,9 @@ func TestEventBus_Run_DispatchesToSubscribers(t *testing.T) {
 	eb := eventbus.NewEventBus(newTestLogger(), clock, md)
 
 	got := make(chan string, 2)
-	unsub1 := eb.Subscribe(eventbus.ChannelMsgReady, func(message string) { got <- "h1:" + message })
+	unsub1 := eb.Subscribe(eventbus.ChannelMsgAvailable, func(message string) { got <- "h1:" + message })
 	defer unsub1()
-	unsub2 := eb.Subscribe(eventbus.ChannelMsgReady, func(message string) { got <- "h2:" + message })
+	unsub2 := eb.Subscribe(eventbus.ChannelMsgAvailable, func(message string) { got <- "h2:" + message })
 	defer unsub2()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -110,7 +110,7 @@ func TestEventBus_Run_DispatchesToSubscribers(t *testing.T) {
 		t.Fatal("Listen did not start in time")
 	}
 
-	md.Trigger(eventbus.ChannelMsgReady, "hello")
+	md.Trigger(eventbus.ChannelMsgAvailable, "hello")
 
 	// expect both handlers to receive it (order not guaranteed)
 	want := map[string]bool{"h1:hello": false, "h2:hello": false}
@@ -141,9 +141,9 @@ func TestEventBus_UnsubscribeStopsDelivery(t *testing.T) {
 
 	got := make(chan string, 2)
 
-	unsub1 := eb.Subscribe(eventbus.ChannelMsgReady, func(message string) { got <- "kept:" + message })
+	unsub1 := eb.Subscribe(eventbus.ChannelMsgAvailable, func(message string) { got <- "kept:" + message })
 	defer unsub1()
-	unsub2 := eb.Subscribe(eventbus.ChannelMsgReady, func(message string) { got <- "removed:" + message })
+	unsub2 := eb.Subscribe(eventbus.ChannelMsgAvailable, func(message string) { got <- "removed:" + message })
 	unsub2() // unsubscribe right away
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -159,7 +159,7 @@ func TestEventBus_UnsubscribeStopsDelivery(t *testing.T) {
 		t.Fatal("Listen did not start in time")
 	}
 
-	md.Trigger(eventbus.ChannelMsgReady, "X")
+	md.Trigger(eventbus.ChannelMsgAvailable, "X")
 
 	// Expect only the kept handler to fire
 	select {

@@ -1,16 +1,16 @@
 package domain
 
 const (
-	MsgReadyEventName = "MessageReady"
+	MsgAvailableEventName = "MessageAvailable"
 )
 
-type MsgReadyEvent struct {
+type MsgAvailableEvent struct {
 	queue string
 }
 
-func NewMsgReadyEvent(queue string) MsgReadyEvent {
-	return MsgReadyEvent{queue}
+func NewMsgAvailableEvent(queue string) MsgAvailableEvent {
+	return MsgAvailableEvent{queue}
 }
 
-func (e MsgReadyEvent) Name() string  { return MsgReadyEventName }
-func (e MsgReadyEvent) Queue() string { return e.queue }
+func (e MsgAvailableEvent) Name() string  { return MsgAvailableEventName }
+func (e MsgAvailableEvent) Queue() string { return e.queue }

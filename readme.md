@@ -29,13 +29,13 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ☐ Distributed tracing support
 - ☐ Document
 - ☐ Compare with alternatives
-- ☐ Improve benchmark (many completed and many in READY status)
+- ☐ More benchmarks
 - ☐ Create admin API and UI (most likely won't do)
 
 ## ✨ Features
 
 - ✅ **Message Prioritization** – High-priority messages are picked first.
-- ✅ **Retries & Backoff** – Failed messages are retried automatically.
+- ✅ **Retries & Backoff** – Lost/NACKed messages are retried automatically.
 - ✅ **Long-polling** – Consumers can efficiently wait until a message comes.
 - ✅ **Atomic Ack + Publish** – Consumers can publish messages atomically with Ack.
 
