@@ -1,0 +1,14 @@
+db:
+  postgres:
+    host: ${env("APP_DB_HOST", "127.0.0.1:5432")}
+    db_name: queue
+    username: user
+    password: pass
+
+queues:
+  test:
+    backoff:
+      shape: [30s, 1m, 2m, 5m]
+      max_attempts: 10
+    processing_timeout: 5m
+    retention_period: ${30*24}h

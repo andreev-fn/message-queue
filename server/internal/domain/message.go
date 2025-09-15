@@ -96,13 +96,13 @@ func (m *Message) Release(clock timeutils.Clock, ed EventDispatcher) error {
 	return nil
 }
 
-func (m *Message) StartProcessing(clock timeutils.Clock) error {
+func (m *Message) StartProcessing(clock timeutils.Clock, timeout time.Duration) error {
 	if m.status != MsgStatusAvailable {
 		return errors.New("message must be in AVAILABLE status")
 	}
 
 	m.setStatus(clock, MsgStatusProcessing)
-	m.timeoutAt = utils.P(clock.Now().Add(5 * time.Minute))
+	m.timeoutAt = utils.P(clock.Now().Add(timeout))
 
 	return nil
 }

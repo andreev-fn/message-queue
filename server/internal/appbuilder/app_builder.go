@@ -2,6 +2,7 @@ package appbuilder
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"server/internal/appbuilder/requestscope"
+	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/eventbus"
 	"server/internal/eventbus/postgres"
@@ -18,14 +20,6 @@ import (
 	"server/internal/usecases"
 	"server/internal/utils/timeutils"
 )
-
-type Config struct {
-	DatabaseHost     string
-	DatabaseUser     string
-	DatabasePassword string
-	DatabaseName     string
-	MaxBatchSize     int
-}
 
 type Overrides struct {
 	Clock timeutils.Clock
@@ -56,7 +50,7 @@ type App struct {
 	Router *http.ServeMux
 }
 
-func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
+func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 	if overrides == nil {
 		overrides = &Overrides{}
 	}
@@ -68,12 +62,16 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 		clock = overrides.Clock
 	}
 
+	if conf.DatabaseType() != config.DBTypePostgres {
+		return nil, errors.New("database type not supported")
+	}
+
 	dbURL := fmt.Sprintf(
 		"postgres://%s:%s@%s/%s",
-		conf.DatabaseUser,
-		conf.DatabasePassword,
-		conf.DatabaseHost,
-		conf.DatabaseName,
+		conf.PostgresConfig().MustValue().Username(),
+		conf.PostgresConfig().MustValue().Password(),
+		conf.PostgresConfig().MustValue().Host(),
+		conf.PostgresConfig().MustValue().DBName(),
 	)
 	db, err := sql.Open("pgx", dbURL)
 	if err != nil {
@@ -88,16 +86,16 @@ func BuildApp(conf *Config, overrides *Overrides) (*App, error) {
 
 	eventBus := eventbus.NewEventBus(logger, clock, postgres.NewPubSubDriver(db))
 
-	redeliveryService := domain.NewRedeliveryService(clock)
+	redeliveryService := domain.NewRedeliveryService(clock, config.NewBackoffConfigProvider(conf))
 
 	requestScopeFactory := NewRequestScopeFactory(eventBus)
 
-	publishMessages := usecases.NewPublishMessages(logger, clock, db, msgRepo, requestScopeFactory, conf.MaxBatchSize)
-	releaseMessages := usecases.NewReleaseMessages(logger, clock, db, msgRepo, requestScopeFactory, conf.MaxBatchSize)
-	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus, conf.MaxBatchSize)
-	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory, conf.MaxBatchSize)
-	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, redeliveryService, conf.MaxBatchSize)
-	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo, conf.MaxBatchSize)
+	publishMessages := usecases.NewPublishMessages(logger, clock, db, msgRepo, requestScopeFactory, conf)
+	releaseMessages := usecases.NewReleaseMessages(logger, clock, db, msgRepo, requestScopeFactory, conf)
+	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus, conf)
+	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory, conf)
+	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, redeliveryService, conf)
+	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo, conf)
 	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
 	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo, redeliveryService)
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)

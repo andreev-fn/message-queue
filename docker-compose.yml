@@ -15,10 +15,9 @@ services:
       context: server
     depends_on:
       - database
+    volumes:
+      - ./server_config.yaml:/data/config.yaml
     environment:
-      APP_DB_USER: user
-      APP_DB_PASS: pass
-      APP_DB_HOST: database:5432
-      APP_DB_NAME: queue
+      APP_DB_HOST: database
     ports:
       - "127.0.0.1:8060:8060"

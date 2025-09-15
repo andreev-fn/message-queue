@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/storage"
 	"server/internal/utils/dbutils"
@@ -24,7 +25,7 @@ type NackMessages struct {
 	db           *sql.DB
 	msgRepo      *storage.MessageRepository
 	redeliverSvc *domain.RedeliveryService
-	maxBatchSize int
+	conf         *config.Config
 }
 
 func NewNackMessages(
@@ -33,7 +34,7 @@ func NewNackMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	redeliverSvc *domain.RedeliveryService,
-	maxBatchSize int,
+	conf *config.Config,
 ) *NackMessages {
 	return &NackMessages{
 		clock:        clock,
@@ -41,12 +42,12 @@ func NewNackMessages(
 		db:           db,
 		msgRepo:      msgRepo,
 		redeliverSvc: redeliverSvc,
-		maxBatchSize: maxBatchSize,
+		conf:         conf,
 	}
 }
 
 func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
-	if len(nacks) > uc.maxBatchSize {
+	if len(nacks) > uc.conf.BatchSizeLimit() {
 		return errors.New("batch size limit exceeded")
 	}
 

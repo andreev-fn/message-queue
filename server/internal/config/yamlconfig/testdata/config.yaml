@@ -1,0 +1,18 @@
+db:
+  postgres:
+    host: ${env("DB_HOST", "127.0.0.1:5432")}
+    db_name: queue
+    username: user
+    password: ${env("DB_PASS")}
+
+app:
+  batch_size_limit: ${env("BATCH_SIZE_MAX")}
+
+queues:
+  queue1: &default_queue_cfg
+    backoff:
+      shape: [30s, 1m, 2m, 5m]
+      max_attempts: 10
+    processing_timeout: 5m
+    retention_period: ${24*30}h
+  queue2: *default_queue_cfg

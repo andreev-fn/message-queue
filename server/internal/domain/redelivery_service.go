@@ -3,36 +3,54 @@ package domain
 import (
 	"time"
 
+	"server/internal/utils/opt"
 	"server/internal/utils/timeutils"
 )
 
-const maxRetries = 10
-
-type RedeliveryService struct {
-	clock timeutils.Clock
+type BackoffConfig interface {
+	Shape() []time.Duration
+	MaxAttempts() opt.Val[int]
 }
 
-func NewRedeliveryService(clock timeutils.Clock) *RedeliveryService {
-	return &RedeliveryService{clock}
+type BackoffConfigProvider interface {
+	GetConfig(queueName string) (BackoffConfig, error)
+}
+
+type RedeliveryService struct {
+	clock          timeutils.Clock
+	configProvider BackoffConfigProvider
+}
+
+func NewRedeliveryService(
+	clock timeutils.Clock,
+	configProvider BackoffConfigProvider,
+) *RedeliveryService {
+	return &RedeliveryService{
+		clock:          clock,
+		configProvider: configProvider,
+	}
 }
 
 func (eh *RedeliveryService) HandleNack(msg *Message) error {
-	if msg.Retries() >= maxRetries {
+	conf, err := eh.configProvider.GetConfig(msg.Queue())
+	if err != nil {
+		return err
+	}
+
+	if conf.MaxAttempts().IsSet() && msg.Retries() >= conf.MaxAttempts().MustValue() {
 		return msg.MarkUndeliverable(eh.clock)
 	}
 
-	return msg.Delay(eh.clock, eh.getDelayTime(msg.Retries()))
+	duration := getDelayDuration(conf.Shape(), msg.Retries())
+
+	return msg.Delay(eh.clock, eh.clock.Now().Add(duration))
 }
 
-func (eh *RedeliveryService) getDelayTime(retries int) time.Time {
-	if retries < 5 {
-		return eh.clock.Now().Add(2 * time.Minute)
+func getDelayDuration(shape []time.Duration, retries int) time.Duration {
+	for i, dur := range shape {
+		if i == retries {
+			return dur
+		}
 	}
-	if retries < 10 {
-		return eh.clock.Now().Add(10 * time.Minute)
-	}
-	if retries < 50 {
-		return eh.clock.Now().Add(30 * time.Minute)
-	}
-	return eh.clock.Now().Add(3 * time.Hour)
+	return shape[len(shape)-1]
 }

@@ -21,7 +21,7 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 
 	// Arrange
 	msgID := e2eutils.CreateDelayedMsg(t, app, msgQueue, msgPayload)
-	clock.Set(clock.Now().Add(3 * time.Minute))
+	clock.Set(clock.Now().Add(40 * time.Second))
 
 	// Act
 	affected, err := app.ResumeDelayed.Do(context.Background(), 10)
@@ -47,7 +47,7 @@ func TestResumeDelayedBeforeTimeout(t *testing.T) {
 
 	// Arrange
 	msgID := e2eutils.CreateDelayedMsg(t, app, msgQueue, msgPayload)
-	clock.Set(clock.Now().Add(1 * time.Minute))
+	clock.Set(clock.Now().Add(20 * time.Second))
 
 	// Act
 	affected, err := app.ResumeDelayed.Do(context.Background(), 10)

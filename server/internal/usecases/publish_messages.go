@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"server/internal/appbuilder/requestscope"
+	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/storage"
 	"server/internal/utils/dbutils"
@@ -30,7 +31,7 @@ type PublishMessages struct {
 	db           *sql.DB
 	msgRepo      *storage.MessageRepository
 	scopeFactory requestscope.Factory
-	maxBatchSize int
+	conf         *config.Config
 }
 
 func NewPublishMessages(
@@ -39,7 +40,7 @@ func NewPublishMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	scopeFactory requestscope.Factory,
-	maxBatchSize int,
+	conf *config.Config,
 ) *PublishMessages {
 	return &PublishMessages{
 		logger:       logger,
@@ -47,7 +48,7 @@ func NewPublishMessages(
 		db:           db,
 		msgRepo:      msgRepo,
 		scopeFactory: scopeFactory,
-		maxBatchSize: maxBatchSize,
+		conf:         conf,
 	}
 }
 
@@ -56,7 +57,7 @@ func (uc *PublishMessages) Do(
 	messages []NewMessageParams,
 	autoRelease bool,
 ) ([]string, error) {
-	if len(messages) > uc.maxBatchSize {
+	if len(messages) > uc.conf.BatchSizeLimit() {
 		return []string{}, errors.New("batch size limit exceeded")
 	}
 
@@ -71,6 +72,10 @@ func (uc *PublishMessages) Do(
 	result := make([]string, 0, len(messages))
 
 	for _, msg := range messages {
+		if !uc.conf.IsQueueDefined(msg.Queue) {
+			return nil, fmt.Errorf("queue %s not defined", msg.Queue)
+		}
+
 		message, err := domain.NewMessage(uc.clock, uuid.New(), msg.Queue, msg.Payload, msg.Priority, msg.StartAt)
 		if err != nil {
 			return nil, err

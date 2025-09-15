@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	"server/internal/config"
 	"server/internal/eventbus"
 	"server/internal/msgavailability"
 	"server/internal/storage"
@@ -21,12 +22,12 @@ type MessageToConsume struct {
 }
 
 type ConsumeMessages struct {
-	logger       *slog.Logger
-	clock        timeutils.Clock
-	db           *sql.DB
-	msgRepo      *storage.MessageRepository
-	eventBus     *eventbus.EventBus
-	maxBatchSize int
+	logger   *slog.Logger
+	clock    timeutils.Clock
+	db       *sql.DB
+	msgRepo  *storage.MessageRepository
+	eventBus *eventbus.EventBus
+	conf     *config.Config
 }
 
 func NewConsumeMessages(
@@ -35,15 +36,15 @@ func NewConsumeMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	eventBus *eventbus.EventBus,
-	maxBatchSize int,
+	conf *config.Config,
 ) *ConsumeMessages {
 	return &ConsumeMessages{
-		logger:       logger,
-		clock:        clock,
-		db:           db,
-		msgRepo:      msgRepo,
-		eventBus:     eventBus,
-		maxBatchSize: maxBatchSize,
+		logger:   logger,
+		clock:    clock,
+		db:       db,
+		msgRepo:  msgRepo,
+		eventBus: eventBus,
+		conf:     conf,
 	}
 }
 
@@ -53,8 +54,12 @@ func (uc *ConsumeMessages) Do(
 	limit int,
 	poll time.Duration,
 ) ([]MessageToConsume, error) {
-	if limit > uc.maxBatchSize {
+	if limit > uc.conf.BatchSizeLimit() {
 		return []MessageToConsume{}, errors.New("batch size limit exceeded")
+	}
+
+	if !uc.conf.IsQueueDefined(queue) {
+		return nil, fmt.Errorf("queue %s not defined", queue)
 	}
 
 	// fast path first
@@ -100,8 +105,10 @@ func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue string, limit
 		return nil, fmt.Errorf("msgRepo.GetNextAvailableWithLock: %w", err)
 	}
 
+	qConf := uc.conf.QueueConfig(queue)
+
 	for _, message := range messages {
-		if err := message.StartProcessing(uc.clock); err != nil {
+		if err := message.StartProcessing(uc.clock, qConf.ProcessingTimeout()); err != nil {
 			return nil, fmt.Errorf("message.StartProcessing: %w", err)
 		}
 

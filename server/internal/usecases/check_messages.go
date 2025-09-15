@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"server/internal/config"
 	"server/internal/storage"
 	"server/internal/utils"
 )
@@ -25,25 +26,25 @@ type CheckMessages struct {
 	db              *sql.DB
 	msgRepo         *storage.MessageRepository
 	archivedMsgRepo *storage.ArchivedMsgRepository
-	maxBatchSize    int
+	conf            *config.Config
 }
 
 func NewCheckMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	archivedMsgRepo *storage.ArchivedMsgRepository,
-	maxBatchSize int,
+	conf *config.Config,
 ) *CheckMessages {
 	return &CheckMessages{
 		db:              db,
 		msgRepo:         msgRepo,
 		archivedMsgRepo: archivedMsgRepo,
-		maxBatchSize:    maxBatchSize,
+		conf:            conf,
 	}
 }
 
 func (uc *CheckMessages) Do(ctx context.Context, ids []string) ([]CheckMsgResult, error) {
-	if len(ids) > uc.maxBatchSize {
+	if len(ids) > uc.conf.BatchSizeLimit() {
 		return []CheckMsgResult{}, errors.New("batch size limit exceeded")
 	}
 

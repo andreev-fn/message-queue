@@ -8,6 +8,7 @@ import (
 	"log/slog"
 
 	"server/internal/appbuilder/requestscope"
+	"server/internal/config"
 	"server/internal/storage"
 	"server/internal/utils/dbutils"
 	"server/internal/utils/timeutils"
@@ -19,7 +20,7 @@ type ReleaseMessages struct {
 	db           *sql.DB
 	msgRepo      *storage.MessageRepository
 	scopeFactory requestscope.Factory
-	maxBatchSize int
+	conf         *config.Config
 }
 
 func NewReleaseMessages(
@@ -28,7 +29,7 @@ func NewReleaseMessages(
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
 	scopeFactory requestscope.Factory,
-	maxBatchSize int,
+	conf *config.Config,
 ) *ReleaseMessages {
 	return &ReleaseMessages{
 		logger:       logger,
@@ -36,12 +37,12 @@ func NewReleaseMessages(
 		db:           db,
 		msgRepo:      msgRepo,
 		scopeFactory: scopeFactory,
-		maxBatchSize: maxBatchSize,
+		conf:         conf,
 	}
 }
 
 func (uc *ReleaseMessages) Do(ctx context.Context, ids []string) error {
-	if len(ids) > uc.maxBatchSize {
+	if len(ids) > uc.conf.BatchSizeLimit() {
 		return errors.New("batch size limit exceeded")
 	}
 

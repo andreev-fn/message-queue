@@ -1,14 +1,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"slices"
 	"strings"
 
-	"server/cmd/config"
 	"server/internal/appbuilder"
+	"server/internal/config/yamlconfig"
 )
 
 const (
@@ -21,15 +22,26 @@ const (
 func main() {
 	availableCommands := []string{CmdListen, CmdArchiveMessages, CmdExpireProcessing, CmdResumeDelayed}
 
-	if len(os.Args) != 2 || !slices.Contains(availableCommands, os.Args[1]) {
+	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
+
+	var configPath string
+	flagSet.StringVar(&configPath, "c", "config.yaml", "config file path")
+
+	if err := flagSet.Parse(os.Args[1:]); err != nil {
+		log.Fatal(err)
+	}
+
+	args := flagSet.Args()
+
+	if len(args) < 1 || !slices.Contains(availableCommands, args[0]) {
 		fmt.Println("Usage: queue <cmd>")
 		fmt.Println("Available commands: " + strings.Join(availableCommands, ", "))
 		return
 	}
 
-	conf, err := config.Parse()
+	conf, err := yamlconfig.Load(configPath)
 	if err != nil {
-		log.Fatalf("config.Parse: %v", err)
+		log.Fatalf("yamlconfig.Parse: %v", err)
 	}
 
 	app, err := appbuilder.BuildApp(conf, nil)
@@ -37,7 +49,7 @@ func main() {
 		log.Fatalf("appbuilder.BuildApp: %v", err)
 	}
 
-	switch os.Args[1] {
+	switch args[0] {
 	case CmdListen:
 		Listen(app)
 	case CmdArchiveMessages:

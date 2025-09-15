@@ -13,5 +13,7 @@ FROM scratch
 
 COPY --from=builder /app /app
 
+WORKDIR /data
+
 ENTRYPOINT ["/app"]
 CMD ["listen"]
