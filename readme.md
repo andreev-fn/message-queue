@@ -6,31 +6,30 @@ A simple, reliable, and modern message queue built on top of PostgreSQL.
 Also serves as a **real-world example of applying Domain-Driven Design (DDD) principles in Go**.
 
 ## TODO
-- ☑ Archival of finalized messages
-- ☑ Message prioritization
-- ☑ Some kind of long-polling for consumers
-- ☑ Atomic Ack + Publish
-- ☑ Permanent nack
-- ☑ Batch operations
-- ☐ Configurable queues (config file)
-- ☐ Dead-letter queues
-- ☐ Add authentication (config file)
-- ☐ Message forwarding
-- ☐ Tries history (and attempt ID)
-- ☐ Configurable retries strategies
-- ☐ Removal of old messages
-- ☐ Metrics
-- ☐ Implement webhooks
-- ☐ Rate-limited queues
-- ☐ Single-process mode
-- ☐ gRPC
-- ☐ ValueObjects for queue name, priority
-- ☐ Decrease priority after some time
-- ☐ Distributed tracing support
-- ☐ Document
-- ☐ Compare with alternatives
-- ☐ More benchmarks
-- ☐ Create admin API and UI (most likely won't do)
+- [x] Archival of finalized messages
+- [x] Message prioritization
+- [x] Some kind of long-polling for consumers
+- [x] Atomic Ack + Publish
+- [x] Permanent nack
+- [x] Batch operations
+- [x] Configurable queues (config file)
+- [ ] Dead-letter queues
+- [ ] Add authentication (config file)
+- [ ] Message forwarding
+- [ ] Tries history (and attempt ID)
+- [ ] Removal of old messages
+- [ ] Metrics
+- [ ] Implement webhooks
+- [ ] Rate-limited queues
+- [ ] Single-process mode
+- [ ] gRPC
+- [ ] ValueObjects for queue name, priority
+- [ ] Decrease priority after some time
+- [ ] Distributed tracing support
+- [ ] Document
+- [ ] Compare with alternatives
+- [ ] More benchmarks
+- [ ] Create admin API and UI (most likely won't do)
 
 ## ✨ Features
 
