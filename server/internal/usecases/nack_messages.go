@@ -20,12 +20,12 @@ type NackParams struct {
 }
 
 type NackMessages struct {
-	clock        timeutils.Clock
-	logger       *slog.Logger
-	db           *sql.DB
-	msgRepo      *storage.MessageRepository
-	redeliverSvc *domain.RedeliveryService
-	conf         *config.Config
+	clock      timeutils.Clock
+	logger     *slog.Logger
+	db         *sql.DB
+	msgRepo    *storage.MessageRepository
+	nackPolicy *domain.NackPolicy
+	conf       *config.Config
 }
 
 func NewNackMessages(
@@ -33,16 +33,16 @@ func NewNackMessages(
 	logger *slog.Logger,
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
-	redeliverSvc *domain.RedeliveryService,
+	nackPolicy *domain.NackPolicy,
 	conf *config.Config,
 ) *NackMessages {
 	return &NackMessages{
-		clock:        clock,
-		logger:       logger,
-		db:           db,
-		msgRepo:      msgRepo,
-		redeliverSvc: redeliverSvc,
-		conf:         conf,
+		clock:      clock,
+		logger:     logger,
+		db:         db,
+		msgRepo:    msgRepo,
+		nackPolicy: nackPolicy,
+		conf:       conf,
 	}
 }
 
@@ -63,11 +63,17 @@ func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
 			return fmt.Errorf("msgRepo.GetByID: %w", err)
 		}
 
-		if nack.Redeliver {
-			if err := uc.redeliverSvc.HandleNack(message); err != nil {
-				return err
+		action, err := uc.nackPolicy.Decide(message, nack.Redeliver)
+		if err != nil {
+			return err
+		}
+
+		switch action.Type {
+		case domain.NackActionDelay:
+			if err := message.Delay(uc.clock, uc.clock.Now().Add(action.DelayDuration)); err != nil {
+				return fmt.Errorf("message.Delay: %w", err)
 			}
-		} else {
+		case domain.NackActionDrop:
 			if err := message.MarkUndeliverable(uc.clock); err != nil {
 				return fmt.Errorf("message.MarkUndeliverable: %w", err)
 			}

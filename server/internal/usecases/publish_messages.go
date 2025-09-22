@@ -72,7 +72,7 @@ func (uc *PublishMessages) Do(
 	result := make([]string, 0, len(messages))
 
 	for _, msg := range messages {
-		if !uc.conf.IsQueueDefined(msg.Queue) {
+		if _, exist := uc.conf.GetQueueConfig(msg.Queue); !exist {
 			return nil, fmt.Errorf("queue %s not defined", msg.Queue)
 		}
 

@@ -39,9 +39,9 @@ func main() {
 		return
 	}
 
-	conf, err := yamlconfig.Load(configPath)
+	conf, err := yamlconfig.LoadFromFile(configPath)
 	if err != nil {
-		log.Fatalf("yamlconfig.Parse: %v", err)
+		log.Fatalf("yamlconfig.LoadFromFile: %v", err)
 	}
 
 	app, err := appbuilder.BuildApp(conf, nil)

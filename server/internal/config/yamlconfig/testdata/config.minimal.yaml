@@ -1,0 +1,9 @@
+db:
+  postgres:
+    host: 127.0.0.1:5432
+    db_name: queue
+    username: user
+    password:
+
+queues:
+  queue1: { processing_timeout: 5m }

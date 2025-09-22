@@ -10,6 +10,7 @@ import (
 
 	"server/internal/appbuilder"
 	"server/internal/config"
+	"server/internal/domain"
 	"server/internal/utils/opt"
 	"server/internal/utils/testutils"
 	"server/internal/utils/timeutils"
@@ -46,23 +47,22 @@ func CreateTestConfig(t *testing.T) *config.Config {
 	)
 	require.NoError(t, err)
 
-	backoffConfig, err := config.NewBackoffConfig(
+	backoffConfig, err := domain.NewBackoffConfig(
 		[]time.Duration{time.Second * 30},
-		opt.Some(10),
+		opt.Some(config.DefaultBackoffMaxAttempts),
 	)
 	require.NoError(t, err)
 
-	queueConfig, err := config.NewQueueConfig(
+	queueConfig, err := domain.NewQueueConfig(
 		opt.Some(backoffConfig),
 		time.Minute*5,
-		opt.Some(time.Hour*24),
 	)
 	require.NoError(t, err)
 
 	conf, err := config.NewConfig(
 		opt.Some(pgConf),
-		opt.None[int](),
-		map[string]*config.QueueConfig{
+		config.DefaultBatchSizeLimit,
+		map[string]*domain.QueueConfig{
 			"test":        queueConfig,
 			"test.result": queueConfig,
 		},

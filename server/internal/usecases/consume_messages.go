@@ -58,10 +58,6 @@ func (uc *ConsumeMessages) Do(
 		return []MessageToConsume{}, errors.New("batch size limit exceeded")
 	}
 
-	if !uc.conf.IsQueueDefined(queue) {
-		return nil, fmt.Errorf("queue %s not defined", queue)
-	}
-
 	// fast path first
 	result, err := uc.takeMessages(ctx, queue, limit)
 	if err != nil {
@@ -94,6 +90,11 @@ func (uc *ConsumeMessages) Do(
 }
 
 func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue string, limit int) ([]MessageToConsume, error) {
+	qConf, exist := uc.conf.GetQueueConfig(queue)
+	if !exist {
+		return nil, fmt.Errorf("queue %s not defined", queue)
+	}
+
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -104,8 +105,6 @@ func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue string, limit
 	if err != nil {
 		return nil, fmt.Errorf("msgRepo.GetNextAvailableWithLock: %w", err)
 	}
-
-	qConf := uc.conf.QueueConfig(queue)
 
 	for _, message := range messages {
 		if err := message.StartProcessing(uc.clock, qConf.ProcessingTimeout()); err != nil {

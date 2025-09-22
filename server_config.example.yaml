@@ -11,4 +11,3 @@ queues:
       shape: [30s, 1m, 2m, 5m]
       max_attempts: 10
     processing_timeout: 5m
-    retention_period: ${30*24}h

@@ -28,15 +28,15 @@ type PostgresConfig struct {
 type QueueConfig struct {
 	Backoff           *BackoffConfig `yaml:"backoff"`
 	ProcessingTimeout time.Duration  `yaml:"processing_timeout"`
-	RetentionPeriod   *time.Duration `yaml:"retention_period"`
 }
 
 type BackoffConfig struct {
+	Enabled     *bool           `yaml:"enabled"`
 	Shape       []time.Duration `yaml:"shape"`
-	MaxAttempts *int            `yaml:"max_attempts"` // nil => no maximum
+	MaxAttempts *OptionalLimit  `yaml:"max_attempts"`
 }
 
-func ReadConfigDTO(r io.Reader) (*ConfigDTO, error) {
+func NewFromReader(r io.Reader) (*ConfigDTO, error) {
 	var root yaml.Node
 	if err := yaml.NewDecoder(r).Decode(&root); err != nil {
 		return nil, fmt.Errorf("dec.Decode: %w", err)

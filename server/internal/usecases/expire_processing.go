@@ -13,11 +13,11 @@ import (
 )
 
 type ExpireProcessing struct {
-	clock        timeutils.Clock
-	logger       *slog.Logger
-	db           *sql.DB
-	msgRepo      *storage.MessageRepository
-	redeliverSvc *domain.RedeliveryService
+	clock      timeutils.Clock
+	logger     *slog.Logger
+	db         *sql.DB
+	msgRepo    *storage.MessageRepository
+	nackPolicy *domain.NackPolicy
 }
 
 func NewExpireProcessing(
@@ -25,14 +25,14 @@ func NewExpireProcessing(
 	logger *slog.Logger,
 	db *sql.DB,
 	msgRepo *storage.MessageRepository,
-	redeliverSvc *domain.RedeliveryService,
+	nackPolicy *domain.NackPolicy,
 ) *ExpireProcessing {
 	return &ExpireProcessing{
-		clock:        clock,
-		logger:       logger,
-		db:           db,
-		msgRepo:      msgRepo,
-		redeliverSvc: redeliverSvc,
+		clock:      clock,
+		logger:     logger,
+		db:         db,
+		msgRepo:    msgRepo,
+		nackPolicy: nackPolicy,
 	}
 }
 
@@ -49,8 +49,20 @@ func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
 	for _, message := range messages {
-		if err := uc.redeliverSvc.HandleNack(message); err != nil {
+		action, err := uc.nackPolicy.Decide(message, true)
+		if err != nil {
 			return 0, err
+		}
+
+		switch action.Type {
+		case domain.NackActionDelay:
+			if err := message.Delay(uc.clock, uc.clock.Now().Add(action.DelayDuration)); err != nil {
+				return 0, fmt.Errorf("message.Delay: %w", err)
+			}
+		case domain.NackActionDrop:
+			if err := message.MarkUndeliverable(uc.clock); err != nil {
+				return 0, fmt.Errorf("message.MarkUndeliverable: %w", err)
+			}
 		}
 
 		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {

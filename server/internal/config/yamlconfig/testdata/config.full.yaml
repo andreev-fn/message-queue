@@ -11,8 +11,8 @@ app:
 queues:
   queue1: &default_queue_cfg
     backoff:
+      enabled: true
       shape: [30s, 1m, 2m, 5m]
       max_attempts: 10
-    processing_timeout: 5m
-    retention_period: ${24*30}h
+    processing_timeout: ${5*60}s
   queue2: *default_queue_cfg
