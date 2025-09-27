@@ -3,16 +3,18 @@ package msgavailability
 import (
 	"context"
 	"time"
+
+	"server/internal/domain"
 )
 
 type Poller struct {
-	queue          string
+	queue          domain.QueueName
 	msgAvailableCh chan struct{}
 	pollTimeout    <-chan time.Time
 	timedOut       bool
 }
 
-func NewPoller(queue string, poll time.Duration) *Poller {
+func NewPoller(queue domain.QueueName, poll time.Duration) *Poller {
 	return &Poller{
 		queue:          queue,
 		msgAvailableCh: make(chan struct{}, 1),
@@ -21,7 +23,7 @@ func NewPoller(queue string, poll time.Duration) *Poller {
 }
 
 func (p *Poller) HandleEvent(message string) {
-	if message == p.queue {
+	if message == p.queue.String() {
 		select {
 		case p.msgAvailableCh <- struct{}{}:
 		default:

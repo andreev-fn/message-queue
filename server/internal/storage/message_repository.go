@@ -224,7 +224,7 @@ func (r *MessageRepository) GetByID(
 func (r *MessageRepository) GetNextAvailableWithLock(
 	ctx context.Context,
 	conn dbutils.Querier,
-	queue string,
+	queue domain.QueueName,
 	limit int,
 ) ([]*domain.Message, error) {
 	query := selectAll + `

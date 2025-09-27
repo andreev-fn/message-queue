@@ -18,13 +18,13 @@ type Config struct {
 	databaseType   DBType
 	postgresConfig opt.Val[*PostgresConfig]
 	batchSizeLimit int
-	queues         map[string]*domain.QueueConfig
+	queues         map[domain.QueueName]*domain.QueueConfig
 }
 
 func NewConfig(
 	pgConfig opt.Val[*PostgresConfig],
 	batchSizeLimit int,
-	queues map[string]*domain.QueueConfig,
+	queues map[domain.QueueName]*domain.QueueConfig,
 ) (*Config, error) {
 	if !pgConfig.IsSet() {
 		return nil, fmt.Errorf("postgres config required")
@@ -50,8 +50,8 @@ func (c *Config) DatabaseType() DBType                     { return c.databaseTy
 func (c *Config) PostgresConfig() opt.Val[*PostgresConfig] { return c.postgresConfig }
 func (c *Config) BatchSizeLimit() int                      { return c.batchSizeLimit }
 
-func (c *Config) GetQueueConfig(name string) (*domain.QueueConfig, bool) {
-	conf, ok := c.queues[name]
+func (c *Config) GetQueueConfig(queue domain.QueueName) (*domain.QueueConfig, bool) {
+	conf, ok := c.queues[queue]
 	return conf, ok
 }
 

@@ -21,7 +21,7 @@ type ArchivedMsgDTO struct {
 func ArchivedMsgFromDTO(dto *ArchivedMsgDTO) *ArchivedMsg {
 	return &ArchivedMsg{
 		id:          dto.ID,
-		queue:       dto.Queue,
+		queue:       UnsafeQueueName(dto.Queue),
 		payload:     dto.Payload,
 		createdAt:   dto.CreatedAt,
 		finalizedAt: dto.FinalizedAt,
@@ -34,7 +34,7 @@ func ArchivedMsgFromDTO(dto *ArchivedMsgDTO) *ArchivedMsg {
 func (m *ArchivedMsg) ToDTO() *ArchivedMsgDTO {
 	return &ArchivedMsgDTO{
 		ID:          m.id,
-		Queue:       m.queue,
+		Queue:       m.queue.String(),
 		Payload:     m.payload,
 		CreatedAt:   m.createdAt,
 		FinalizedAt: m.finalizedAt,

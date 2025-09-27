@@ -38,7 +38,7 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, domain.MsgStatusDelivered, archivedMsg.Status())
-	require.Equal(t, msgQueue, archivedMsg.Queue())
+	require.Equal(t, msgQueue, archivedMsg.Queue().String())
 	require.Equal(t, msgPayload, archivedMsg.Payload())
 }
 

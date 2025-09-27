@@ -112,7 +112,7 @@ func (a *CheckMessages) writeSuccess(writer http.ResponseWriter, result []usecas
 	for _, msg := range result {
 		messages = append(messages, map[string]any{
 			"id":           msg.ID,
-			"queue":        msg.Queue,
+			"queue":        msg.Queue.String(),
 			"created_at":   msg.CreatedAt,
 			"finalized_at": msg.FinalizedAt,
 			"status":       msg.Status,

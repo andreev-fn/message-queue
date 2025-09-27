@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"server/internal/config"
+	"server/internal/domain"
 	"server/internal/storage"
 	"server/internal/utils"
 )
 
 type CheckMsgResult struct {
 	ID          string
-	Queue       string
+	Queue       domain.QueueName
 	CreatedAt   time.Time
 	FinalizedAt *time.Time
 	Status      string

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/appbuilder"
+	"server/internal/domain"
 	"server/internal/usecases"
 )
 
@@ -16,7 +17,7 @@ func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, 
 	msgIDs, err := app.PublishMessages.Do(
 		context.Background(),
 		[]usecases.NewMessageParams{{
-			Queue:    queue,
+			Queue:    domain.UnsafeQueueName(queue),
 			Payload:  payload,
 			Priority: priority,
 			StartAt:  nil,
@@ -45,7 +46,7 @@ func CreateProcessingMsg(t *testing.T, app *appbuilder.App, queue string, payloa
 
 	msgID := CreateAvailableMsg(t, app, queue, payload, priority)
 
-	result, err := app.ConsumeMessages.Do(context.Background(), queue, 1, 0)
+	result, err := app.ConsumeMessages.Do(context.Background(), domain.UnsafeQueueName(queue), 1, 0)
 	require.NoError(t, err)
 
 	require.Len(t, result, 1)

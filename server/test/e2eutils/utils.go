@@ -62,9 +62,9 @@ func CreateTestConfig(t *testing.T) *config.Config {
 	conf, err := config.NewConfig(
 		opt.Some(pgConf),
 		config.DefaultBatchSizeLimit,
-		map[string]*domain.QueueConfig{
-			"test":        queueConfig,
-			"test.result": queueConfig,
+		map[domain.QueueName]*domain.QueueConfig{
+			domain.UnsafeQueueName("test"):        queueConfig,
+			domain.UnsafeQueueName("test.result"): queueConfig,
 		},
 	)
 	require.NoError(t, err)

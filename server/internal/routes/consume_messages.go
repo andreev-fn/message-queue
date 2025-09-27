@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"server/internal/domain"
 	"server/internal/usecases"
 )
 
@@ -86,6 +87,12 @@ func (a *ConsumeMessages) handler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
+	queue, err := domain.NewQueueName(requestDTO.Queue)
+	if err != nil {
+		a.writeError(writer, http.StatusBadRequest, fmt.Errorf("domain.NewQueueName: %w", err))
+		return
+	}
+
 	limit := 1
 	if requestDTO.Limit != nil {
 		limit = *requestDTO.Limit
@@ -96,7 +103,7 @@ func (a *ConsumeMessages) handler(writer http.ResponseWriter, request *http.Requ
 		poll = time.Duration(*requestDTO.Poll) * time.Second
 	}
 
-	messages, err := a.useCase.Do(request.Context(), requestDTO.Queue, limit, poll)
+	messages, err := a.useCase.Do(request.Context(), queue, limit, poll)
 	if err != nil {
 		a.writeError(writer, http.StatusInternalServerError, fmt.Errorf("useCase.Do: %w", err))
 		return

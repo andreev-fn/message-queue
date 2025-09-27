@@ -7,7 +7,7 @@ import (
 )
 
 type ConfigProvider interface {
-	GetConfig(queueName string) (*QueueConfig, error)
+	GetConfig(queue QueueName) (*QueueConfig, error)
 }
 
 type NackActionKind int

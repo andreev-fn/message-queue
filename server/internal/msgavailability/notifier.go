@@ -7,13 +7,13 @@ import (
 
 type Notifier struct {
 	eventBus        *eventbus.EventBus
-	availableQueues map[string]struct{}
+	availableQueues map[domain.QueueName]struct{}
 }
 
 func NewNotifier(eventBus *eventbus.EventBus) *Notifier {
 	return &Notifier{
 		eventBus:        eventBus,
-		availableQueues: make(map[string]struct{}),
+		availableQueues: make(map[domain.QueueName]struct{}),
 	}
 }
 
@@ -28,7 +28,7 @@ func (h *Notifier) HandleEvent(event domain.Event) {
 
 func (h *Notifier) Flush() error {
 	for queue := range h.availableQueues {
-		if err := h.eventBus.Publish(eventbus.ChannelMsgAvailable, queue); err != nil {
+		if err := h.eventBus.Publish(eventbus.ChannelMsgAvailable, queue.String()); err != nil {
 			return err
 		}
 	}

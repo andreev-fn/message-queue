@@ -16,10 +16,10 @@ func NewDomainProvider(conf *Config) DomainProvider {
 	return DomainProvider{conf}
 }
 
-func (b DomainProvider) GetConfig(queueName string) (*domain.QueueConfig, error) {
-	qConf, exist := b.conf.GetQueueConfig(queueName)
+func (b DomainProvider) GetConfig(queue domain.QueueName) (*domain.QueueConfig, error) {
+	qConf, exist := b.conf.GetQueueConfig(queue)
 	if !exist {
-		return nil, fmt.Errorf("queue %s not defined", queueName)
+		return nil, fmt.Errorf("queue %s not defined", queue.String())
 	}
 
 	return qConf, nil

@@ -26,7 +26,7 @@ type MessageDTO struct {
 func FromDTO(dto *MessageDTO) *Message {
 	return &Message{
 		id:              dto.ID,
-		queue:           dto.Queue,
+		queue:           UnsafeQueueName(dto.Queue),
 		payload:         dto.Payload,
 		createdAt:       dto.CreatedAt,
 		finalizedAt:     dto.FinalizedAt,
@@ -44,7 +44,7 @@ func FromDTO(dto *MessageDTO) *Message {
 func (m *Message) ToDTO() *MessageDTO {
 	return &MessageDTO{
 		ID:              m.id,
-		Queue:           m.queue,
+		Queue:           m.queue.String(),
 		Payload:         m.payload,
 		CreatedAt:       m.createdAt,
 		FinalizedAt:     m.finalizedAt,

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"server/internal/config"
+	"server/internal/domain"
 	"server/internal/eventbus"
 	"server/internal/msgavailability"
 	"server/internal/storage"
@@ -50,7 +51,7 @@ func NewConsumeMessages(
 
 func (uc *ConsumeMessages) Do(
 	ctx context.Context,
-	queue string,
+	queue domain.QueueName,
 	limit int,
 	poll time.Duration,
 ) ([]MessageToConsume, error) {
@@ -89,7 +90,7 @@ func (uc *ConsumeMessages) Do(
 	}
 }
 
-func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue string, limit int) ([]MessageToConsume, error) {
+func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue domain.QueueName, limit int) ([]MessageToConsume, error) {
 	qConf, exist := uc.conf.GetQueueConfig(queue)
 	if !exist {
 		return nil, fmt.Errorf("queue %s not defined", queue)

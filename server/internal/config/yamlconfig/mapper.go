@@ -27,11 +27,16 @@ func MapToAppConfig(dto *ConfigDTO) (*config.Config, error) {
 		postgresConfig = opt.Some(tmp)
 	}
 
-	queues := make(map[string]*domain.QueueConfig, len(dto.Queues))
-	for qName, qConf := range dto.Queues {
+	queues := make(map[domain.QueueName]*domain.QueueConfig, len(dto.Queues))
+	for qNameStr, qConf := range dto.Queues {
+		qName, err := domain.NewQueueName(qNameStr)
+		if err != nil {
+			return nil, fmt.Errorf("domain.NewQueueName: %w", err)
+		}
+
 		backoffConfig, err := mapBackoffConfig(qConf.Backoff)
 		if err != nil {
-			return nil, fmt.Errorf("queue %s: %w", qName, err)
+			return nil, fmt.Errorf("queue %s: %w", qNameStr, err)
 		}
 
 		queues[qName], err = domain.NewQueueConfig(
@@ -39,7 +44,7 @@ func MapToAppConfig(dto *ConfigDTO) (*config.Config, error) {
 			qConf.ProcessingTimeout,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("queue %s: domain.NewQueueConfig: %w", qName, err)
+			return nil, fmt.Errorf("queue %s: domain.NewQueueConfig: %w", qNameStr, err)
 		}
 	}
 

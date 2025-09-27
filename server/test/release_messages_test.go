@@ -54,7 +54,7 @@ func TestReleaseMessage(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, msgQueue, message.Queue())
+	require.Equal(t, msgQueue, message.Queue().String())
 	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, msgPriority, message.Priority())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())

@@ -10,7 +10,7 @@ import (
 
 type ArchivedMsg struct {
 	id          uuid.UUID
-	queue       string
+	queue       QueueName
 	payload     string
 	createdAt   time.Time
 	finalizedAt time.Time
@@ -42,7 +42,7 @@ func NewArchivedMsg(msg *Message) (*ArchivedMsg, error) {
 }
 
 func (m *ArchivedMsg) ID() uuid.UUID          { return m.id }
-func (m *ArchivedMsg) Queue() string          { return m.queue }
+func (m *ArchivedMsg) Queue() QueueName       { return m.queue }
 func (m *ArchivedMsg) Payload() string        { return m.payload }
 func (m *ArchivedMsg) CreatedAt() time.Time   { return m.createdAt }
 func (m *ArchivedMsg) FinalizedAt() time.Time { return m.finalizedAt }

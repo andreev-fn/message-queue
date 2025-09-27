@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/config"
+	"server/internal/domain"
 )
 
 func TestLoadFromFile_full(t *testing.T) {
@@ -30,7 +31,7 @@ func TestLoadFromFile_full(t *testing.T) {
 
 	// Queues
 	for _, qName := range []string{"queue1", "queue2"} {
-		q, exist := cfg.GetQueueConfig(qName)
+		q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName(qName))
 		require.True(t, exist)
 
 		// Backoff
@@ -66,7 +67,7 @@ func TestLoadFromFile_minimal(t *testing.T) {
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
-	q, exist := cfg.GetQueueConfig("queue1")
+	q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
 	require.True(t, exist)
 
 	// Backoff
@@ -98,7 +99,7 @@ func TestLoadFromFile_disabled(t *testing.T) {
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
-	q, exist := cfg.GetQueueConfig("queue1")
+	q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
 	require.True(t, exist)
 
 	// Backoff
@@ -125,7 +126,7 @@ func TestLoadFromFile_custom(t *testing.T) {
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
-	q, exist := cfg.GetQueueConfig("queue1")
+	q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
 	require.True(t, exist)
 
 	// Backoff

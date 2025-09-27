@@ -60,7 +60,7 @@ func TestCreateMessage(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO[0])
 	require.NoError(t, err)
 
-	require.Equal(t, msgQueue, message.Queue())
+	require.Equal(t, msgQueue, message.Queue().String())
 	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusPrepared, message.Status())
@@ -114,7 +114,7 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO[0])
 	require.NoError(t, err)
 
-	require.Equal(t, msgQueue, message.Queue())
+	require.Equal(t, msgQueue, message.Queue().String())
 	require.Equal(t, msgPayload, message.Payload())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusAvailable, message.Status())

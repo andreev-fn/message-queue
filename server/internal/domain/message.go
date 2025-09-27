@@ -23,7 +23,7 @@ const (
 
 type Message struct {
 	id              uuid.UUID
-	queue           string
+	queue           QueueName
 	payload         string
 	createdAt       time.Time
 	finalizedAt     *time.Time
@@ -41,7 +41,7 @@ type Message struct {
 func NewMessage(
 	clock timeutils.Clock,
 	id uuid.UUID,
-	queue string,
+	queue QueueName,
 	payload string,
 	priority int,
 	startAt *time.Time,
@@ -67,7 +67,7 @@ func NewMessage(
 }
 
 func (m *Message) ID() uuid.UUID         { return m.id }
-func (m *Message) Queue() string         { return m.queue }
+func (m *Message) Queue() QueueName      { return m.queue }
 func (m *Message) Payload() string       { return m.payload }
 func (m *Message) CreatedAt() time.Time  { return m.createdAt }
 func (m *Message) Status() MessageStatus { return m.status }

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"server/internal/domain"
 	"server/internal/usecases"
 )
 
@@ -110,8 +111,15 @@ func (a *PublishMessages) handler(writer http.ResponseWriter, request *http.Requ
 		if param.Priority != nil {
 			priority = *param.Priority
 		}
+
+		queue, err := domain.NewQueueName(param.Queue)
+		if err != nil {
+			a.writeError(writer, http.StatusBadRequest, fmt.Errorf("domain.NewQueueName: %w", err))
+			return
+		}
+
 		newMessages = append(newMessages, usecases.NewMessageParams{
-			Queue:    param.Queue,
+			Queue:    queue,
 			Payload:  param.Payload,
 			Priority: priority,
 			StartAt:  param.parsedStartAt,

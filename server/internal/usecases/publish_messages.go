@@ -19,7 +19,7 @@ import (
 )
 
 type NewMessageParams struct {
-	Queue    string
+	Queue    domain.QueueName
 	Payload  string
 	Priority int
 	StartAt  *time.Time

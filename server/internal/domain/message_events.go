@@ -5,12 +5,12 @@ const (
 )
 
 type MsgAvailableEvent struct {
-	queue string
+	queue QueueName
 }
 
-func NewMsgAvailableEvent(queue string) MsgAvailableEvent {
+func NewMsgAvailableEvent(queue QueueName) MsgAvailableEvent {
 	return MsgAvailableEvent{queue}
 }
 
-func (e MsgAvailableEvent) Name() string  { return MsgAvailableEventName }
-func (e MsgAvailableEvent) Queue() string { return e.queue }
+func (e MsgAvailableEvent) Name() string     { return MsgAvailableEventName }
+func (e MsgAvailableEvent) Queue() QueueName { return e.queue }
