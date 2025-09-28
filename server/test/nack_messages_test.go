@@ -44,7 +44,7 @@ func TestNackMessages(t *testing.T) {
 	app.Router.ServeHTTP(resp, req)
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
+	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
 	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
@@ -91,7 +91,7 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 	app.Router.ServeHTTP(resp, req)
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
+	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
 	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)

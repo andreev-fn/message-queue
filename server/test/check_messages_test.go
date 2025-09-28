@@ -40,7 +40,7 @@ func TestCheckExistingMessage(t *testing.T) {
 	app.Router.ServeHTTP(resp, req)
 
 	// Assert
-	require.Equal(t, http.StatusOK, resp.Result().StatusCode)
+	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
 	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
@@ -89,7 +89,7 @@ func TestCheckNonExistentMessage(t *testing.T) {
 	app.Router.ServeHTTP(resp, req)
 
 	// Assert
-	require.Equal(t, http.StatusInternalServerError, resp.Result().StatusCode)
+	require.Equal(t, http.StatusInternalServerError, resp.Code, resp.Body.String())
 
 	var respWrapper e2eutils.ResponseWrapper
 	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
