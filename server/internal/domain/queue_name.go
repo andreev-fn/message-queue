@@ -20,8 +20,8 @@ func NewQueueName(name string) (QueueName, error) {
 		}
 
 		for _, c := range part {
-			if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z') {
-				return QueueName{}, errors.New("queue name can only contain alphanumeric characters")
+			if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c == '_') {
+				return QueueName{}, errors.New("queue name can only contain alphanumeric characters and '_'")
 			}
 		}
 	}

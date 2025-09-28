@@ -17,6 +17,7 @@ func TestNewQueueName_Valid(t *testing.T) {
 		{name: "three segments", in: "abc.def.ghi"},
 		{name: "mixed segments", in: "a.3"},
 		{name: "all numbers", in: "1.2.3"},
+		{name: "underscore allowed", in: "a_b"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -39,7 +40,6 @@ func TestNewQueueName_Invalid(t *testing.T) {
 		{name: "trailing dot empty part", in: "a."},
 		{name: "uppercase not allowed", in: "Abc"},
 		{name: "dash not allowed", in: "a-b"},
-		{name: "underscore not allowed", in: "a_b"},
 		{name: "space not allowed", in: "a b"},
 	}
 	for _, tc := range cases {
