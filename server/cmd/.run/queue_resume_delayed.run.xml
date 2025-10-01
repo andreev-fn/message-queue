@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="queue_resume_delayed" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="message-queue" />
-    <working_directory value="$PROJECT_DIR$/server" />
+    <working_directory value="$PROJECT_DIR$" />
     <parameters value="resume-delayed" />
     <kind value="PACKAGE" />
     <package value="server/cmd" />

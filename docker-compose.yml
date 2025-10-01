@@ -16,7 +16,7 @@ services:
     depends_on:
       - database
     volumes:
-      - ./server_config.yaml:/data/config.yaml
+      - ./config.yaml:/data/config.yaml
     environment:
       APP_DB_HOST: database
     ports:
