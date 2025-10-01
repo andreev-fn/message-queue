@@ -2,7 +2,9 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"server/internal/domain"
 	"server/internal/utils/dbutils"
@@ -23,19 +25,26 @@ func (r *ArchivedMsgRepository) Upsert(
 ) error {
 	msgDTO := msg.ToDTO()
 
+	historyJSON, err := json.Marshal(msgDTO.History)
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+
 	query := `
 		INSERT INTO archived_messages (
-			id, queue, created_at, finalized_at, status, priority, retries, payload
+			id, queue, created_at, finalized_at, status, priority, retries, generation, payload, history
    		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		ON CONFLICT (id) DO UPDATE SET 
-		    queue = $2, 
-		    created_at = $3, 
-		    finalized_at = $4, 
-		    status = $5, 
-		    priority = $6, 
-		    retries = $7, 
-		    payload = $8
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		ON CONFLICT (id) DO UPDATE SET
+		    queue = $2,
+		    created_at = $3,
+		    finalized_at = $4,
+		    status = $5,
+		    priority = $6,
+		    retries = $7,
+		    generation = $8,
+		    payload = $9,
+		    history = $10
     `
 	if _, err := conn.ExecContext(
 		ctx,
@@ -47,7 +56,9 @@ func (r *ArchivedMsgRepository) Upsert(
 		msgDTO.Status,
 		msgDTO.Priority,
 		msgDTO.Retries,
+		msgDTO.Generation,
 		msgDTO.Payload,
+		historyJSON,
 	); err != nil {
 		return err
 	}
@@ -61,7 +72,7 @@ func (r *ArchivedMsgRepository) GetByID(
 	id string,
 ) (*domain.ArchivedMsg, error) {
 	query := `
-		SELECT id, queue, created_at, finalized_at, status, priority, retries, payload
+		SELECT id, queue, created_at, finalized_at, status, priority, retries, generation, payload, history
 		FROM archived_messages
 		WHERE id = $1
 	`
@@ -76,6 +87,7 @@ func (r *ArchivedMsgRepository) GetByID(
 
 	for rows.Next() {
 		var msg domain.ArchivedMsgDTO
+		var historyJSON json.RawMessage
 
 		if err := rows.Scan(
 			&msg.ID,
@@ -85,10 +97,19 @@ func (r *ArchivedMsgRepository) GetByID(
 			&msg.Status,
 			&msg.Priority,
 			&msg.Retries,
+			&msg.Generation,
 			&msg.Payload,
+			&historyJSON,
 		); err != nil {
 			return nil, err
 		}
+
+		var historyDTO []domain.ArchivedChapterDTO
+		if err := json.Unmarshal(historyJSON, &historyDTO); err != nil {
+			return nil, err
+		}
+
+		msg.History = historyDTO
 
 		result = append(result, domain.ArchivedMsgFromDTO(&msg))
 	}

@@ -65,6 +65,7 @@ func CreateTestConfig(t *testing.T) *config.Config {
 		map[domain.QueueName]*domain.QueueConfig{
 			domain.UnsafeQueueName("test"):        queueConfig,
 			domain.UnsafeQueueName("test.result"): queueConfig,
+			domain.UnsafeQueueName("all_results"): queueConfig,
 		},
 	)
 	require.NoError(t, err)
@@ -92,6 +93,9 @@ func CleanupDatabase(t *testing.T, db *sql.DB) {
 		require.NoError(t, err)
 	}
 	if _, err := db.Exec("DELETE FROM message_payloads"); err != nil {
+		require.NoError(t, err)
+	}
+	if _, err := db.Exec("DELETE FROM message_history"); err != nil {
 		require.NoError(t, err)
 	}
 	if _, err := db.Exec("DELETE FROM archived_messages"); err != nil {

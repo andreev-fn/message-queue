@@ -110,14 +110,28 @@ func (a *CheckMessages) writeError(writer http.ResponseWriter, code int, err err
 func (a *CheckMessages) writeSuccess(writer http.ResponseWriter, result []usecases.CheckMsgResult) {
 	messages := make([]any, 0, len(result))
 	for _, msg := range result {
+		history := make([]any, 0, len(msg.History))
+		for _, chapter := range msg.History {
+			history = append(history, map[string]any{
+				"generation":    chapter.Generation,
+				"queue":         chapter.Queue.String(),
+				"redirected_at": chapter.RedirectedAt,
+				"priority":      chapter.Priority,
+				"retries":       chapter.Retries,
+			})
+		}
+
 		messages = append(messages, map[string]any{
 			"id":           msg.ID,
 			"queue":        msg.Queue.String(),
 			"created_at":   msg.CreatedAt,
 			"finalized_at": msg.FinalizedAt,
 			"status":       msg.Status,
+			"priority":     msg.Priority,
 			"retries":      msg.Retries,
+			"generation":   msg.Generation,
 			"payload":      msg.Payload,
+			"history":      history,
 		})
 	}
 

@@ -22,9 +22,11 @@ import (
 
 // batchSizePublish = 1, batchSizeConsume = 10, batchSizeAck = 1
 // 2025/08/23 17:35:48 published 710189 messages (2574.4 t/s), consumed 710066 messages (2576.4 t/s)
+// 2025/09/30 18:58:01 published 728925 messages (2615.4 t/s), consumed 728798 messages (2615.6 t/s)
 
 // batchSizePublish = 100, batchSizeConsume = 100, batchSizeAck = 100
 // 2025/08/23 17:28:31 published 3874300 messages (12579.6 t/s), consumed 1694600 messages (5339.8 t/s)
+// 2025/09/30 19:04:34 published 3883600 messages (12879.7 t/s), consumed 1659300 messages (5599.9 t/s)
 
 const threadsCountW = 24
 const threadsCountR = 32

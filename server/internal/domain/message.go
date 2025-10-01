@@ -33,6 +33,8 @@ type Message struct {
 	timeoutAt       *time.Time
 	priority        int
 	retries         int
+	generation      int
+	history         *MessageHistory
 
 	version int  // for optimistic locking
 	isNew   bool // to distinguish between insert and update
@@ -61,18 +63,22 @@ func NewMessage(
 		timeoutAt:       nil,
 		priority:        priority,
 		retries:         0,
+		generation:      0,
+		history:         newMessageHistory(true),
 		version:         0,
 		isNew:           true,
 	}, nil
 }
 
-func (m *Message) ID() uuid.UUID         { return m.id }
-func (m *Message) Queue() QueueName      { return m.queue }
-func (m *Message) Payload() string       { return m.payload }
-func (m *Message) CreatedAt() time.Time  { return m.createdAt }
-func (m *Message) Status() MessageStatus { return m.status }
-func (m *Message) Priority() int         { return m.priority }
-func (m *Message) Retries() int          { return m.retries }
+func (m *Message) ID() uuid.UUID            { return m.id }
+func (m *Message) Queue() QueueName         { return m.queue }
+func (m *Message) Payload() string          { return m.payload }
+func (m *Message) CreatedAt() time.Time     { return m.createdAt }
+func (m *Message) Status() MessageStatus    { return m.status }
+func (m *Message) Priority() int            { return m.priority }
+func (m *Message) Retries() int             { return m.retries }
+func (m *Message) Generation() int          { return m.generation }
+func (m *Message) History() *MessageHistory { return m.history }
 
 func (m *Message) FinalizedAt() *time.Time {
 	if m.finalizedAt == nil {
@@ -134,6 +140,33 @@ func (m *Message) Resume(clock timeutils.Clock, ed EventDispatcher) error {
 	}
 
 	m.delayedUntil = nil // cleanup after DELAYED status
+
+	m.setStatus(clock, MsgStatusAvailable)
+	ed.Dispatch(NewMsgAvailableEvent(m.queue))
+
+	return nil
+}
+
+func (m *Message) Redirect(
+	clock timeutils.Clock,
+	ed EventDispatcher,
+	destination QueueName,
+) error {
+	if m.queue == destination {
+		return errors.New("redirecting to the same queue is not allowed")
+	}
+
+	if m.status != MsgStatusProcessing {
+		return errors.New("message must be in PROCESSING status")
+	}
+
+	m.history.addChapter(newChapterFromMessage(clock, m))
+
+	m.timeoutAt = nil // cleanup after PROCESSING status
+
+	m.queue = destination
+	m.retries = 0
+	m.generation++
 
 	m.setStatus(clock, MsgStatusAvailable)
 	ed.Dispatch(NewMsgAvailableEvent(m.queue))

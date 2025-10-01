@@ -73,7 +73,7 @@ func (uc *PublishMessages) Do(
 
 	for _, msg := range messages {
 		if _, exist := uc.conf.GetQueueConfig(msg.Queue); !exist {
-			return nil, fmt.Errorf("queue %s not defined", msg.Queue)
+			return nil, fmt.Errorf("queue not defined: %s", msg.Queue)
 		}
 
 		message, err := domain.NewMessage(uc.clock, uuid.New(), msg.Queue, msg.Payload, msg.Priority, msg.StartAt)

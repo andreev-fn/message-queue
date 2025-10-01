@@ -11,6 +11,7 @@ CREATE TABLE messages (
     timeout_at timestamptz NULL,
     priority smallint NOT NULL,
     retries int NOT NULL,
+    generation int NOT NULL,
     version int NOT NULL
 );
 
@@ -25,6 +26,16 @@ CREATE TABLE message_payloads (
     payload text NOT NULL
 );
 
+CREATE TABLE message_history (
+    msg_id uuid NOT NULL,
+    generation int NOT NULL,
+    queue varchar(255) NOT NULL,
+    redirected_at timestamptz NOT NULL,
+    priority smallint NOT NULL,
+    retries int NOT NULL,
+    PRIMARY KEY (msg_id, generation)
+);
+
 CREATE TABLE archived_messages (
     id uuid PRIMARY KEY,
     queue varchar(255) NOT NULL,
@@ -33,5 +44,7 @@ CREATE TABLE archived_messages (
     status message_status NOT NULL,
     priority smallint NOT NULL,
     retries int NOT NULL,
-    payload text NOT NULL
+    generation int NOT NULL,
+    payload text NOT NULL,
+    history jsonb NOT NULL
 );

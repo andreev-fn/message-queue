@@ -13,9 +13,9 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - [x] Permanent nack
 - [x] Batch operations
 - [x] Configurable queues (config file)
+- [x] Message redirection
 - [ ] Dead-letter queues
 - [ ] Add authentication (config file)
-- [ ] Message forwarding
 - [ ] Tries history (and attempt ID)
 - [ ] Removal of old messages
 - [ ] Metrics

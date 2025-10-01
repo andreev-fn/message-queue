@@ -19,6 +19,8 @@ type MessageDTO struct {
 	TimeoutAt       *time.Time
 	Priority        int
 	Retries         int
+	Generation      int
+	History         []*MessageChapterDTO
 	Version         int
 	IsNew           bool
 }
@@ -36,6 +38,8 @@ func FromDTO(dto *MessageDTO) *Message {
 		timeoutAt:       dto.TimeoutAt,
 		priority:        dto.Priority,
 		retries:         dto.Retries,
+		generation:      dto.Generation,
+		history:         historyFromDTO(dto.History),
 		version:         dto.Version,
 		isNew:           dto.IsNew,
 	}
@@ -54,6 +58,8 @@ func (m *Message) ToDTO() *MessageDTO {
 		TimeoutAt:       m.timeoutAt,
 		Priority:        m.priority,
 		Retries:         m.retries,
+		Generation:      m.generation,
+		History:         m.history.toDTO(),
 		Version:         m.version,
 		IsNew:           m.isNew,
 	}

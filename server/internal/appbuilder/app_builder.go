@@ -42,6 +42,7 @@ type App struct {
 	ConsumeMessages  *usecases.ConsumeMessages
 	AckMessages      *usecases.AckMessages
 	NackMessages     *usecases.NackMessages
+	RedirectMessages *usecases.RedirectMessages
 	CheckMessages    *usecases.CheckMessages
 	ArchiveMessages  *usecases.ArchiveMessages
 	ExpireProcessing *usecases.ExpireProcessing
@@ -95,6 +96,7 @@ func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus, conf)
 	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory, conf)
 	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, nackPolicy, conf)
+	redirectMessages := usecases.NewRedirectMessages(clock, logger, db, msgRepo, requestScopeFactory, conf)
 	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo, conf)
 	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
 	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo, nackPolicy)
@@ -106,6 +108,7 @@ func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 	routes.NewConsumeMessages(db, logger, consumeMessages).Mount(mux)
 	routes.NewAckMessages(db, logger, ackMessages).Mount(mux)
 	routes.NewNackMessages(db, logger, nackMessages).Mount(mux)
+	routes.NewRedirectMessages(db, logger, redirectMessages).Mount(mux)
 	routes.NewCheckMessages(db, logger, checkMessages).Mount(mux)
 
 	return &App{
@@ -125,6 +128,7 @@ func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 		ConsumeMessages:  consumeMessages,
 		AckMessages:      ackMessages,
 		NackMessages:     nackMessages,
+		RedirectMessages: redirectMessages,
 		CheckMessages:    checkMessages,
 		ArchiveMessages:  archiveMessages,
 		ExpireProcessing: expireProcessing,

@@ -11,3 +11,5 @@ queues:
       shape: [30s, 1m, 2m, 5m]
       max_attempts: 10
     processing_timeout: 5m
+  test.result: { processing_timeout: 5m }
+  all_results: { processing_timeout: 5m }

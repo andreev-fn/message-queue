@@ -84,3 +84,14 @@ Content-Type: application/json
     "redeliver": false
   }
 ]
+
+### redirect message
+POST http://localhost:8060/messages/redirect
+Content-Type: application/json
+
+[
+  {
+    "id": "c12340ef-61a1-467a-8132-6b9cf00ceb45",
+    "destination": "all_results"
+  }
+]

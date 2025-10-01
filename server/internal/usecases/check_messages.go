@@ -19,8 +19,19 @@ type CheckMsgResult struct {
 	CreatedAt   time.Time
 	FinalizedAt *time.Time
 	Status      string
+	Priority    int
 	Retries     int
+	Generation  int
 	Payload     string
+	History     []CheckMsgChapter
+}
+
+type CheckMsgChapter struct {
+	Generation   int
+	Queue        domain.QueueName
+	RedirectedAt time.Time
+	Priority     int
+	Retries      int
 }
 
 type CheckMessages struct {
@@ -63,12 +74,28 @@ func (uc *CheckMessages) Do(ctx context.Context, ids []string) ([]CheckMsgResult
 }
 
 func (uc *CheckMessages) checkMessage(ctx context.Context, id string) (CheckMsgResult, error) {
-	message, err := uc.msgRepo.GetByID(ctx, uc.db, id)
+	message, err := uc.msgRepo.GetByIDWithHistory(ctx, uc.db, id)
 	if err != nil {
 		if errors.Is(err, storage.ErrMsgNotFound) {
 			return uc.checkArchived(ctx, id)
 		}
 		return CheckMsgResult{}, fmt.Errorf("msgRepo.GetByID: %w", err)
+	}
+
+	chapters, loaded := message.History().Chapters()
+	if !loaded {
+		return CheckMsgResult{}, errors.New("logic error: message history must be loaded")
+	}
+
+	mappedChapters := make([]CheckMsgChapter, 0, len(chapters))
+	for _, chapter := range chapters {
+		mappedChapters = append(mappedChapters, CheckMsgChapter{
+			Generation:   chapter.Generation(),
+			Queue:        chapter.Queue(),
+			RedirectedAt: chapter.RedirectedAt(),
+			Priority:     chapter.Priority(),
+			Retries:      chapter.Retries(),
+		})
 	}
 
 	return CheckMsgResult{
@@ -78,7 +105,10 @@ func (uc *CheckMessages) checkMessage(ctx context.Context, id string) (CheckMsgR
 		CreatedAt:   message.CreatedAt(),
 		FinalizedAt: message.FinalizedAt(),
 		Status:      string(message.Status()),
+		Priority:    message.Priority(),
 		Retries:     message.Retries(),
+		Generation:  message.Generation(),
+		History:     mappedChapters,
 	}, nil
 }
 
@@ -88,6 +118,18 @@ func (uc *CheckMessages) checkArchived(ctx context.Context, id string) (CheckMsg
 		return CheckMsgResult{}, fmt.Errorf("archivedMsgRepo.GetByID: %w", err)
 	}
 
+	chapters := archivedMsg.History()
+	mappedChapters := make([]CheckMsgChapter, 0, len(chapters))
+	for _, chapter := range chapters {
+		mappedChapters = append(mappedChapters, CheckMsgChapter{
+			Generation:   chapter.Generation(),
+			Queue:        chapter.Queue(),
+			RedirectedAt: chapter.RedirectedAt(),
+			Priority:     chapter.Priority(),
+			Retries:      chapter.Retries(),
+		})
+	}
+
 	return CheckMsgResult{
 		ID:          archivedMsg.ID().String(),
 		Queue:       archivedMsg.Queue(),
@@ -95,6 +137,9 @@ func (uc *CheckMessages) checkArchived(ctx context.Context, id string) (CheckMsg
 		CreatedAt:   archivedMsg.CreatedAt(),
 		FinalizedAt: utils.P(archivedMsg.FinalizedAt()),
 		Status:      string(archivedMsg.Status()),
+		Priority:    archivedMsg.Priority(),
 		Retries:     archivedMsg.Retries(),
+		Generation:  archivedMsg.Generation(),
+		History:     mappedChapters,
 	}, nil
 }

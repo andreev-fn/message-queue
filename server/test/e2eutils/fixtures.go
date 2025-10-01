@@ -76,3 +76,34 @@ func CreateDeliveredMsg(t *testing.T, app *appbuilder.App, queue string, payload
 
 	return msgID
 }
+
+func CreateAvailableMsgWithHistory(
+	t *testing.T,
+	app *appbuilder.App,
+	historyQueue,
+	queue string,
+	payload string,
+) string {
+	t.Helper()
+
+	msgID := CreateProcessingMsg(t, app, historyQueue, payload, 100)
+
+	err := app.RedirectMessages.Do(context.Background(), []usecases.RedirectParams{
+		{ID: msgID, Destination: domain.UnsafeQueueName(queue)},
+	})
+	require.NoError(t, err)
+
+	return msgID
+}
+
+func CreateArchivedMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
+	t.Helper()
+
+	msgID := CreateDeliveredMsg(t, app, queue, payload)
+
+	affected, err := app.ArchiveMessages.Do(context.Background(), 1)
+	require.NoError(t, err)
+	require.Equal(t, 1, affected)
+
+	return msgID
+}

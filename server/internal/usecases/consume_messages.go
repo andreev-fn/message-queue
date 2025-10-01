@@ -93,7 +93,7 @@ func (uc *ConsumeMessages) Do(
 func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue domain.QueueName, limit int) ([]MessageToConsume, error) {
 	qConf, exist := uc.conf.GetQueueConfig(queue)
 	if !exist {
-		return nil, fmt.Errorf("queue %s not defined", queue)
+		return nil, fmt.Errorf("queue not defined: %s", queue)
 	}
 
 	tx, err := uc.db.BeginTx(ctx, nil)
