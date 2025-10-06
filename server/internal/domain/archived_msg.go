@@ -30,7 +30,7 @@ type ArchivedChapter struct {
 }
 
 func NewArchivedMsg(msg *Message) (*ArchivedMsg, error) {
-	if !slices.Contains([]MessageStatus{MsgStatusDelivered, MsgStatusUndeliverable}, msg.Status()) {
+	if !slices.Contains([]MessageStatus{MsgStatusDelivered, MsgStatusDropped}, msg.Status()) {
 		return nil, errors.New("message status not final")
 	}
 

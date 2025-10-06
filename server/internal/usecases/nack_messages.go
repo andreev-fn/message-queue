@@ -74,8 +74,8 @@ func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
 				return fmt.Errorf("message.Delay: %w", err)
 			}
 		case domain.NackActionDrop:
-			if err := message.MarkUndeliverable(uc.clock); err != nil {
-				return fmt.Errorf("message.MarkUndeliverable: %w", err)
+			if err := message.MarkDropped(uc.clock); err != nil {
+				return fmt.Errorf("message.MarkDropped: %w", err)
 			}
 		}
 

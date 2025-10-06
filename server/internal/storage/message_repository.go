@@ -434,7 +434,7 @@ func (r *MessageRepository) GetFinalizedToArchive(
 		ctx,
 		query,
 		domain.MsgStatusDelivered,
-		domain.MsgStatusUndeliverable,
+		domain.MsgStatusDropped,
 		limit,
 	)
 	if err != nil {

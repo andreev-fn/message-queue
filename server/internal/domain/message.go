@@ -13,12 +13,12 @@ import (
 type MessageStatus string
 
 const (
-	MsgStatusPrepared      MessageStatus = "PREPARED"
-	MsgStatusAvailable     MessageStatus = "AVAILABLE"
-	MsgStatusProcessing    MessageStatus = "PROCESSING"
-	MsgStatusDelayed       MessageStatus = "DELAYED"
-	MsgStatusDelivered     MessageStatus = "DELIVERED"
-	MsgStatusUndeliverable MessageStatus = "UNDELIVERABLE"
+	MsgStatusPrepared   MessageStatus = "PREPARED"
+	MsgStatusAvailable  MessageStatus = "AVAILABLE"
+	MsgStatusProcessing MessageStatus = "PROCESSING"
+	MsgStatusDelayed    MessageStatus = "DELAYED"
+	MsgStatusDelivered  MessageStatus = "DELIVERED"
+	MsgStatusDropped    MessageStatus = "DROPPED"
 )
 
 type Message struct {
@@ -187,14 +187,14 @@ func (m *Message) MarkDelivered(clock timeutils.Clock) error {
 	return nil
 }
 
-func (m *Message) MarkUndeliverable(clock timeutils.Clock) error {
+func (m *Message) MarkDropped(clock timeutils.Clock) error {
 	if m.status != MsgStatusProcessing {
 		return errors.New("message must be in PROCESSING status")
 	}
 
 	m.timeoutAt = nil // cleanup after PROCESSING status
 
-	m.setStatus(clock, MsgStatusUndeliverable)
+	m.setStatus(clock, MsgStatusDropped)
 	m.finalizedAt = utils.P(clock.Now())
 
 	return nil

@@ -104,5 +104,5 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
-	require.Equal(t, domain.MsgStatusUndeliverable, message.Status())
+	require.Equal(t, domain.MsgStatusDropped, message.Status())
 }

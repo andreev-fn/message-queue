@@ -60,8 +60,8 @@ func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
 				return 0, fmt.Errorf("message.Delay: %w", err)
 			}
 		case domain.NackActionDrop:
-			if err := message.MarkUndeliverable(uc.clock); err != nil {
-				return 0, fmt.Errorf("message.MarkUndeliverable: %w", err)
+			if err := message.MarkDropped(uc.clock); err != nil {
+				return 0, fmt.Errorf("message.MarkDropped: %w", err)
 			}
 		}
 
