@@ -97,9 +97,7 @@ func (a *ReleaseMessages) writeError(writer http.ResponseWriter, code int, err e
 	writer.WriteHeader(code)
 
 	err = json.NewEncoder(writer).Encode(map[string]any{
-		"success": false,
-		"result":  nil,
-		"error":   err.Error(),
+		"error": err.Error(),
 	})
 	if err != nil {
 		a.logger.Error("json encode of error response failed", "error", err)
@@ -108,9 +106,7 @@ func (a *ReleaseMessages) writeError(writer http.ResponseWriter, code int, err e
 
 func (a *ReleaseMessages) writeSuccess(writer http.ResponseWriter) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
-		"success": true,
-		"result":  nil,
-		"error":   nil,
+		"ok": true,
 	})
 	if err != nil {
 		a.logger.Error("json encode of success response failed", "error", err)

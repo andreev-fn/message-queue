@@ -43,16 +43,8 @@ func TestCreateMessage(t *testing.T) {
 	// Assert response
 	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
-	require.NoError(t, err)
-
-	require.True(t, respWrapper.Success)
-	require.NotNil(t, respWrapper.Result)
-	require.Nil(t, respWrapper.Error)
-
 	var respDTO []string
-	err = json.Unmarshal(*respWrapper.Result, &respDTO)
+	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 	require.Len(t, respDTO, 1)
 
@@ -97,16 +89,8 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	// Assert response
 	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
-	require.NoError(t, err)
-
-	require.True(t, respWrapper.Success)
-	require.NotNil(t, respWrapper.Result)
-	require.Nil(t, respWrapper.Error)
-
 	var respDTO []string
-	err = json.Unmarshal(*respWrapper.Result, &respDTO)
+	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 	require.Len(t, respDTO, 1)
 

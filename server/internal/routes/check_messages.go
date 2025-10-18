@@ -98,9 +98,7 @@ func (a *CheckMessages) writeError(writer http.ResponseWriter, code int, err err
 	writer.WriteHeader(code)
 
 	err = json.NewEncoder(writer).Encode(map[string]any{
-		"success": false,
-		"result":  nil,
-		"error":   err.Error(),
+		"error": err.Error(),
 	})
 	if err != nil {
 		a.logger.Error("json encode of error response failed", "error", err)
@@ -109,8 +107,10 @@ func (a *CheckMessages) writeError(writer http.ResponseWriter, code int, err err
 
 func (a *CheckMessages) writeSuccess(writer http.ResponseWriter, result []usecases.CheckMsgResult) {
 	messages := make([]any, 0, len(result))
+
 	for _, msg := range result {
 		history := make([]any, 0, len(msg.History))
+
 		for _, chapter := range msg.History {
 			history = append(history, map[string]any{
 				"generation":    chapter.Generation,
@@ -135,11 +135,7 @@ func (a *CheckMessages) writeSuccess(writer http.ResponseWriter, result []usecas
 		})
 	}
 
-	err := json.NewEncoder(writer).Encode(map[string]any{
-		"success": true,
-		"result":  messages,
-		"error":   nil,
-	})
+	err := json.NewEncoder(writer).Encode(messages)
 	if err != nil {
 		a.logger.Error("json encode of success response failed", "error", err)
 	}

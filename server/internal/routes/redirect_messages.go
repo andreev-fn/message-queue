@@ -122,9 +122,7 @@ func (a *RedirectMessages) writeError(writer http.ResponseWriter, code int, err 
 	writer.WriteHeader(code)
 
 	err = json.NewEncoder(writer).Encode(map[string]any{
-		"success": false,
-		"result":  nil,
-		"error":   err.Error(),
+		"error": err.Error(),
 	})
 	if err != nil {
 		a.logger.Error("json encode of error response failed", "error", err)
@@ -133,8 +131,7 @@ func (a *RedirectMessages) writeError(writer http.ResponseWriter, code int, err 
 
 func (a *RedirectMessages) writeSuccess(writer http.ResponseWriter) {
 	err := json.NewEncoder(writer).Encode(map[string]any{
-		"success": true,
-		"error":   nil,
+		"ok": true,
 	})
 	if err != nil {
 		a.logger.Error("json encode of success response failed", "error", err)

@@ -120,9 +120,7 @@ func (a *ConsumeMessages) writeError(writer http.ResponseWriter, code int, err e
 	writer.WriteHeader(code)
 
 	err = json.NewEncoder(writer).Encode(map[string]any{
-		"success": false,
-		"result":  nil,
-		"error":   err.Error(),
+		"error": err.Error(),
 	})
 	if err != nil {
 		a.logger.Error("json encode of error response failed", "error", err)
@@ -139,11 +137,7 @@ func (a *ConsumeMessages) writeSuccess(writer http.ResponseWriter, messages []us
 		})
 	}
 
-	err := json.NewEncoder(writer).Encode(map[string]any{
-		"success": true,
-		"result":  result,
-		"error":   nil,
-	})
+	err := json.NewEncoder(writer).Encode(result)
 	if err != nil {
 		a.logger.Error("json encode of success response failed", "error", err)
 	}

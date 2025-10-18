@@ -54,24 +54,16 @@ func TestConsumeMessages(t *testing.T) {
 	// Assert response
 	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
-	require.NoError(t, err)
-
-	require.True(t, respWrapper.Success)
-	require.NotNil(t, respWrapper.Result)
-	require.Nil(t, respWrapper.Error)
-
-	var results []struct {
+	var respDTO []struct {
 		ID      string `json:"id"`
 		Payload string `json:"payload"`
 	}
-	err = json.Unmarshal(*respWrapper.Result, &results)
+	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 
-	require.Len(t, results, 1)
-	require.Equal(t, msg2ID, results[0].ID)
-	require.Equal(t, msg2Payload, results[0].Payload)
+	require.Len(t, respDTO, 1)
+	require.Equal(t, msg2ID, respDTO[0].ID)
+	require.Equal(t, msg2Payload, respDTO[0].Payload)
 
 	// Assert messages in DB
 	takenMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msg2ID)
@@ -109,17 +101,9 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 	// Assert
 	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
+	var respDTO []any
+	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 
-	require.True(t, respWrapper.Success)
-	require.NotNil(t, respWrapper.Result)
-	require.Nil(t, respWrapper.Error)
-
-	var results []any
-	err = json.Unmarshal(*respWrapper.Result, &results)
-	require.NoError(t, err)
-
-	require.Empty(t, results, "Expected empty result list for empty queue")
+	require.Empty(t, respDTO)
 }

@@ -2,7 +2,6 @@ package e2eutils
 
 import (
 	"database/sql"
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -16,10 +15,10 @@ import (
 	"server/internal/utils/timeutils"
 )
 
-type ResponseWrapper struct {
-	Success bool             `json:"success"`
-	Result  *json.RawMessage `json:"result"`
-	Error   *string          `json:"error"`
+const OkResponseJSON = `{"ok":true}`
+
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
 
 func Prepare(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {

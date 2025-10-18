@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
@@ -50,14 +51,7 @@ func TestRedirectMessages(t *testing.T) {
 
 	// Assert response
 	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
-	require.NoError(t, err)
-
-	require.True(t, respWrapper.Success)
-	require.Nil(t, respWrapper.Result)
-	require.Nil(t, respWrapper.Error)
+	assert.JSONEq(t, e2eutils.OkResponseJSON, resp.Body.String())
 
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByIDWithHistory(context.Background(), app.DB, msgID)
@@ -107,14 +101,11 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 	// Assert response
 	require.Equal(t, http.StatusInternalServerError, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
+	var respDTO e2eutils.ErrorResponse
+	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 
-	require.False(t, respWrapper.Success)
-	require.Nil(t, respWrapper.Result)
-	require.NotNil(t, respWrapper.Error)
-	require.Contains(t, *respWrapper.Error, "queue not defined")
+	require.Contains(t, respDTO.Error, "queue not defined")
 }
 
 func TestRedirectUnknownMessage(t *testing.T) {
@@ -141,12 +132,9 @@ func TestRedirectUnknownMessage(t *testing.T) {
 	// Assert
 	require.Equal(t, http.StatusInternalServerError, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
+	var respDTO e2eutils.ErrorResponse
+	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 
-	require.False(t, respWrapper.Success)
-	require.Nil(t, respWrapper.Result)
-	require.NotNil(t, respWrapper.Error)
-	require.Contains(t, *respWrapper.Error, "message not found")
+	require.Contains(t, respDTO.Error, "message not found")
 }

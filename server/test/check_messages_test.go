@@ -46,14 +46,6 @@ func TestCheckExistingMessage(t *testing.T) {
 	// Assert
 	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
-	require.NoError(t, err)
-
-	require.True(t, respWrapper.Success)
-	require.NotNil(t, respWrapper.Result)
-	require.Nil(t, respWrapper.Error)
-
 	var respDTO []struct {
 		ID          string     `json:"id"`
 		Queue       string     `json:"queue"`
@@ -72,7 +64,7 @@ func TestCheckExistingMessage(t *testing.T) {
 		} `json:"history"`
 		Payload string `json:"payload"`
 	}
-	err = json.Unmarshal(*respWrapper.Result, &respDTO)
+	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 
 	require.Len(t, respDTO, 3)
@@ -138,12 +130,9 @@ func TestCheckNonExistentMessage(t *testing.T) {
 	// Assert
 	require.Equal(t, http.StatusInternalServerError, resp.Code, resp.Body.String())
 
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
+	var responseDTO e2eutils.ErrorResponse
+	err = json.NewDecoder(resp.Body).Decode(&responseDTO)
 	require.NoError(t, err)
 
-	require.False(t, respWrapper.Success)
-	require.Nil(t, respWrapper.Result)
-	require.NotNil(t, respWrapper.Error)
-	require.Contains(t, *respWrapper.Error, "message not found")
+	require.Contains(t, responseDTO.Error, "message not found")
 }

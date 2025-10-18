@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
@@ -41,14 +42,7 @@ func TestReleaseMessage(t *testing.T) {
 
 	// Assert response
 	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-
-	var respWrapper e2eutils.ResponseWrapper
-	err = json.NewDecoder(resp.Body).Decode(&respWrapper)
-	require.NoError(t, err)
-
-	require.True(t, respWrapper.Success)
-	require.Nil(t, respWrapper.Result)
-	require.Nil(t, respWrapper.Error)
+	assert.JSONEq(t, e2eutils.OkResponseJSON, resp.Body.String())
 
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
