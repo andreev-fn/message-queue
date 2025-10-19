@@ -1,21 +1,20 @@
 package test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/internal/utils"
+	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
 
 func TestConsumeMessages(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue = "test"
@@ -36,34 +35,19 @@ func TestConsumeMessages(t *testing.T) {
 	msg3ID := e2eutils.CreateAvailableMsg(t, app, msgQueue, msg3Payload, msg3Priority)
 
 	// Act
-	requestBody := map[string]any{
-		"queue": msgQueue,
-		"limit": 1,
-	}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/consume", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
+	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
+		Queue: msgQueue,
+		Limit: utils.P(1),
+	})
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-
-	var respDTO []struct {
-		ID      string `json:"id"`
-		Payload string `json:"payload"`
-	}
-	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 
 	require.Len(t, respDTO, 1)
-	require.Equal(t, msg2ID, respDTO[0].ID)
-	require.Equal(t, msg2Payload, respDTO[0].Payload)
+	require.Equal(t, httpmodels.ConsumeResponseItem{
+		ID:      msg2ID,
+		Payload: msg2Payload,
+	}, respDTO[0])
 
 	// Assert messages in DB
 	takenMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msg2ID)
@@ -81,28 +65,15 @@ func TestConsumeMessages(t *testing.T) {
 
 func TestConsumeMessagesEmptyQueue(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act
-	requestBody := map[string]any{
-		"queue": "test",
-		"limit": 1,
-	}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/consume", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
+	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
+		Queue: "test",
+		Limit: utils.P(1),
+	})
 
 	// Assert
-	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-
-	var respDTO []any
-	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 
 	require.Empty(t, respDTO)

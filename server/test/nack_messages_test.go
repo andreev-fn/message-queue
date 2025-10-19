@@ -1,22 +1,20 @@
 package test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/internal/utils"
+	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
 
 func TestNackMessages(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test"
@@ -28,25 +26,12 @@ func TestNackMessages(t *testing.T) {
 	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	requestBody := []any{
-		map[string]any{
-			"id": msgID,
-		},
-	}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/nack", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
+	err := client.NackMessages(httpmodels.NackRequest{
+		httpmodels.NackRequestItem{ID: msgID},
+	})
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-	assert.JSONEq(t, e2eutils.OkResponseJSON, resp.Body.String())
+	require.NoError(t, err)
 
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
@@ -56,6 +41,7 @@ func TestNackMessages(t *testing.T) {
 
 func TestNackMessagesNoRedeliver(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test"
@@ -67,26 +53,12 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	requestBody := []any{
-		map[string]any{
-			"id":        msgID,
-			"redeliver": false,
-		},
-	}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/nack", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
+	err := client.NackMessages(httpmodels.NackRequest{
+		httpmodels.NackRequestItem{ID: msgID, Redeliver: utils.P(false)},
+	})
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-	assert.JSONEq(t, e2eutils.OkResponseJSON, resp.Body.String())
+	require.NoError(t, err)
 
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)

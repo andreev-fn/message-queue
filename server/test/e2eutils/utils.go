@@ -13,12 +13,12 @@ import (
 	"server/internal/utils/opt"
 	"server/internal/utils/testutils"
 	"server/internal/utils/timeutils"
+	"server/pkg/httpclient"
 )
 
-const OkResponseJSON = `{"ok":true}`
-
-type ErrorResponse struct {
-	Error string `json:"error"`
+func PrepareHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
+	t.Helper()
+	return httpclient.NewClient("/", NewHTTPTestDoer(app.Router))
 }
 
 func Prepare(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {

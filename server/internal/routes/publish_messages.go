@@ -77,6 +77,8 @@ func (a *PublishMessages) Mount(srv *http.ServeMux) {
 }
 
 func (a *PublishMessages) handler(writer http.ResponseWriter, request *http.Request, autoRelease bool) {
+	writer.Header().Add("Content-Type", "application/json")
+
 	if request.Method != http.MethodPost {
 		a.writeError(writer, http.StatusBadRequest, errors.New("method POST expected"))
 		return

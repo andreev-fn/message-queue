@@ -59,6 +59,8 @@ func (a *ConsumeMessages) Mount(srv *http.ServeMux) {
 }
 
 func (a *ConsumeMessages) handler(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Add("Content-Type", "application/json")
+
 	if request.Method != http.MethodPost {
 		a.writeError(writer, http.StatusBadRequest, errors.New("method POST expected"))
 		return

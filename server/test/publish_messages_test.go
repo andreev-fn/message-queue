@@ -1,21 +1,20 @@
 package test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/internal/utils"
+	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
 
-func TestCreateMessage(t *testing.T) {
+func TestPrepareMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test"
@@ -24,27 +23,14 @@ func TestCreateMessage(t *testing.T) {
 	)
 
 	// Act
-	body, err := json.Marshal([]any{
-		map[string]any{
-			"queue":   msgQueue,
-			"payload": msgPayload,
+	respDTO, err := client.PrepareMessages(httpmodels.PublishRequest{
+		httpmodels.PublishRequestItem{
+			Queue:   msgQueue,
+			Payload: msgPayload,
 		},
 	})
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/prepare", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-
-	var respDTO []string
-	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 	require.Len(t, respDTO, 1)
 
@@ -61,6 +47,7 @@ func TestCreateMessage(t *testing.T) {
 
 func TestPublishMessageWithPriority(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test"
@@ -69,28 +56,15 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	)
 
 	// Act
-	body, err := json.Marshal([]any{
-		map[string]any{
-			"queue":    msgQueue,
-			"payload":  msgPayload,
-			"priority": msgPriority,
+	respDTO, err := client.PublishMessages(httpmodels.PublishRequest{
+		httpmodels.PublishRequestItem{
+			Queue:    msgQueue,
+			Payload:  msgPayload,
+			Priority: utils.P(msgPriority),
 		},
 	})
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/publish", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-
-	var respDTO []string
-	err = json.NewDecoder(resp.Body).Decode(&respDTO)
 	require.NoError(t, err)
 	require.Len(t, respDTO, 1)
 

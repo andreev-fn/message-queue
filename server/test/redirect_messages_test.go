@@ -1,23 +1,20 @@
 package test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
 
 func TestRedirectMessages(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test.result"
@@ -32,26 +29,15 @@ func TestRedirectMessages(t *testing.T) {
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
-	requestBody := []any{
-		map[string]any{
-			"id":          msgID,
-			"destination": destinationQueue,
+	err := client.RedirectMessages(httpmodels.RedirectRequest{
+		httpmodels.RedirectRequestItem{
+			ID:          msgID,
+			Destination: destinationQueue,
 		},
-	}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/redirect", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
+	})
 
 	// Assert response
-	require.Equal(t, http.StatusOK, resp.Code, resp.Body.String())
-	assert.JSONEq(t, e2eutils.OkResponseJSON, resp.Body.String())
+	require.NoError(t, err)
 
 	// Assert the message in DB
 	message, err := app.MsgRepo.GetByIDWithHistory(context.Background(), app.DB, msgID)
@@ -70,6 +56,7 @@ func TestRedirectMessages(t *testing.T) {
 
 func TestRedirectToUnknownQueue(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test.result"
@@ -81,60 +68,29 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
 
 	// Act
-	requestBody := []any{
-		map[string]any{
-			"id":          msgID,
-			"destination": "unknown_queue",
+	err := client.RedirectMessages(httpmodels.RedirectRequest{
+		httpmodels.RedirectRequestItem{
+			ID:          msgID,
+			Destination: "unknown_queue",
 		},
-	}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
+	})
 
-	req, err := http.NewRequest(http.MethodPost, "/messages/redirect", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
-
-	// Assert response
-	require.Equal(t, http.StatusInternalServerError, resp.Code, resp.Body.String())
-
-	var respDTO e2eutils.ErrorResponse
-	err = json.NewDecoder(resp.Body).Decode(&respDTO)
-	require.NoError(t, err)
-
-	require.Contains(t, respDTO.Error, "queue not defined")
+	// Assert
+	require.ErrorContains(t, err, "queue not defined")
 }
 
 func TestRedirectUnknownMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act
-	requestBody := []any{
-		map[string]any{
-			"id":          "d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2",
-			"destination": "all_results",
+	err := client.RedirectMessages(httpmodels.RedirectRequest{
+		httpmodels.RedirectRequestItem{
+			ID:          "d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2",
+			Destination: "all_results",
 		},
-	}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
-
-	req, err := http.NewRequest(http.MethodPost, "/messages/redirect", bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := httptest.NewRecorder()
-	app.Router.ServeHTTP(resp, req)
+	})
 
 	// Assert
-	require.Equal(t, http.StatusInternalServerError, resp.Code, resp.Body.String())
-
-	var respDTO e2eutils.ErrorResponse
-	err = json.NewDecoder(resp.Body).Decode(&respDTO)
-	require.NoError(t, err)
-
-	require.Contains(t, respDTO.Error, "message not found")
+	require.ErrorContains(t, err, "message not found")
 }
