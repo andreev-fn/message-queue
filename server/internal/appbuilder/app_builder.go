@@ -103,13 +103,13 @@ func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()
-	routes.NewPublishMessages(db, logger, publishMessages).Mount(mux)
-	routes.NewReleaseMessages(db, logger, releaseMessages).Mount(mux)
-	routes.NewConsumeMessages(db, logger, consumeMessages).Mount(mux)
-	routes.NewAckMessages(db, logger, ackMessages).Mount(mux)
-	routes.NewNackMessages(db, logger, nackMessages).Mount(mux)
-	routes.NewRedirectMessages(db, logger, redirectMessages).Mount(mux)
-	routes.NewCheckMessages(db, logger, checkMessages).Mount(mux)
+	routes.NewPublishMessages(logger, publishMessages).Mount(mux)
+	routes.NewReleaseMessages(logger, releaseMessages).Mount(mux)
+	routes.NewConsumeMessages(logger, consumeMessages).Mount(mux)
+	routes.NewAckMessages(logger, ackMessages).Mount(mux)
+	routes.NewNackMessages(logger, nackMessages).Mount(mux)
+	routes.NewRedirectMessages(logger, redirectMessages).Mount(mux)
+	routes.NewCheckMessages(logger, checkMessages).Mount(mux)
 
 	return &App{
 		Clock:  clock,
