@@ -1,0 +1,370 @@
+openapi: 3.0.0
+info:
+  title: Message Queue API
+  version: "0.1.0"
+
+servers:
+  - url: http://localhost:8060
+
+paths:
+  /messages/publish:
+    post:
+      operationId: PublishMessages
+      summary: Publish messages to a queue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublishRequest"
+      responses:
+        "200":
+          description: Messages published successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /messages/prepare:
+    post:
+      operationId: PrepareMessages
+      summary: Prepare messages for later release
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublishRequest"
+      responses:
+        "200":
+          description: Messages prepared successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /messages/release:
+    post:
+      operationId: ReleaseMessages
+      summary: Release prepared messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReleaseRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /messages/check:
+    post:
+      operationId: CheckMessages
+      summary: Check status and details of messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckRequest"
+      responses:
+        "200":
+          description: Message details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /messages/consume:
+    post:
+      operationId: ConsumeMessages
+      summary: Consume messages from a queue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumeRequest"
+      responses:
+        "200":
+          description: Messages consumed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumeResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /messages/ack:
+    post:
+      operationId: AckMessages
+      summary: Acknowledge processed messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AckRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /messages/nack:
+    post:
+      operationId: NackMessages
+      summary: Negatively acknowledge messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NackRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /messages/redirect:
+    post:
+      operationId: RedirectMessages
+      summary: Redirect messages to another queue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedirectRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+components:
+  responses:
+    # ----------------------
+    # Shared Responses
+    # ----------------------
+    OkResponse:
+      description: Successful response
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ok]
+            properties:
+              ok:
+                type: boolean
+                example: true
+
+    ErrorResponse:
+      description: Error occurred
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error:
+                type: string
+
+  schemas:
+    # ----------------------
+    # Base types
+    # ----------------------
+    QueueName:
+      type: string
+      description: Must be a valid queue name
+
+    MessageID:
+      type: string
+      description: Must be a valid UUID
+
+    MessageStatus:
+      type: string
+      enum: [ 'PREPARED', 'AVAILABLE', 'PROCESSING', 'DELAYED', 'DELIVERED', 'DROPPED' ]
+
+    MessageChapter:
+      type: object
+      required: [ generation, queue, redirected_at, priority, retries ]
+      properties:
+        generation:
+          type: integer
+        queue:
+          $ref: "#/components/schemas/QueueName"
+        redirected_at:
+          type: string
+          format: date-time
+        priority:
+          type: integer
+        retries:
+          type: integer
+
+    Message:
+      type: object
+      required: [ id, queue, payload, created_at, finalized_at, generation, history, priority, retries, status ]
+      properties:
+        id:
+          $ref: "#/components/schemas/MessageID"
+        queue:
+          $ref: "#/components/schemas/QueueName"
+        payload:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        finalized_at:
+          type: string
+          format: date-time
+          nullable: true
+        generation:
+          type: integer
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageChapter"
+        priority:
+          type: integer
+        retries:
+          type: integer
+        status:
+          $ref: "#/components/schemas/MessageStatus"
+
+    # ----------------------
+    # Requests
+    # ----------------------
+    PublishRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/PublishRequestItem"
+    PublishRequestItem:
+      type: object
+      required: [queue, payload]
+      properties:
+        queue:
+          $ref: "#/components/schemas/QueueName"
+        payload:
+          type: string
+        priority:
+          type: integer
+        startAt:
+          type: string
+          format: date-time
+
+    ReleaseRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/MessageID"
+
+    CheckRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/MessageID"
+
+    ConsumeRequest:
+      type: object
+      required: [queue]
+      properties:
+        queue:
+          $ref: "#/components/schemas/QueueName"
+        limit:
+          type: integer
+          minimum: 1
+        poll:
+          type: integer
+          minimum: 0
+          description: Polling timeout in seconds
+
+    AckRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/AckRequestItem"
+    AckRequestItem:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/MessageID"
+        release:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageID"
+
+    NackRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/NackRequestItem"
+    NackRequestItem:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/MessageID"
+        redeliver:
+          type: boolean
+
+    RedirectRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/RedirectRequestItem"
+    RedirectRequestItem:
+      type: object
+      required: [id, destination]
+      properties:
+        id:
+          $ref: "#/components/schemas/MessageID"
+        destination:
+          type: string
+
+    # ----------------------
+    # Responses
+    # ----------------------
+    PublishResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/MessageID"
+
+    CheckResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/Message"
+
+    ConsumeResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/ConsumeResponseItem"
+    ConsumeResponseItem:
+      type: object
+      required: [id, payload]
+      properties:
+        id:
+          $ref: "#/components/schemas/MessageID"
+        payload:
+          type: string

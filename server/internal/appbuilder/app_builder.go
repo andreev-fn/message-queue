@@ -15,6 +15,7 @@ import (
 	"server/internal/domain"
 	"server/internal/eventbus"
 	"server/internal/eventbus/postgres"
+	"server/internal/openapi"
 	"server/internal/routes"
 	"server/internal/storage"
 	"server/internal/usecases"
@@ -103,6 +104,7 @@ func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()
+	openapi.MountHandlers(mux)
 	routes.NewPublishMessages(logger, publishMessages).Mount(mux)
 	routes.NewReleaseMessages(logger, releaseMessages).Mount(mux)
 	routes.NewConsumeMessages(logger, consumeMessages).Mount(mux)

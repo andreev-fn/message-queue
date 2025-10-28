@@ -18,7 +18,7 @@ import (
 
 func PrepareHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
 	t.Helper()
-	return httpclient.NewClient("/", NewHTTPTestDoer(app.Router))
+	return httpclient.NewClient("/", NewHTTPTestDoer(t, app.Router))
 }
 
 func Prepare(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
