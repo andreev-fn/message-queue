@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"time"
 
+	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 )
 
@@ -156,7 +157,7 @@ func (c *Client) doRequest(method string, reqDTO any, respDTO any) error {
 			return fmt.Errorf("json.Unmarshal: %w; body: %s", err, string(respBody))
 		}
 
-		return errors.New(errDTO.Error)
+		return apierror.NewError(apierror.Code(errDTO.Code), errDTO.Message)
 	}
 
 	if err = json.Unmarshal(respBody, &respDTO); err != nil {

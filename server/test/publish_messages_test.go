@@ -8,6 +8,7 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils"
+	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
@@ -77,4 +78,27 @@ func TestPublishMessageWithPriority(t *testing.T) {
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusAvailable, message.Status())
 	require.Equal(t, msgPriority, message.Priority())
+}
+
+func TestPublishToUnknownQueue(t *testing.T) {
+	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
+
+	const (
+		msgQueue    = "undefined_queue"
+		msgPayload  = `{"arg": 123}`
+		msgPriority = 5
+	)
+
+	// Act
+	_, err := client.PublishMessages(httpmodels.PublishRequest{
+		httpmodels.PublishRequestItem{
+			Queue:    msgQueue,
+			Payload:  msgPayload,
+			Priority: utils.P(msgPriority),
+		},
+	})
+
+	// Assert
+	require.True(t, apierror.IsCode(err, apierror.CodeQueueNotFound))
 }

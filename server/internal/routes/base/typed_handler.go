@@ -9,6 +9,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
+	"server/pkg/httpmodels"
 )
 
 type ValidatableDTO interface {
@@ -80,8 +82,9 @@ func (a *TypedHandler[TI, TO]) writeError(writer http.ResponseWriter, apiErr *Er
 	writer.Header().Add("Content-Type", "application/json")
 	writer.WriteHeader(apiErr.StatusCode())
 
-	err := json.NewEncoder(writer).Encode(map[string]any{
-		"error": apiErr.Error(),
+	err := json.NewEncoder(writer).Encode(httpmodels.ErrorResponse{
+		Code:    string(apiErr.ErrorCode()),
+		Message: apiErr.Error(),
 	})
 	if err != nil {
 		a.logger.Error("json encode of error response failed", "error", err)

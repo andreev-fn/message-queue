@@ -190,9 +190,11 @@ components:
         application/json:
           schema:
             type: object
-            required: [error]
+            required: [code, message]
             properties:
-              error:
+              code:
+                type: string
+              message:
                 type: string
 
   schemas:

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
@@ -39,4 +40,15 @@ func TestReleaseMessage(t *testing.T) {
 	require.Equal(t, msgPriority, message.Priority())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusAvailable, message.Status())
+}
+
+func TestReleaseUnknownMessage(t *testing.T) {
+	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
+
+	// Act
+	err := client.ReleaseMessages(httpmodels.ReleaseRequest{"d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2"})
+
+	// Assert
+	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
 }

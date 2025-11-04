@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/utils"
+	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
@@ -83,7 +84,7 @@ func TestCheckExistingMessage(t *testing.T) {
 	}, respDTO[2])
 }
 
-func TestCheckNonExistentMessage(t *testing.T) {
+func TestCheckUnknownMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
@@ -93,5 +94,5 @@ func TestCheckNonExistentMessage(t *testing.T) {
 	_, err := client.CheckMessages(httpmodels.CheckRequest{nonExistentID})
 
 	// Assert
-	require.ErrorContains(t, err, "message not found")
+	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
 }

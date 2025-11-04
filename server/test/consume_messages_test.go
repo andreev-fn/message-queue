@@ -8,6 +8,7 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils"
+	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
@@ -77,4 +78,18 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Empty(t, respDTO)
+}
+
+func TestConsumeFromUnknownQueue(t *testing.T) {
+	app, _ := e2eutils.Prepare(t)
+	client := e2eutils.PrepareHTTPClient(t, app)
+
+	// Act
+	_, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
+		Queue: "undefined_queue",
+		Limit: utils.P(1),
+	})
+
+	// Assert
+	require.True(t, apierror.IsCode(err, apierror.CodeQueueNotFound))
 }

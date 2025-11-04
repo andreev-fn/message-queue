@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
@@ -91,5 +92,5 @@ func TestAckUnknownMessage(t *testing.T) {
 	})
 
 	// Assert
-	require.ErrorContains(t, err, "message not found")
+	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
 }
