@@ -52,7 +52,7 @@ func (a *ConsumeMessages) handler(
 
 	messages, err := a.useCase.Do(ctx, queue, limit, poll)
 	if err != nil {
-		return nil, base.NewError(http.StatusInternalServerError, err)
+		return nil, base.ExtractKnownErrors(err)
 	}
 
 	resp := make([]httpmodels.ConsumeResponseItem, 0, len(messages))

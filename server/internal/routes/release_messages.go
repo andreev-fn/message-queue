@@ -34,7 +34,7 @@ func (a *ReleaseMessages) handler(
 	req httpmodels.ReleaseRequest,
 ) (*httpmodels.OkResponse, *base.Error) {
 	if err := a.useCase.Do(ctx, req); err != nil {
-		return nil, base.NewError(http.StatusInternalServerError, err)
+		return nil, base.ExtractKnownErrors(err)
 	}
 
 	return &httpmodels.OkResponse{Ok: true}, nil

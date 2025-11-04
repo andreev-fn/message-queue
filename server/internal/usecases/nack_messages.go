@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -48,7 +47,7 @@ func NewNackMessages(
 
 func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
 	if len(nacks) > uc.conf.BatchSizeLimit() {
-		return errors.New("batch size limit exceeded")
+		return ErrBatchSizeTooBig
 	}
 
 	tx, err := uc.db.BeginTx(ctx, nil)

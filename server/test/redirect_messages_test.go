@@ -76,7 +76,7 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 	})
 
 	// Assert
-	require.ErrorContains(t, err, "queue not defined")
+	require.ErrorContains(t, err, "queue not found")
 }
 
 func TestRedirectUnknownMessage(t *testing.T) {

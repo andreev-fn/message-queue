@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -43,7 +42,7 @@ func NewReleaseMessages(
 
 func (uc *ReleaseMessages) Do(ctx context.Context, ids []string) error {
 	if len(ids) > uc.conf.BatchSizeLimit() {
-		return errors.New("batch size limit exceeded")
+		return ErrBatchSizeTooBig
 	}
 
 	scope := uc.scopeFactory.New()

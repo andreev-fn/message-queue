@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-
 	"server/internal/domain"
 )
 
@@ -17,9 +15,9 @@ func NewDomainProvider(conf *Config) DomainProvider {
 }
 
 func (b DomainProvider) GetConfig(queue domain.QueueName) (*domain.QueueConfig, error) {
-	qConf, exist := b.conf.GetQueueConfig(queue)
-	if !exist {
-		return nil, fmt.Errorf("queue not defined: %s", queue.String())
+	qConf, err := b.conf.GetQueueConfig(queue)
+	if err != nil {
+		return nil, err
 	}
 
 	return qConf, nil

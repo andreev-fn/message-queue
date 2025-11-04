@@ -42,7 +42,7 @@ func (a *AckMessages) handler(
 	}
 
 	if err := a.useCase.Do(ctx, ackParams); err != nil {
-		return nil, base.NewError(http.StatusInternalServerError, err)
+		return nil, base.ExtractKnownErrors(err)
 	}
 
 	return &httpmodels.OkResponse{Ok: true}, nil

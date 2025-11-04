@@ -50,9 +50,11 @@ func (c *Config) DatabaseType() DBType                     { return c.databaseTy
 func (c *Config) PostgresConfig() opt.Val[*PostgresConfig] { return c.postgresConfig }
 func (c *Config) BatchSizeLimit() int                      { return c.batchSizeLimit }
 
-func (c *Config) GetQueueConfig(queue domain.QueueName) (*domain.QueueConfig, bool) {
-	conf, ok := c.queues[queue]
-	return conf, ok
+func (c *Config) GetQueueConfig(queue domain.QueueName) (*domain.QueueConfig, error) {
+	if conf, exist := c.queues[queue]; exist {
+		return conf, nil
+	}
+	return nil, newQueueNotFoundError(queue)
 }
 
 type PostgresConfig struct {

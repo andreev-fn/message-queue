@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -49,7 +48,7 @@ func NewRedirectMessages(
 
 func (uc *RedirectMessages) Do(ctx context.Context, redirects []RedirectParams) error {
 	if len(redirects) > uc.conf.BatchSizeLimit() {
-		return errors.New("batch size limit exceeded")
+		return ErrBatchSizeTooBig
 	}
 
 	scope := uc.scopeFactory.New()
@@ -61,8 +60,9 @@ func (uc *RedirectMessages) Do(ctx context.Context, redirects []RedirectParams) 
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
 	for _, redirect := range redirects {
-		if _, exist := uc.conf.GetQueueConfig(redirect.Destination); !exist {
-			return fmt.Errorf("queue not defined: %s", redirect.Destination)
+		// check that the queue exists
+		if _, err := uc.conf.GetQueueConfig(redirect.Destination); err != nil {
+			return err
 		}
 
 		message, err := uc.msgRepo.GetByID(ctx, uc.db, redirect.ID)

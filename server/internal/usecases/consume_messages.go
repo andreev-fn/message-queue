@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -56,7 +55,7 @@ func (uc *ConsumeMessages) Do(
 	poll time.Duration,
 ) ([]MessageToConsume, error) {
 	if limit > uc.conf.BatchSizeLimit() {
-		return []MessageToConsume{}, errors.New("batch size limit exceeded")
+		return nil, ErrBatchSizeTooBig
 	}
 
 	// fast path first
@@ -91,9 +90,9 @@ func (uc *ConsumeMessages) Do(
 }
 
 func (uc *ConsumeMessages) takeMessages(ctx context.Context, queue domain.QueueName, limit int) ([]MessageToConsume, error) {
-	qConf, exist := uc.conf.GetQueueConfig(queue)
-	if !exist {
-		return nil, fmt.Errorf("queue not defined: %s", queue)
+	qConf, err := uc.conf.GetQueueConfig(queue)
+	if err != nil {
+		return nil, err
 	}
 
 	tx, err := uc.db.BeginTx(ctx, nil)

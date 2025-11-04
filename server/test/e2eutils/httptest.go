@@ -55,5 +55,9 @@ func (d HTTPTestDoer) Do(req *http.Request) (*http.Response, error) {
 		}
 	}
 
+	if resp.StatusCode == http.StatusInternalServerError {
+		d.t.Error("internal server error not expected in tests")
+	}
+
 	return resp, nil
 }

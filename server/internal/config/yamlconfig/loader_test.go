@@ -31,8 +31,8 @@ func TestLoadFromFile_full(t *testing.T) {
 
 	// Queues
 	for _, qName := range []string{"queue1", "queue2"} {
-		q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName(qName))
-		require.True(t, exist)
+		q, err := cfg.GetQueueConfig(domain.UnsafeQueueName(qName))
+		require.NoError(t, err)
 
 		// Backoff
 		require.True(t, q.Backoff().IsSet())
@@ -67,8 +67,8 @@ func TestLoadFromFile_minimal(t *testing.T) {
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
-	q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
-	require.True(t, exist)
+	q, err := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
+	require.NoError(t, err)
 
 	// Backoff
 	require.Equal(t, config.DefaultBackoffEnabled, q.Backoff().IsSet())
@@ -99,8 +99,8 @@ func TestLoadFromFile_disabled(t *testing.T) {
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
-	q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
-	require.True(t, exist)
+	q, err := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
+	require.NoError(t, err)
 
 	// Backoff
 	require.False(t, q.Backoff().IsSet())
@@ -126,8 +126,8 @@ func TestLoadFromFile_custom(t *testing.T) {
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
-	q, exist := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
-	require.True(t, exist)
+	q, err := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
+	require.NoError(t, err)
 
 	// Backoff
 	require.True(t, q.Backoff().IsSet())

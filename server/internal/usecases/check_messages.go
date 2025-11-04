@@ -57,7 +57,7 @@ func NewCheckMessages(
 
 func (uc *CheckMessages) Do(ctx context.Context, ids []string) ([]CheckMsgResult, error) {
 	if len(ids) > uc.conf.BatchSizeLimit() {
-		return []CheckMsgResult{}, errors.New("batch size limit exceeded")
+		return nil, ErrBatchSizeTooBig
 	}
 
 	allResults := make([]CheckMsgResult, 0, len(ids))

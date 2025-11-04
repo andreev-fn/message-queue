@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -52,7 +51,7 @@ func (uc *AckMessages) Do(ctx context.Context, acks []AckParams) error {
 		batchSize += len(ack.Release)
 	}
 	if batchSize > uc.conf.BatchSizeLimit() {
-		return errors.New("batch size limit exceeded")
+		return ErrBatchSizeTooBig
 	}
 
 	scope := uc.scopeFactory.New()

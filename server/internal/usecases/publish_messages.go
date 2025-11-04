@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -58,7 +57,7 @@ func (uc *PublishMessages) Do(
 	autoRelease bool,
 ) ([]string, error) {
 	if len(messages) > uc.conf.BatchSizeLimit() {
-		return []string{}, errors.New("batch size limit exceeded")
+		return nil, ErrBatchSizeTooBig
 	}
 
 	scope := uc.scopeFactory.New()
@@ -72,8 +71,9 @@ func (uc *PublishMessages) Do(
 	result := make([]string, 0, len(messages))
 
 	for _, msg := range messages {
-		if _, exist := uc.conf.GetQueueConfig(msg.Queue); !exist {
-			return nil, fmt.Errorf("queue not defined: %s", msg.Queue)
+		// check that the queue exists
+		if _, err := uc.conf.GetQueueConfig(msg.Queue); err != nil {
+			return nil, err
 		}
 
 		message, err := domain.NewMessage(uc.clock, uuid.New(), msg.Queue, msg.Payload, msg.Priority, msg.StartAt)

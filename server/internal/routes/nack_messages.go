@@ -48,7 +48,7 @@ func (a *NackMessages) handler(
 	}
 
 	if err := a.useCase.Do(ctx, nackParams); err != nil {
-		return nil, base.NewError(http.StatusInternalServerError, err)
+		return nil, base.ExtractKnownErrors(err)
 	}
 
 	return &httpmodels.OkResponse{Ok: true}, nil

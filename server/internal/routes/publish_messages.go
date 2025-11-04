@@ -72,7 +72,7 @@ func (a *PublishMessages) handler(
 
 	msgIDs, err := a.useCase.Do(ctx, newMessages, autoRelease)
 	if err != nil {
-		return nil, base.NewError(http.StatusInternalServerError, err)
+		return nil, base.ExtractKnownErrors(err)
 	}
 
 	return msgIDs, nil
