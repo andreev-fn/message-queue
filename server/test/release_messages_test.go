@@ -23,7 +23,7 @@ func TestReleaseMessage(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
+	msgID := e2eutils.CreateMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.ReleaseMessages(httpmodels.ReleaseRequest{msgID})

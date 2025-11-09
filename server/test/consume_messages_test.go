@@ -31,9 +31,9 @@ func TestConsumeMessages(t *testing.T) {
 	)
 
 	// Arrange
-	msg1ID := e2eutils.CreateAvailableMsg(t, app, msgQueue, msg1Payload, msg1Priority)
-	msg2ID := e2eutils.CreateAvailableMsg(t, app, msgQueue, msg2Payload, msg2Priority)
-	msg3ID := e2eutils.CreateAvailableMsg(t, app, msgQueue, msg3Payload, msg3Priority)
+	msg1ID := e2eutils.CreateAvailableMsg(app, msgQueue, msg1Payload, msg1Priority)
+	msg2ID := e2eutils.CreateAvailableMsg(app, msgQueue, msg2Payload, msg2Priority)
+	msg3ID := e2eutils.CreateAvailableMsg(app, msgQueue, msg3Payload, msg3Priority)
 
 	// Act
 	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{

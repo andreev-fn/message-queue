@@ -2,18 +2,14 @@ package e2eutils
 
 import (
 	"context"
-	"testing"
-
-	"github.com/stretchr/testify/require"
+	"fmt"
 
 	"server/internal/appbuilder"
 	"server/internal/domain"
 	"server/internal/usecases"
 )
 
-func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
-	t.Helper()
-
+func CreateMsg(app *appbuilder.App, queue string, payload string, priority int) string {
 	msgIDs, err := app.PublishMessages.Do(
 		context.Background(),
 		[]usecases.NewMessageParams{{
@@ -24,86 +20,89 @@ func CreateMsg(t *testing.T, app *appbuilder.App, queue string, payload string, 
 		}},
 		false,
 	)
-	require.NoError(t, err)
-	require.Len(t, msgIDs, 1)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(msgIDs) != 1 {
+		panic(fmt.Sprint("expected 1 msgID, got ", msgIDs))
+	}
 
 	return msgIDs[0]
 }
 
-func CreateAvailableMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
-	t.Helper()
-
-	msgID := CreateMsg(t, app, queue, payload, priority)
+func CreateAvailableMsg(app *appbuilder.App, queue string, payload string, priority int) string {
+	msgID := CreateMsg(app, queue, payload, priority)
 
 	err := app.ReleaseMessages.Do(context.Background(), []string{msgID})
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
 	return msgID
 }
 
-func CreateProcessingMsg(t *testing.T, app *appbuilder.App, queue string, payload string, priority int) string {
-	t.Helper()
-
-	msgID := CreateAvailableMsg(t, app, queue, payload, priority)
+func CreateProcessingMsg(app *appbuilder.App, queue string, payload string, priority int) string {
+	msgID := CreateAvailableMsg(app, queue, payload, priority)
 
 	result, err := app.ConsumeMessages.Do(context.Background(), domain.UnsafeQueueName(queue), 1, 0)
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	require.Len(t, result, 1)
-	require.Equal(t, msgID, result[0].ID)
+	if len(result) != 1 || result[0].ID != msgID {
+		panic("consumed unexpected message")
+	}
 
 	return msgID
 }
 
-func CreateDelayedMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
-	t.Helper()
-
-	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
+func CreateDelayedMsg(app *appbuilder.App, queue string, payload string) string {
+	msgID := CreateProcessingMsg(app, queue, payload, 100)
 
 	err := app.NackMessages.Do(context.Background(), []usecases.NackParams{{ID: msgID, Redeliver: true}})
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
 	return msgID
 }
 
-func CreateDeliveredMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
-	t.Helper()
-
-	msgID := CreateProcessingMsg(t, app, queue, payload, 100)
+func CreateDeliveredMsg(app *appbuilder.App, queue string, payload string) string {
+	msgID := CreateProcessingMsg(app, queue, payload, 100)
 
 	err := app.AckMessages.Do(context.Background(), []usecases.AckParams{{ID: msgID}})
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
 	return msgID
 }
 
-func CreateAvailableMsgWithHistory(
-	t *testing.T,
-	app *appbuilder.App,
-	historyQueue,
-	queue string,
-	payload string,
-) string {
-	t.Helper()
-
-	msgID := CreateProcessingMsg(t, app, historyQueue, payload, 100)
+func CreateAvailableMsgWithHistory(app *appbuilder.App, historyQueue, queue, payload string) string {
+	msgID := CreateProcessingMsg(app, historyQueue, payload, 100)
 
 	err := app.RedirectMessages.Do(context.Background(), []usecases.RedirectParams{
 		{ID: msgID, Destination: domain.UnsafeQueueName(queue)},
 	})
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
 	return msgID
 }
 
-func CreateArchivedMsg(t *testing.T, app *appbuilder.App, queue string, payload string) string {
-	t.Helper()
-
-	msgID := CreateDeliveredMsg(t, app, queue, payload)
+func CreateArchivedMsg(app *appbuilder.App, queue string, payload string) string {
+	msgID := CreateDeliveredMsg(app, queue, payload)
 
 	affected, err := app.ArchiveMessages.Do(context.Background(), 1)
-	require.NoError(t, err)
-	require.Equal(t, 1, affected)
+	if err != nil {
+		panic(err)
+	}
+
+	if affected != 1 {
+		panic(fmt.Sprint("affected ", affected, " messages (expected 1)"))
+	}
 
 	return msgID
 }

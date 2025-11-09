@@ -24,9 +24,9 @@ func TestCheckExistingMessage(t *testing.T) {
 	)
 
 	// Arrange
-	msg1ID := e2eutils.CreateArchivedMsg(t, app, msgQueue, msgPayload)
-	msg2ID := e2eutils.CreateMsg(t, app, msgQueue, msgPayload, msgPriority)
-	msg3ID := e2eutils.CreateAvailableMsgWithHistory(t, app, msgHistoryQueue, msgQueue, msgPayload)
+	msg1ID := e2eutils.CreateArchivedMsg(app, msgQueue, msgPayload)
+	msg2ID := e2eutils.CreateMsg(app, msgQueue, msgPayload, msgPriority)
+	msg3ID := e2eutils.CreateAvailableMsgWithHistory(app, msgHistoryQueue, msgQueue, msgPayload)
 
 	// Act
 	respDTO, err := client.CheckMessages(httpmodels.CheckRequest{msg1ID, msg2ID, msg3ID})

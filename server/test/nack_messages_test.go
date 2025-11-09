@@ -24,7 +24,7 @@ func TestNackMessages(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{
@@ -51,7 +51,7 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{

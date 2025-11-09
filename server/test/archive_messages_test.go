@@ -21,7 +21,7 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateDeliveredMsg(t, app, msgQueue, msgPayload)
+	msgID := e2eutils.CreateDeliveredMsg(app, msgQueue, msgPayload)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
@@ -52,7 +52,7 @@ func TestArchiveMessagesNotFinal(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act

@@ -23,7 +23,7 @@ func TestAckMessages(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(t, app, msgQueue, msgPayload, msgPriority)
+	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.AckMessages(httpmodels.AckRequest{
@@ -56,8 +56,8 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 	)
 
 	// Arrange
-	msgToAckID := e2eutils.CreateProcessingMsg(t, app, msgToAckQueue, msgToAckPayload, msgToAckPriority)
-	msgToReleaseID := e2eutils.CreateMsg(t, app, msgToReleaseQueue, msgToReleasePayload, msgToReleasePriority)
+	msgToAckID := e2eutils.CreateProcessingMsg(app, msgToAckQueue, msgToAckPayload, msgToAckPriority)
+	msgToReleaseID := e2eutils.CreateMsg(app, msgToReleaseQueue, msgToReleasePayload, msgToReleasePriority)
 
 	// Act
 	err := client.AckMessages(httpmodels.AckRequest{
