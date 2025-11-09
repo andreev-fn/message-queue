@@ -10,6 +10,7 @@ import (
 	"server/internal/domain"
 	"server/internal/storage"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestArchiveMessagesFinalized(t *testing.T) {
@@ -21,7 +22,7 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateDeliveredMsg(app, msgQueue, msgPayload)
+	msgID := fixtures.CreateDeliveredMsg(app, msgQueue, msgPayload)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
@@ -52,7 +53,7 @@ func TestArchiveMessagesNotFinal(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act

@@ -9,6 +9,7 @@ import (
 
 	"server/internal/domain"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestExpireProcessingAfterTimeout(t *testing.T) {
@@ -21,7 +22,7 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 	clock.Set(clock.Now().Add(6 * time.Minute))
 
 	// Act
@@ -48,7 +49,7 @@ func TestExpireProcessingBeforeTimeout(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 	clock.Set(clock.Now().Add(3 * time.Minute))
 
 	// Act

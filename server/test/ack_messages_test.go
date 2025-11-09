@@ -10,6 +10,7 @@ import (
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestAckMessages(t *testing.T) {
@@ -23,7 +24,7 @@ func TestAckMessages(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.AckMessages(httpmodels.AckRequest{
@@ -56,8 +57,8 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 	)
 
 	// Arrange
-	msgToAckID := e2eutils.CreateProcessingMsg(app, msgToAckQueue, msgToAckPayload, msgToAckPriority)
-	msgToReleaseID := e2eutils.CreateMsg(app, msgToReleaseQueue, msgToReleasePayload, msgToReleasePriority)
+	msgToAckID := fixtures.CreateProcessingMsg(app, msgToAckQueue, msgToAckPayload, msgToAckPriority)
+	msgToReleaseID := fixtures.CreateMsg(app, msgToReleaseQueue, msgToReleasePayload, msgToReleasePriority)
 
 	// Act
 	err := client.AckMessages(httpmodels.AckRequest{

@@ -9,6 +9,7 @@ import (
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestCheckExistingMessage(t *testing.T) {
@@ -24,9 +25,9 @@ func TestCheckExistingMessage(t *testing.T) {
 	)
 
 	// Arrange
-	msg1ID := e2eutils.CreateArchivedMsg(app, msgQueue, msgPayload)
-	msg2ID := e2eutils.CreateMsg(app, msgQueue, msgPayload, msgPriority)
-	msg3ID := e2eutils.CreateAvailableMsgWithHistory(app, msgHistoryQueue, msgQueue, msgPayload)
+	msg1ID := fixtures.CreateArchivedMsg(app, msgQueue, msgPayload)
+	msg2ID := fixtures.CreateMsg(app, msgQueue, msgPayload, msgPriority)
+	msg3ID := fixtures.CreateAvailableMsgWithHistory(app, msgHistoryQueue, msgQueue, msgPayload)
 
 	// Act
 	respDTO, err := client.CheckMessages(httpmodels.CheckRequest{msg1ID, msg2ID, msg3ID})

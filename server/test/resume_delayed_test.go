@@ -9,6 +9,7 @@ import (
 
 	"server/internal/domain"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestResumeDelayedAfterTimeout(t *testing.T) {
@@ -20,7 +21,7 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateDelayedMsg(app, msgQueue, msgPayload)
+	msgID := fixtures.CreateDelayedMsg(app, msgQueue, msgPayload)
 	clock.Set(clock.Now().Add(40 * time.Second))
 
 	// Act
@@ -46,7 +47,7 @@ func TestResumeDelayedBeforeTimeout(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateDelayedMsg(app, msgQueue, msgPayload)
+	msgID := fixtures.CreateDelayedMsg(app, msgQueue, msgPayload)
 	clock.Set(clock.Now().Add(20 * time.Second))
 
 	// Act

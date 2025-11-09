@@ -11,6 +11,7 @@ import (
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestConsumeMessages(t *testing.T) {
@@ -31,9 +32,9 @@ func TestConsumeMessages(t *testing.T) {
 	)
 
 	// Arrange
-	msg1ID := e2eutils.CreateAvailableMsg(app, msgQueue, msg1Payload, msg1Priority)
-	msg2ID := e2eutils.CreateAvailableMsg(app, msgQueue, msg2Payload, msg2Priority)
-	msg3ID := e2eutils.CreateAvailableMsg(app, msgQueue, msg3Payload, msg3Priority)
+	msg1ID := fixtures.CreateAvailableMsg(app, msgQueue, msg1Payload, msg1Priority)
+	msg2ID := fixtures.CreateAvailableMsg(app, msgQueue, msg2Payload, msg2Priority)
+	msg3ID := fixtures.CreateAvailableMsg(app, msgQueue, msg3Payload, msg3Priority)
 
 	// Act
 	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{

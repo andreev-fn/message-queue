@@ -11,6 +11,7 @@ import (
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestNackMessages(t *testing.T) {
@@ -24,7 +25,7 @@ func TestNackMessages(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{
@@ -51,7 +52,7 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{

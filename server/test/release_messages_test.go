@@ -10,6 +10,7 @@ import (
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestReleaseMessage(t *testing.T) {
@@ -23,7 +24,7 @@ func TestReleaseMessage(t *testing.T) {
 	)
 
 	// Arrange
-	msgID := e2eutils.CreateMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateMsg(app, msgQueue, msgPayload, msgPriority)
 
 	// Act
 	err := client.ReleaseMessages(httpmodels.ReleaseRequest{msgID})
