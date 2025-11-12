@@ -8,6 +8,7 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils"
+	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
@@ -15,7 +16,9 @@ import (
 )
 
 func TestNackMessages(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -36,7 +39,9 @@ func TestNackMessages(t *testing.T) {
 }
 
 func TestNackMessagesNoRedeliver(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -57,7 +62,9 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 }
 
 func TestNackUnknownMessage(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act

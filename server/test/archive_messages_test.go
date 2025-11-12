@@ -9,12 +9,15 @@ import (
 
 	"server/internal/domain"
 	"server/internal/storage"
+	"server/internal/utils/testutils"
 	"server/test/e2eutils"
 	"server/test/fixtures"
 )
 
 func TestArchiveMessagesFinalized(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateDeliveredMsg(app)
@@ -39,7 +42,9 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 }
 
 func TestArchiveMessagesNotFinal(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)

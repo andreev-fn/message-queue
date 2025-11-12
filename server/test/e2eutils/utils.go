@@ -9,7 +9,6 @@ import (
 	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/utils/opt"
-	"server/internal/utils/testutils"
 	"server/internal/utils/timeutils"
 	"server/pkg/httpclient"
 )
@@ -18,13 +17,9 @@ func PrepareHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
 	return httpclient.NewClient("/", NewHTTPTestDoer(t, app.Router))
 }
 
-func Prepare(t *testing.T) *appbuilder.App {
-	testutils.SkipIfNotIntegration(t)
-
+func Prepare() *appbuilder.App {
 	app := BuildTestApp(CreateTestConfig())
-
 	CleanupDatabase(app.DB)
-
 	return app
 }
 

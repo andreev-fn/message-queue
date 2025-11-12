@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/utils"
+	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
@@ -13,7 +14,9 @@ import (
 )
 
 func TestCheckExistingMessage(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const msgHistoryQueue = "test.result"
@@ -80,7 +83,9 @@ func TestCheckExistingMessage(t *testing.T) {
 }
 
 func TestCheckUnknownMessage(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const nonExistentID = "00000000-0000-0000-0000-000000000002"

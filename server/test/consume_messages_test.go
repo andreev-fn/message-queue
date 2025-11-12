@@ -8,6 +8,7 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils"
+	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
@@ -15,7 +16,9 @@ import (
 )
 
 func TestConsumeMessages(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const msg2Payload = `{"arg": 213}`
@@ -55,7 +58,9 @@ func TestConsumeMessages(t *testing.T) {
 }
 
 func TestConsumeMessagesEmptyQueue(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act
@@ -71,7 +76,9 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 }
 
 func TestConsumeFromUnknownQueue(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act

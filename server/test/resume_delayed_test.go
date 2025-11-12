@@ -8,12 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/internal/utils/testutils"
 	"server/test/e2eutils"
 	"server/test/fixtures"
 )
 
 func TestResumeDelayedAfterTimeout(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)
@@ -34,7 +37,9 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 }
 
 func TestResumeDelayedBeforeTimeout(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)

@@ -8,12 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/internal/utils/testutils"
 	"server/test/e2eutils"
 	"server/test/fixtures"
 )
 
 func TestExpireProcessingAfterTimeout(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -34,7 +37,9 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 }
 
 func TestExpireProcessingBeforeTimeout(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)

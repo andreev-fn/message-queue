@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
@@ -14,7 +15,9 @@ import (
 )
 
 func TestAckMessages(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -37,7 +40,9 @@ func TestAckMessages(t *testing.T) {
 }
 
 func TestAckMessagesAtomicRelease(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const msgToReleaseQueue = "test.result"
@@ -68,7 +73,9 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 }
 
 func TestAckUnknownMessage(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act

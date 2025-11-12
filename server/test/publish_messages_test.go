@@ -8,13 +8,16 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils"
+	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
 )
 
 func TestPrepareMessage(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
@@ -47,7 +50,9 @@ func TestPrepareMessage(t *testing.T) {
 }
 
 func TestPublishMessageWithPriority(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
@@ -81,7 +86,9 @@ func TestPublishMessageWithPriority(t *testing.T) {
 }
 
 func TestPublishToUnknownQueue(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"server/internal/domain"
+	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
@@ -15,7 +16,9 @@ import (
 )
 
 func TestRedirectMessages(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const destinationQueue = "all_results"
@@ -51,7 +54,9 @@ func TestRedirectMessages(t *testing.T) {
 }
 
 func TestRedirectToUnknownQueue(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -70,7 +75,9 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 }
 
 func TestRedirectUnknownMessage(t *testing.T) {
-	app := e2eutils.Prepare(t)
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare()
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act
