@@ -14,7 +14,7 @@ import (
 )
 
 func TestReleaseMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -38,7 +38,7 @@ func TestReleaseMessage(t *testing.T) {
 }
 
 func TestReleaseUnknownMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act

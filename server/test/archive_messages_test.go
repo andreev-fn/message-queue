@@ -14,11 +14,11 @@ import (
 )
 
 func TestArchiveMessagesFinalized(t *testing.T) {
-	app, clock := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 
 	// Arrange
 	msgID := fixtures.CreateDeliveredMsg(app)
-	clock.Set(clock.Now().Add(time.Minute))
+	e2eutils.AdvanceClock(app, time.Minute)
 
 	// Act
 	affected, err := app.ArchiveMessages.Do(context.Background(), 10)
@@ -39,11 +39,11 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 }
 
 func TestArchiveMessagesNotFinal(t *testing.T) {
-	app, clock := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	clock.Set(clock.Now().Add(time.Minute))
+	e2eutils.AdvanceClock(app, time.Minute)
 
 	// Act
 	affected, err := app.ArchiveMessages.Do(context.Background(), 10)

@@ -18,14 +18,14 @@ func PrepareHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
 	return httpclient.NewClient("/", NewHTTPTestDoer(t, app.Router))
 }
 
-func Prepare(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
+func Prepare(t *testing.T) *appbuilder.App {
 	testutils.SkipIfNotIntegration(t)
 
-	app, clock := BuildTestApp(CreateTestConfig())
+	app := BuildTestApp(CreateTestConfig())
 
 	CleanupDatabase(app.DB)
 
-	return app, clock
+	return app
 }
 
 func CreateTestConfig() *config.Config {
@@ -71,7 +71,7 @@ func CreateTestConfig() *config.Config {
 	return conf
 }
 
-func BuildTestApp(conf *config.Config) (*appbuilder.App, *timeutils.StubClock) {
+func BuildTestApp(conf *config.Config) *appbuilder.App {
 	clock := timeutils.NewStubClock(time.Date(2025, 6, 12, 12, 0, 0, 0, time.Local))
 
 	app, err := appbuilder.BuildApp(conf, &appbuilder.Overrides{
@@ -81,7 +81,11 @@ func BuildTestApp(conf *config.Config) (*appbuilder.App, *timeutils.StubClock) {
 		panic(err)
 	}
 
-	return app, clock
+	return app
+}
+
+func AdvanceClock(app *appbuilder.App, dur time.Duration) {
+	app.Clock.(*timeutils.StubClock).Set(app.Clock.Now().Add(dur))
 }
 
 func CleanupDatabase(db *sql.DB) {

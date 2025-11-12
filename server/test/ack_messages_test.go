@@ -14,7 +14,7 @@ import (
 )
 
 func TestAckMessages(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -37,7 +37,7 @@ func TestAckMessages(t *testing.T) {
 }
 
 func TestAckMessagesAtomicRelease(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const msgToReleaseQueue = "test.result"
@@ -68,7 +68,7 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 }
 
 func TestAckUnknownMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act

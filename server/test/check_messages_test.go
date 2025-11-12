@@ -13,7 +13,7 @@ import (
 )
 
 func TestCheckExistingMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const msgHistoryQueue = "test.result"
@@ -80,7 +80,7 @@ func TestCheckExistingMessage(t *testing.T) {
 }
 
 func TestCheckUnknownMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const nonExistentID = "00000000-0000-0000-0000-000000000002"

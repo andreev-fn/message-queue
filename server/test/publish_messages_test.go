@@ -14,7 +14,7 @@ import (
 )
 
 func TestPrepareMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
@@ -47,7 +47,7 @@ func TestPrepareMessage(t *testing.T) {
 }
 
 func TestPublishMessageWithPriority(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (
@@ -81,7 +81,7 @@ func TestPublishMessageWithPriority(t *testing.T) {
 }
 
 func TestPublishToUnknownQueue(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const (

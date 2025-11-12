@@ -15,7 +15,7 @@ import (
 )
 
 func TestNackMessages(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -36,7 +36,7 @@ func TestNackMessages(t *testing.T) {
 }
 
 func TestNackMessagesNoRedeliver(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -57,7 +57,7 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 }
 
 func TestNackUnknownMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act

@@ -13,11 +13,11 @@ import (
 )
 
 func TestResumeDelayedAfterTimeout(t *testing.T) {
-	app, clock := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)
-	clock.Set(clock.Now().Add(40 * time.Second))
+	e2eutils.AdvanceClock(app, 40*time.Second)
 
 	// Act
 	affected, err := app.ResumeDelayed.Do(context.Background(), 10)
@@ -34,11 +34,11 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 }
 
 func TestResumeDelayedBeforeTimeout(t *testing.T) {
-	app, clock := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)
-	clock.Set(clock.Now().Add(20 * time.Second))
+	e2eutils.AdvanceClock(app, 20*time.Second)
 
 	// Act
 	affected, err := app.ResumeDelayed.Do(context.Background(), 10)

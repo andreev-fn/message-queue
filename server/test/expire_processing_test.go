@@ -13,11 +13,11 @@ import (
 )
 
 func TestExpireProcessingAfterTimeout(t *testing.T) {
-	app, clock := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	clock.Set(clock.Now().Add(6 * time.Minute))
+	e2eutils.AdvanceClock(app, 6*time.Minute)
 
 	// Act
 	affected, err := app.ExpireProcessing.Do(context.Background(), 10)
@@ -34,11 +34,11 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 }
 
 func TestExpireProcessingBeforeTimeout(t *testing.T) {
-	app, clock := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	clock.Set(clock.Now().Add(3 * time.Minute))
+	e2eutils.AdvanceClock(app, 3*time.Minute)
 
 	// Act
 	affected, err := app.ExpireProcessing.Do(context.Background(), 10)

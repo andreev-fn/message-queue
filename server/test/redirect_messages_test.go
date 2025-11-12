@@ -15,14 +15,14 @@ import (
 )
 
 func TestRedirectMessages(t *testing.T) {
-	app, clock := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const destinationQueue = "all_results"
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	clock.Set(clock.Now().Add(time.Minute))
+	e2eutils.AdvanceClock(app, time.Minute)
 
 	// Act
 	err := client.RedirectMessages(httpmodels.RedirectRequest{
@@ -51,7 +51,7 @@ func TestRedirectMessages(t *testing.T) {
 }
 
 func TestRedirectToUnknownQueue(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Arrange
@@ -70,7 +70,7 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 }
 
 func TestRedirectUnknownMessage(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act

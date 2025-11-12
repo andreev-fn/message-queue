@@ -15,7 +15,7 @@ import (
 )
 
 func TestConsumeMessages(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	const msg2Payload = `{"arg": 213}`
@@ -55,7 +55,7 @@ func TestConsumeMessages(t *testing.T) {
 }
 
 func TestConsumeMessagesEmptyQueue(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act
@@ -71,7 +71,7 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 }
 
 func TestConsumeFromUnknownQueue(t *testing.T) {
-	app, _ := e2eutils.Prepare(t)
+	app := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
 	// Act
