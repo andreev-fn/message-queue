@@ -22,11 +22,7 @@ func PrepareHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
 }
 
 func Prepare(t *testing.T) (*appbuilder.App, *timeutils.StubClock) {
-	t.Helper()
-
-	if !testutils.ShouldRunIntegrationTests() {
-		t.SkipNow()
-	}
+	testutils.SkipIfNotIntegration(t)
 
 	app, clock := BuildTestApp(t, CreateTestConfig(t))
 

@@ -2,10 +2,11 @@ package postgres_test
 
 import (
 	"context"
-	"server/internal/eventbus/postgres"
-	"server/internal/utils/testutils"
 	"testing"
 	"time"
+
+	"server/internal/eventbus/postgres"
+	"server/internal/utils/testutils"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,9 +17,7 @@ const testMessage1 = "hello world"
 const testMessage2 = "abacaba"
 
 func TestPubSubDriverTwoMessages(t *testing.T) {
-	if !testutils.ShouldRunIntegrationTests() {
-		t.SkipNow()
-	}
+	testutils.SkipIfNotIntegration(t)
 
 	db, err := testutils.OpenDB()
 	require.NoError(t, err)
@@ -59,9 +58,7 @@ func TestPubSubDriverTwoMessages(t *testing.T) {
 }
 
 func TestPubSubDriverUnwantedMessage(t *testing.T) {
-	if !testutils.ShouldRunIntegrationTests() {
-		t.SkipNow()
-	}
+	testutils.SkipIfNotIntegration(t)
 
 	db, err := testutils.OpenDB()
 	require.NoError(t, err)
