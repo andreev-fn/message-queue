@@ -18,27 +18,16 @@ func TestConsumeMessages(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue = "test"
-
-		msg1Payload  = `{"arg": 123}`
-		msg1Priority = 10
-
-		msg2Payload  = `{"arg": 213}`
-		msg2Priority = 200
-
-		msg3Payload  = `{"arg": 321}`
-		msg3Priority = 100
-	)
+	const msg2Payload = `{"arg": 213}`
 
 	// Arrange
-	msg1ID := fixtures.CreateAvailableMsg(app, msgQueue, msg1Payload, msg1Priority)
-	msg2ID := fixtures.CreateAvailableMsg(app, msgQueue, msg2Payload, msg2Priority)
-	msg3ID := fixtures.CreateAvailableMsg(app, msgQueue, msg3Payload, msg3Priority)
+	msg1ID := fixtures.CreateAvailableMsg(app, fixtures.WithPriority(10))
+	msg2ID := fixtures.CreateAvailableMsg(app, fixtures.WithPriority(200), fixtures.WithPayload(msg2Payload))
+	msg3ID := fixtures.CreateAvailableMsg(app, fixtures.WithPriority(100))
 
 	// Act
 	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
-		Queue: msgQueue,
+		Queue: fixtures.DefaultMsgQueue,
 		Limit: utils.P(1),
 	})
 
@@ -71,7 +60,7 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 
 	// Act
 	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
-		Queue: "test",
+		Queue: fixtures.DefaultMsgQueue,
 		Limit: utils.P(1),
 	})
 

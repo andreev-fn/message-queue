@@ -3,13 +3,19 @@ package fixtures
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"server/internal/appbuilder"
 	"server/internal/domain"
 	"server/internal/usecases"
 )
 
-func CreateMsg(app *appbuilder.App, queue string, payload string, priority int) string {
+func CreatePreparedMsg(app *appbuilder.App, optArgs ...Option) string {
+	opts := buildOptions(optArgs)
+	return publish(app, opts.queue, opts.payload, opts.priority, false)
+}
+
+func publish(app *appbuilder.App, queue string, payload string, priority int, release bool) string {
 	msgIDs, err := app.PublishMessages.Do(
 		context.Background(),
 		[]usecases.NewMessageParams{{
@@ -18,7 +24,7 @@ func CreateMsg(app *appbuilder.App, queue string, payload string, priority int) 
 			Priority: priority,
 			StartAt:  nil,
 		}},
-		false,
+		release,
 	)
 	if err != nil {
 		panic(err)
@@ -31,20 +37,44 @@ func CreateMsg(app *appbuilder.App, queue string, payload string, priority int) 
 	return msgIDs[0]
 }
 
-func CreateAvailableMsg(app *appbuilder.App, queue string, payload string, priority int) string {
-	msgID := CreateMsg(app, queue, payload, priority)
+func CreateAvailableMsg(app *appbuilder.App, optArgs ...Option) string {
+	opts := buildOptions(optArgs)
 
-	err := app.ReleaseMessages.Do(context.Background(), []string{msgID})
-	if err != nil {
-		panic(err)
+	history := append(slices.Clone(opts.history), opts.queue)
+	publishQueue, redirectQueues := history[0], history[1:]
+
+	msgID := publish(app, publishQueue, opts.payload, opts.priority, true)
+
+	prevQueue := publishQueue
+	for _, nextQueue := range redirectQueues {
+		consumeMessage(app, msgID, prevQueue)
+		redirect(app, msgID, nextQueue)
+		prevQueue = nextQueue
 	}
 
 	return msgID
 }
 
-func CreateProcessingMsg(app *appbuilder.App, queue string, payload string, priority int) string {
-	msgID := CreateAvailableMsg(app, queue, payload, priority)
+func redirect(app *appbuilder.App, msgID string, toQueue string) {
+	if err := app.RedirectMessages.Do(context.Background(), []usecases.RedirectParams{{
+		ID:          msgID,
+		Destination: domain.UnsafeQueueName(toQueue),
+	}}); err != nil {
+		panic(err)
+	}
+}
 
+func CreateProcessingMsg(app *appbuilder.App, optArgs ...Option) string {
+	opts := buildOptions(optArgs)
+
+	msgID := CreateAvailableMsg(app, optArgs...)
+
+	consumeMessage(app, msgID, opts.queue)
+
+	return msgID
+}
+
+func consumeMessage(app *appbuilder.App, msgID string, queue string) {
 	result, err := app.ConsumeMessages.Do(context.Background(), domain.UnsafeQueueName(queue), 1, 0)
 	if err != nil {
 		panic(err)
@@ -53,12 +83,10 @@ func CreateProcessingMsg(app *appbuilder.App, queue string, payload string, prio
 	if len(result) != 1 || result[0].ID != msgID {
 		panic("consumed unexpected message")
 	}
-
-	return msgID
 }
 
-func CreateDelayedMsg(app *appbuilder.App, queue string, payload string) string {
-	msgID := CreateProcessingMsg(app, queue, payload, 100)
+func CreateDelayedMsg(app *appbuilder.App, optArgs ...Option) string {
+	msgID := CreateProcessingMsg(app, optArgs...)
 
 	err := app.NackMessages.Do(context.Background(), []usecases.NackParams{{ID: msgID, Redeliver: true}})
 	if err != nil {
@@ -68,8 +96,8 @@ func CreateDelayedMsg(app *appbuilder.App, queue string, payload string) string 
 	return msgID
 }
 
-func CreateDeliveredMsg(app *appbuilder.App, queue string, payload string) string {
-	msgID := CreateProcessingMsg(app, queue, payload, 100)
+func CreateDeliveredMsg(app *appbuilder.App, optArgs ...Option) string {
+	msgID := CreateProcessingMsg(app, optArgs...)
 
 	err := app.AckMessages.Do(context.Background(), []usecases.AckParams{{ID: msgID}})
 	if err != nil {
@@ -79,21 +107,8 @@ func CreateDeliveredMsg(app *appbuilder.App, queue string, payload string) strin
 	return msgID
 }
 
-func CreateAvailableMsgWithHistory(app *appbuilder.App, historyQueue, queue, payload string) string {
-	msgID := CreateProcessingMsg(app, historyQueue, payload, 100)
-
-	err := app.RedirectMessages.Do(context.Background(), []usecases.RedirectParams{
-		{ID: msgID, Destination: domain.UnsafeQueueName(queue)},
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	return msgID
-}
-
-func CreateArchivedMsg(app *appbuilder.App, queue string, payload string) string {
-	msgID := CreateDeliveredMsg(app, queue, payload)
+func CreateArchivedMsg(app *appbuilder.App, optArgs ...Option) string {
+	msgID := CreateDeliveredMsg(app, optArgs...)
 
 	affected, err := app.ArchiveMessages.Do(context.Background(), 1)
 	if err != nil {

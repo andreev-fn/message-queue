@@ -15,14 +15,8 @@ import (
 func TestExpireProcessingAfterTimeout(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 	clock.Set(clock.Now().Add(6 * time.Minute))
 
 	// Act
@@ -42,14 +36,8 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 func TestExpireProcessingBeforeTimeout(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 	clock.Set(clock.Now().Add(3 * time.Minute))
 
 	// Act

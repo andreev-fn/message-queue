@@ -16,13 +16,8 @@ import (
 func TestArchiveMessagesFinalized(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
-	const (
-		msgQueue   = "test"
-		msgPayload = `{"arg": 123}`
-	)
-
 	// Arrange
-	msgID := fixtures.CreateDeliveredMsg(app, msgQueue, msgPayload)
+	msgID := fixtures.CreateDeliveredMsg(app)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
@@ -39,21 +34,15 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, domain.MsgStatusDelivered, archivedMsg.Status())
-	require.Equal(t, msgQueue, archivedMsg.Queue().String())
-	require.Equal(t, msgPayload, archivedMsg.Payload())
+	require.Equal(t, fixtures.DefaultMsgQueue, archivedMsg.Queue().String())
+	require.Equal(t, fixtures.DefaultMsgPayload, archivedMsg.Payload())
 }
 
 func TestArchiveMessagesNotFinal(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act

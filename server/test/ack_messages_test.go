@@ -17,14 +17,8 @@ func TestAckMessages(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 
 	// Act
 	err := client.AckMessages(httpmodels.AckRequest{
@@ -46,19 +40,11 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgToAckQueue    = "test"
-		msgToAckPayload  = `{"a": 2, "b": 2}`
-		msgToAckPriority = 100
-
-		msgToReleaseQueue    = "test.result"
-		msgToReleasePayload  = `{"sum": 4}`
-		msgToReleasePriority = 100
-	)
+	const msgToReleaseQueue = "test.result"
 
 	// Arrange
-	msgToAckID := fixtures.CreateProcessingMsg(app, msgToAckQueue, msgToAckPayload, msgToAckPriority)
-	msgToReleaseID := fixtures.CreateMsg(app, msgToReleaseQueue, msgToReleasePayload, msgToReleasePriority)
+	msgToAckID := fixtures.CreateProcessingMsg(app)
+	msgToReleaseID := fixtures.CreatePreparedMsg(app, fixtures.WithQueue(msgToReleaseQueue))
 
 	// Act
 	err := client.AckMessages(httpmodels.AckRequest{

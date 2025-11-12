@@ -18,14 +18,8 @@ func TestNackMessages(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{
@@ -45,14 +39,8 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{

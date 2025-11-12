@@ -16,18 +16,12 @@ func TestCheckExistingMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-
-		msgHistoryQueue = "test.result"
-	)
+	const msgHistoryQueue = "test.result"
 
 	// Arrange
-	msg1ID := fixtures.CreateArchivedMsg(app, msgQueue, msgPayload)
-	msg2ID := fixtures.CreateMsg(app, msgQueue, msgPayload, msgPriority)
-	msg3ID := fixtures.CreateAvailableMsgWithHistory(app, msgHistoryQueue, msgQueue, msgPayload)
+	msg1ID := fixtures.CreateArchivedMsg(app)
+	msg2ID := fixtures.CreatePreparedMsg(app)
+	msg3ID := fixtures.CreateAvailableMsg(app, fixtures.WithHistory(msgHistoryQueue))
 
 	// Act
 	respDTO, err := client.CheckMessages(httpmodels.CheckRequest{msg1ID, msg2ID, msg3ID})
@@ -39,37 +33,37 @@ func TestCheckExistingMessage(t *testing.T) {
 
 	require.Equal(t, httpmodels.Message{
 		ID:          msg1ID,
-		Queue:       msgQueue,
+		Queue:       fixtures.DefaultMsgQueue,
 		CreatedAt:   app.Clock.Now(),
 		FinalizedAt: utils.P(app.Clock.Now()),
 		Status:      httpmodels.MsgStatusDelivered,
-		Priority:    msgPriority,
+		Priority:    fixtures.DefaultMsgPriority,
 		Retries:     0,
 		Generation:  0,
 		History:     []httpmodels.MessageChapter{},
-		Payload:     msgPayload,
+		Payload:     fixtures.DefaultMsgPayload,
 	}, respDTO[0])
 
 	require.Equal(t, httpmodels.Message{
 		ID:          msg2ID,
-		Queue:       msgQueue,
+		Queue:       fixtures.DefaultMsgQueue,
 		CreatedAt:   app.Clock.Now(),
 		FinalizedAt: nil,
 		Status:      httpmodels.MsgStatusPrepared,
-		Priority:    msgPriority,
+		Priority:    fixtures.DefaultMsgPriority,
 		Retries:     0,
 		Generation:  0,
 		History:     []httpmodels.MessageChapter{},
-		Payload:     msgPayload,
+		Payload:     fixtures.DefaultMsgPayload,
 	}, respDTO[1])
 
 	require.Equal(t, httpmodels.Message{
 		ID:          msg3ID,
-		Queue:       msgQueue,
+		Queue:       fixtures.DefaultMsgQueue,
 		CreatedAt:   app.Clock.Now(),
 		FinalizedAt: nil,
 		Status:      httpmodels.MsgStatusAvailable,
-		Priority:    msgPriority,
+		Priority:    fixtures.DefaultMsgPriority,
 		Retries:     0,
 		Generation:  1,
 		History: []httpmodels.MessageChapter{
@@ -77,11 +71,11 @@ func TestCheckExistingMessage(t *testing.T) {
 				Generation:   0,
 				Queue:        msgHistoryQueue,
 				RedirectedAt: app.Clock.Now(),
-				Priority:     msgPriority,
+				Priority:     fixtures.DefaultMsgPriority,
 				Retries:      0,
 			},
 		},
-		Payload: msgPayload,
+		Payload: fixtures.DefaultMsgPayload,
 	}, respDTO[2])
 }
 

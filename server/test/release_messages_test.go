@@ -17,14 +17,8 @@ func TestReleaseMessage(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreatePreparedMsg(app)
 
 	// Act
 	err := client.ReleaseMessages(httpmodels.ReleaseRequest{msgID})
@@ -36,9 +30,9 @@ func TestReleaseMessage(t *testing.T) {
 	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
-	require.Equal(t, msgQueue, message.Queue().String())
-	require.Equal(t, msgPayload, message.Payload())
-	require.Equal(t, msgPriority, message.Priority())
+	require.Equal(t, fixtures.DefaultMsgQueue, message.Queue().String())
+	require.Equal(t, fixtures.DefaultMsgPayload, message.Payload())
+	require.Equal(t, fixtures.DefaultMsgPriority, message.Priority())
 	require.Equal(t, app.Clock.Now(), message.CreatedAt())
 	require.Equal(t, domain.MsgStatusAvailable, message.Status())
 }

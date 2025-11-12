@@ -18,16 +18,10 @@ func TestRedirectMessages(t *testing.T) {
 	app, clock := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue    = "test.result"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-
-		destinationQueue = "all_results"
-	)
+	const destinationQueue = "all_results"
 
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 	clock.Set(clock.Now().Add(time.Minute))
 
 	// Act
@@ -52,7 +46,7 @@ func TestRedirectMessages(t *testing.T) {
 	chapters, loaded := message.History().Chapters()
 	require.True(t, loaded)
 	require.Len(t, chapters, 1)
-	require.Equal(t, msgQueue, chapters[0].Queue().String())
+	require.Equal(t, fixtures.DefaultMsgQueue, chapters[0].Queue().String())
 	require.Equal(t, 0, chapters[0].Generation())
 }
 
@@ -60,14 +54,8 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 	app, _ := e2eutils.Prepare(t)
 	client := e2eutils.PrepareHTTPClient(t, app)
 
-	const (
-		msgQueue    = "test.result"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 100
-	)
-
 	// Arrange
-	msgID := fixtures.CreateProcessingMsg(app, msgQueue, msgPayload, msgPriority)
+	msgID := fixtures.CreateProcessingMsg(app)
 
 	// Act
 	err := client.RedirectMessages(httpmodels.RedirectRequest{
