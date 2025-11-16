@@ -36,7 +36,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - ✅ **Message Prioritization** – High-priority messages are picked first.
 - ✅ **Retries & Backoff** – Lost/NACKed messages are retried automatically.
 - ✅ **Dead Letter Queues** – Failed messages are automatically routed for later inspection.
-- ✅ **Long-polling** – Consumers can efficiently wait until a message comes.
+- ✅ **Efficient Long-Polling** – Consumers wait for messages without busy-looping.
 - ✅ **Atomic Ack + Publish** – Consumers can publish messages atomically with Ack.
 
 ## 📦 When to Use
