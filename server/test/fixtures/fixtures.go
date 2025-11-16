@@ -8,6 +8,7 @@ import (
 	"server/internal/appbuilder"
 	"server/internal/domain"
 	"server/internal/usecases"
+	"server/test/e2eutils"
 )
 
 func CreatePreparedMsg(app *appbuilder.App, optArgs ...Option) string {
@@ -48,7 +49,17 @@ func CreateAvailableMsg(app *appbuilder.App, optArgs ...Option) string {
 	prevQueue := publishQueue
 	for _, nextQueue := range redirectQueues {
 		consumeMessage(app, msgID, prevQueue)
-		redirect(app, msgID, nextQueue)
+
+		if domain.UnsafeQueueName(nextQueue).IsDLQ() {
+			if e2eutils.GetDLQ(prevQueue) != nextQueue {
+				panic(fmt.Sprintf("queue %s is unreachable from queue %s", nextQueue, prevQueue))
+			}
+
+			nackPermanent(app, msgID)
+		} else {
+			redirect(app, msgID, nextQueue)
+		}
+
 		prevQueue = nextQueue
 	}
 
@@ -60,6 +71,13 @@ func redirect(app *appbuilder.App, msgID string, toQueue string) {
 		ID:          msgID,
 		Destination: domain.UnsafeQueueName(toQueue),
 	}}); err != nil {
+		panic(err)
+	}
+}
+
+func nackPermanent(app *appbuilder.App, msgID string) {
+	err := app.NackMessages.Do(context.Background(), []usecases.NackParams{{ID: msgID, Redeliver: false}})
+	if err != nil {
 		panic(err)
 	}
 }

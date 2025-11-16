@@ -38,6 +38,21 @@ func NewConfig(
 		return nil, errors.New("at least one queue must be defined")
 	}
 
+	for queue, config := range queues {
+		if queue.IsDLQ() && config.IsDeadLetteringOn() {
+			return nil, fmt.Errorf("dlq %q can't have dead-lettering on", queue)
+		}
+		if config.IsDeadLetteringOn() {
+			dlQueue, err := queue.DLQName()
+			if err != nil {
+				return nil, err
+			}
+			if _, configExist := queues[dlQueue]; !configExist {
+				return nil, fmt.Errorf("dlq %q config not found", dlQueue)
+			}
+		}
+	}
+
 	return &Config{
 		databaseType:   DBTypePostgres,
 		postgresConfig: pgConfig,

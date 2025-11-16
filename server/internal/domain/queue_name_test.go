@@ -18,6 +18,7 @@ func TestNewQueueName_Valid(t *testing.T) {
 		{name: "mixed segments", in: "a.3"},
 		{name: "all numbers", in: "1.2.3"},
 		{name: "underscore allowed", in: "a_b"},
+		{name: "dl suffix", in: "abc.def:dl"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -41,6 +42,9 @@ func TestNewQueueName_Invalid(t *testing.T) {
 		{name: "uppercase not allowed", in: "Abc"},
 		{name: "dash not allowed", in: "a-b"},
 		{name: "space not allowed", in: "a b"},
+		{name: "invalid special suffix", in: "a:dead"},
+		{name: "empty before colon", in: ":dl"},
+		{name: "empty after dot with suffix", in: "a..b:dl"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -14,7 +14,21 @@ func NewQueueName(name string) (QueueName, error) {
 		return QueueName{}, errors.New("queue name too long")
 	}
 
-	for _, part := range strings.Split(name, ".") {
+	parts := strings.Split(name, ":")
+	if len(parts) > 2 {
+		return QueueName{}, errors.New("queue name can have at most one colon (':') separator")
+	}
+	if len(parts) == 2 && parts[1] != "dl" {
+		return QueueName{}, errors.New("the only possible special queue kind is ':dl'")
+	}
+	namePart := parts[0]
+
+	// reserve 15 characters for suffixes
+	if len(namePart) > 240 {
+		return QueueName{}, errors.New("queue name too long")
+	}
+
+	for _, part := range strings.Split(namePart, ".") {
 		if part == "" {
 			return QueueName{}, errors.New("queue name parts can't be empty")
 		}
@@ -35,4 +49,15 @@ func UnsafeQueueName(name string) QueueName {
 
 func (q QueueName) String() string {
 	return q.v
+}
+
+func (q QueueName) IsDLQ() bool {
+	return strings.HasSuffix(q.v, ":dl")
+}
+
+func (q QueueName) DLQName() (QueueName, error) {
+	if q.IsDLQ() {
+		return QueueName{}, errors.New("DLQ cannot have DLQ")
+	}
+	return QueueName{v: q.v + ":dl"}, nil
 }

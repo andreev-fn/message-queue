@@ -6,8 +6,7 @@ db:
     password:
 
 queues:
-  queue1:
-    backoff:
-      enabled: false
+  queue1: { processing_timeout: 5m }
+  "queue1:dl":
     processing_timeout: 5m
     dead_lettering: off

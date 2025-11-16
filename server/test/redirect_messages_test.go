@@ -91,3 +91,24 @@ func TestRedirectUnknownMessage(t *testing.T) {
 	// Assert
 	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
 }
+
+func TestRedirectToDLQNotAllowed(t *testing.T) {
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare(e2eutils.WithDeadLettering())
+	client := e2eutils.PrepareHTTPClient(t, app)
+
+	// Arrange
+	msgID := fixtures.CreateProcessingMsg(app)
+
+	// Act
+	err := client.RedirectMessages(httpmodels.RedirectRequest{
+		httpmodels.RedirectRequestItem{
+			ID:          msgID,
+			Destination: e2eutils.GetDLQ(fixtures.DefaultMsgQueue),
+		},
+	})
+
+	// Assert
+	require.ErrorContains(t, err, "writing directly to DLQ is not allowed")
+}

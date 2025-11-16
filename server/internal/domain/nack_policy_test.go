@@ -17,7 +17,7 @@ func Test_pureDecide_WithBackoff(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	conf, err := NewQueueConfig(opt.Some(bConf), time.Minute)
+	conf, err := NewQueueConfig(opt.Some(bConf), time.Minute, false)
 	require.NoError(t, err)
 
 	t.Run("NotExhaustedWithRedelivery", func(t *testing.T) {
@@ -43,7 +43,7 @@ func Test_pureDecide_WithBackoff(t *testing.T) {
 }
 
 func Test_pureDecide_WithoutBackoff(t *testing.T) {
-	conf, err := NewQueueConfig(opt.None[*BackoffConfig](), time.Minute)
+	conf, err := NewQueueConfig(opt.None[*BackoffConfig](), time.Minute, false)
 	require.NoError(t, err)
 
 	t.Run("WithRedelivery", func(t *testing.T) {

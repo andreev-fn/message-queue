@@ -28,6 +28,7 @@ type PostgresConfig struct {
 type QueueConfig struct {
 	Backoff           *BackoffConfig `yaml:"backoff"`
 	ProcessingTimeout time.Duration  `yaml:"processing_timeout"`
+	DeadLettering     *bool          `yaml:"dead_lettering"`
 }
 
 type BackoffConfig struct {

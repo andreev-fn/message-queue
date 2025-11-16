@@ -15,6 +15,10 @@ func ExtractKnownErrors(err error) *Error {
 		return NewError(http.StatusBadRequest, err)
 	}
 
+	if errors.Is(err, usecases.ErrDirectWriteToDLQNotAllowed) {
+		return NewError(http.StatusBadRequest, err)
+	}
+
 	if errors.Is(err, storage.ErrMsgNotFound) || errors.Is(err, storage.ErrArchivedMsgNotFound) {
 		return NewError(http.StatusBadRequest, err).WithCode(apierror.CodeMessageNotFound)
 	}

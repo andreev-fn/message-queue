@@ -17,13 +17,15 @@ func PrepareHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
 	return httpclient.NewClient("/", NewHTTPTestDoer(t, app.Router))
 }
 
-func Prepare() *appbuilder.App {
-	app := BuildTestApp(CreateTestConfig())
+func Prepare(optArgs ...ConfigOption) *appbuilder.App {
+	app := BuildTestApp(CreateTestConfig(optArgs...))
 	CleanupDatabase(app.DB)
 	return app
 }
 
-func CreateTestConfig() *config.Config {
+func CreateTestConfig(optArgs ...ConfigOption) *config.Config {
+	opts := buildConfigOptions(optArgs)
+
 	pgConf, err := config.NewPostgresConfig(
 		"127.0.0.1:5432",
 		"queue",
@@ -45,19 +47,25 @@ func CreateTestConfig() *config.Config {
 	queueConfig, err := domain.NewQueueConfig(
 		opt.Some(backoffConfig),
 		time.Minute*5,
+		opts.deadLetteringOn,
 	)
 	if err != nil {
 		panic(err)
 	}
 
+	queues := map[domain.QueueName]*domain.QueueConfig{}
+	for _, queue := range []string{"test", "test.result", "all_results"} {
+		queues[domain.UnsafeQueueName(queue)] = queueConfig
+		if opts.deadLetteringOn {
+			dlqName := domain.UnsafeQueueName(GetDLQ(queue))
+			queues[dlqName] = config.DefaultDLQueueConfig(queueConfig.ProcessingTimeout())
+		}
+	}
+
 	conf, err := config.NewConfig(
 		opt.Some(pgConf),
 		config.DefaultBatchSizeLimit,
-		map[domain.QueueName]*domain.QueueConfig{
-			domain.UnsafeQueueName("test"):        queueConfig,
-			domain.UnsafeQueueName("test.result"): queueConfig,
-			domain.UnsafeQueueName("all_results"): queueConfig,
-		},
+		queues,
 	)
 	if err != nil {
 		panic(err)
@@ -96,4 +104,12 @@ func CleanupDatabase(db *sql.DB) {
 	if _, err := db.Exec("DELETE FROM archived_messages"); err != nil {
 		panic(err)
 	}
+}
+
+func GetDLQ(queue string) string {
+	dlqName, err := domain.UnsafeQueueName(queue).DLQName()
+	if err != nil {
+		panic(err)
+	}
+	return dlqName.String()
 }

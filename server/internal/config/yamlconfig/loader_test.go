@@ -34,6 +34,9 @@ func TestLoadFromFile_full(t *testing.T) {
 		q, err := cfg.GetQueueConfig(domain.UnsafeQueueName(qName))
 		require.NoError(t, err)
 
+		require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
+		require.True(t, q.IsDeadLetteringOn())
+
 		// Backoff
 		require.True(t, q.Backoff().IsSet())
 		require.Equal(t, []time.Duration{
@@ -44,9 +47,6 @@ func TestLoadFromFile_full(t *testing.T) {
 		}, q.Backoff().MustValue().Shape())
 		require.True(t, q.Backoff().MustValue().MaxAttempts().IsSet())
 		require.Equal(t, 10, q.Backoff().MustValue().MaxAttempts().MustValue())
-
-		// Timeouts and retention
-		require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
 	}
 }
 
@@ -70,6 +70,9 @@ func TestLoadFromFile_minimal(t *testing.T) {
 	q, err := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
 	require.NoError(t, err)
 
+	require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
+	require.True(t, q.IsDeadLetteringOn())
+
 	// Backoff
 	require.Equal(t, config.DefaultBackoffEnabled, q.Backoff().IsSet())
 	if config.DefaultBackoffEnabled {
@@ -77,9 +80,6 @@ func TestLoadFromFile_minimal(t *testing.T) {
 		require.True(t, q.Backoff().MustValue().MaxAttempts().IsSet())
 		require.Equal(t, config.DefaultBackoffMaxAttempts, q.Backoff().MustValue().MaxAttempts().MustValue())
 	}
-
-	// Timeouts and retention
-	require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
 }
 
 func TestLoadFromFile_disabled(t *testing.T) {
@@ -102,11 +102,11 @@ func TestLoadFromFile_disabled(t *testing.T) {
 	q, err := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
 	require.NoError(t, err)
 
+	require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
+	require.False(t, q.IsDeadLetteringOn())
+
 	// Backoff
 	require.False(t, q.Backoff().IsSet())
-
-	// Timeouts and retention
-	require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
 }
 
 func TestLoadFromFile_custom(t *testing.T) {
@@ -129,11 +129,16 @@ func TestLoadFromFile_custom(t *testing.T) {
 	q, err := cfg.GetQueueConfig(domain.UnsafeQueueName("queue1"))
 	require.NoError(t, err)
 
+	require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
+	require.True(t, q.IsDeadLetteringOn())
+
 	// Backoff
 	require.True(t, q.Backoff().IsSet())
 	require.Equal(t, config.DefaultBackoffShape(), q.Backoff().MustValue().Shape())
 	require.False(t, q.Backoff().MustValue().MaxAttempts().IsSet())
+}
 
-	// Timeouts and retention
-	require.Equal(t, 5*time.Minute, q.ProcessingTimeout())
+func TestLoadFromFile_DirectConfigOfDLQNotAllowed(t *testing.T) {
+	_, err := LoadFromFile("testdata/config.err.dlq.yaml")
+	require.ErrorContains(t, err, "manual configuration of DL queues is not allowed")
 }

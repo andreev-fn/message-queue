@@ -15,6 +15,7 @@ type NackActionKind int
 const (
 	NackActionDelay NackActionKind = 1 << iota
 	NackActionDrop
+	NackActionDLQ
 )
 
 type NackAction struct {
@@ -50,11 +51,11 @@ func pureDecide(msgRetries int, conf *QueueConfig, redeliveryRequested bool) *Na
 	backoffConf, backoffIsSet := conf.Backoff().Value()
 
 	if !redeliveryRequested || !backoffIsSet {
-		return &NackAction{Type: NackActionDrop}
+		return handleExhausted(conf)
 	}
 
 	if maxAttempt, isSet := backoffConf.MaxAttempts().Value(); isSet && msgRetries >= maxAttempt {
-		return &NackAction{Type: NackActionDrop}
+		return handleExhausted(conf)
 	}
 
 	duration := getDelayDuration(backoffConf.Shape(), msgRetries)
@@ -63,6 +64,13 @@ func pureDecide(msgRetries int, conf *QueueConfig, redeliveryRequested bool) *Na
 		Type:          NackActionDelay,
 		DelayDuration: duration,
 	}
+}
+
+func handleExhausted(conf *QueueConfig) *NackAction {
+	if conf.IsDeadLetteringOn() {
+		return &NackAction{Type: NackActionDLQ}
+	}
+	return &NackAction{Type: NackActionDrop}
 }
 
 func getDelayDuration(shape []time.Duration, retries int) time.Duration {

@@ -96,11 +96,11 @@ func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 	releaseMessages := usecases.NewReleaseMessages(logger, clock, db, msgRepo, requestScopeFactory, conf)
 	consumeMessages := usecases.NewConsumeMessages(logger, clock, db, msgRepo, eventBus, conf)
 	ackMessages := usecases.NewAckMessages(clock, logger, db, msgRepo, requestScopeFactory, conf)
-	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, nackPolicy, conf)
+	nackMessages := usecases.NewNackMessages(clock, logger, db, msgRepo, requestScopeFactory, nackPolicy, conf)
 	redirectMessages := usecases.NewRedirectMessages(clock, logger, db, msgRepo, requestScopeFactory, conf)
 	checkMessages := usecases.NewCheckMessages(db, msgRepo, archivedMsgRepo, conf)
 	archiveMessages := usecases.NewArchiveMessages(clock, db, msgRepo, archivedMsgRepo)
-	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo, nackPolicy)
+	expireProcessing := usecases.NewExpireProcessing(clock, logger, db, msgRepo, requestScopeFactory, nackPolicy)
 	resumeDelayed := usecases.NewResumeDelayed(clock, logger, db, msgRepo, requestScopeFactory)
 
 	mux := http.NewServeMux()

@@ -90,3 +90,37 @@ func TestConsumeFromUnknownQueue(t *testing.T) {
 	// Assert
 	require.True(t, apierror.IsCode(err, apierror.CodeQueueNotFound))
 }
+
+func TestConsumeFromDLQAllowed(t *testing.T) {
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare(e2eutils.WithDeadLettering())
+	client := e2eutils.PrepareHTTPClient(t, app)
+
+	// Arrange
+	msgID := fixtures.CreateAvailableMsg(
+		app,
+		fixtures.WithQueue(e2eutils.GetDLQ(fixtures.DefaultMsgQueue)),
+		fixtures.WithHistory(fixtures.DefaultMsgQueue),
+	)
+
+	// Act
+	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
+		Queue: e2eutils.GetDLQ(fixtures.DefaultMsgQueue),
+		Limit: utils.P(1),
+	})
+
+	// Assert response
+	require.NoError(t, err)
+
+	require.Len(t, respDTO, 1)
+	require.Equal(t, httpmodels.ConsumeResponseItem{
+		ID:      msgID,
+		Payload: fixtures.DefaultMsgPayload,
+	}, respDTO[0])
+
+	// Assert messages in DB
+	takenMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
+	require.NoError(t, err)
+	require.Equal(t, domain.MsgStatusProcessing, takenMsg.Status())
+}

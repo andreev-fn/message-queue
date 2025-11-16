@@ -15,4 +15,5 @@ queues:
       shape: [30s, 1m, 2m, 5m]
       max_attempts: 10
     processing_timeout: ${5*60}s
+    dead_lettering: on
   queue2: *default_queue_cfg

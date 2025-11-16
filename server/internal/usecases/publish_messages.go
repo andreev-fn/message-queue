@@ -76,6 +76,10 @@ func (uc *PublishMessages) Do(
 			return nil, err
 		}
 
+		if msg.Queue.IsDLQ() {
+			return nil, ErrDirectWriteToDLQNotAllowed
+		}
+
 		message, err := domain.NewMessage(uc.clock, uuid.New(), msg.Queue, msg.Payload, msg.Priority, msg.StartAt)
 		if err != nil {
 			return nil, err

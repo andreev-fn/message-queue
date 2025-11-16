@@ -11,6 +11,7 @@ const (
 	DefaultBatchSizeLimit     = 200
 	DefaultBackoffEnabled     = true
 	DefaultBackoffMaxAttempts = 5
+	DefaultDeadLettering      = true
 )
 
 func DefaultBackoffShape() []time.Duration {
@@ -32,4 +33,31 @@ func DefaultBackoffConfig() *domain.BackoffConfig {
 		panic(err)
 	}
 	return cfg
+}
+
+func DefaultDLQueueConfig(parentProcessingTimeout time.Duration) *domain.QueueConfig {
+	backoffConf, err := domain.NewBackoffConfig(
+		[]time.Duration{time.Minute},
+		opt.None[int](), // infinite retries
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// derive timeout from the parent queue, but not less than a minute
+	timeout := time.Minute
+	if parentProcessingTimeout > timeout {
+		timeout = parentProcessingTimeout
+	}
+
+	conf, err := domain.NewQueueConfig(
+		opt.Some(backoffConf),
+		timeout,
+		false,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return conf
 }

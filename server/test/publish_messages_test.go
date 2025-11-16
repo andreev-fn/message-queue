@@ -12,6 +12,7 @@ import (
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
 	"server/test/e2eutils"
+	"server/test/fixtures"
 )
 
 func TestPrepareMessage(t *testing.T) {
@@ -108,4 +109,23 @@ func TestPublishToUnknownQueue(t *testing.T) {
 
 	// Assert
 	require.True(t, apierror.IsCode(err, apierror.CodeQueueNotFound))
+}
+
+func TestPublishToDLQNotAllowed(t *testing.T) {
+	testutils.SkipIfNotIntegration(t)
+
+	app := e2eutils.Prepare(e2eutils.WithDeadLettering())
+	client := e2eutils.PrepareHTTPClient(t, app)
+
+	// Act
+	_, err := client.PublishMessages(httpmodels.PublishRequest{
+		httpmodels.PublishRequestItem{
+			Queue:    e2eutils.GetDLQ(fixtures.DefaultMsgQueue),
+			Payload:  fixtures.DefaultMsgPayload,
+			Priority: utils.P(fixtures.DefaultMsgPriority),
+		},
+	})
+
+	// Assert
+	require.ErrorContains(t, err, "writing directly to DLQ is not allowed")
 }

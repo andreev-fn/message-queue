@@ -65,6 +65,10 @@ func (uc *RedirectMessages) Do(ctx context.Context, redirects []RedirectParams) 
 			return err
 		}
 
+		if redirect.Destination.IsDLQ() {
+			return ErrDirectWriteToDLQNotAllowed
+		}
+
 		message, err := uc.msgRepo.GetByID(ctx, uc.db, redirect.ID)
 		if err != nil {
 			return fmt.Errorf("msgRepo.GetByID: %w", err)

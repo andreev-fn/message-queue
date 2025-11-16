@@ -34,17 +34,33 @@ func MapToAppConfig(dto *ConfigDTO) (*config.Config, error) {
 			return nil, fmt.Errorf("domain.NewQueueName: %w", err)
 		}
 
+		if qName.IsDLQ() {
+			return nil, fmt.Errorf("manual configuration of DL queues is not allowed")
+		}
+
 		backoffConfig, err := mapBackoffConfig(qConf.Backoff)
 		if err != nil {
 			return nil, fmt.Errorf("queue %s: %w", qNameStr, err)
 		}
 
+		deadLetteringOn := derefOrDefault(qConf.DeadLettering, config.DefaultDeadLettering)
+
 		queues[qName], err = domain.NewQueueConfig(
 			backoffConfig,
 			qConf.ProcessingTimeout,
+			deadLetteringOn,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("queue %s: domain.NewQueueConfig: %w", qNameStr, err)
+		}
+
+		if deadLetteringOn {
+			dlQueue, err := qName.DLQName()
+			if err != nil {
+				return nil, fmt.Errorf("queue.DLQName: %w", err)
+			}
+
+			queues[dlQueue] = config.DefaultDLQueueConfig(qConf.ProcessingTimeout)
 		}
 	}
 

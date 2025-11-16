@@ -11,11 +11,13 @@ import (
 type QueueConfig struct {
 	backoff           opt.Val[*BackoffConfig]
 	processingTimeout time.Duration
+	deadLetteringOn   bool
 }
 
 func NewQueueConfig(
 	backoff opt.Val[*BackoffConfig],
 	processingTimeout time.Duration,
+	deadLetteringOn bool,
 ) (*QueueConfig, error) {
 	if processingTimeout < time.Second {
 		return nil, errors.New("processing timeout must be at least 1 second")
@@ -24,11 +26,13 @@ func NewQueueConfig(
 	return &QueueConfig{
 		backoff:           backoff,
 		processingTimeout: processingTimeout,
+		deadLetteringOn:   deadLetteringOn,
 	}, nil
 }
 
 func (c *QueueConfig) Backoff() opt.Val[*BackoffConfig] { return c.backoff }
 func (c *QueueConfig) ProcessingTimeout() time.Duration { return c.processingTimeout }
+func (c *QueueConfig) IsDeadLetteringOn() bool          { return c.deadLetteringOn }
 
 type BackoffConfig struct {
 	shape       []time.Duration

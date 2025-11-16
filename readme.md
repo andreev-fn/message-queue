@@ -14,7 +14,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - [x] Batch operations
 - [x] Configurable queues (config file)
 - [x] Message redirection
-- [ ] Dead-letter queues
+- [x] Dead-letter queues
 - [ ] Add authentication (config file)
 - [ ] Tries history (and attempt ID)
 - [ ] Removal of old messages
@@ -35,6 +35,7 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 
 - ✅ **Message Prioritization** – High-priority messages are picked first.
 - ✅ **Retries & Backoff** – Lost/NACKed messages are retried automatically.
+- ✅ **Dead Letter Queues** – Failed messages are automatically routed for later inspection.
 - ✅ **Long-polling** – Consumers can efficiently wait until a message comes.
 - ✅ **Atomic Ack + Publish** – Consumers can publish messages atomically with Ack.
 
