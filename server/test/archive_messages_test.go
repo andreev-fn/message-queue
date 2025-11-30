@@ -17,7 +17,8 @@ import (
 func TestArchiveMessagesFinalized(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
+	app := testkit.NewApp(testkit.NewAppConfig())
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateDeliveredMsg(app)
@@ -44,7 +45,8 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 func TestArchiveMessagesNotFinal(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
+	app := testkit.NewApp(testkit.NewAppConfig())
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)

@@ -18,8 +18,9 @@ import (
 func TestConsumeMessages(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	const msg2Payload = `{"arg": 213}`
 
@@ -60,8 +61,9 @@ func TestConsumeMessages(t *testing.T) {
 func TestConsumeMessagesEmptyQueue(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Act
 	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
@@ -78,8 +80,9 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 func TestConsumeFromUnknownQueue(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Act
 	_, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
@@ -94,8 +97,9 @@ func TestConsumeFromUnknownQueue(t *testing.T) {
 func TestConsumeFromDLQAllowed(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare(testkit.WithDeadLettering())
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig(testkit.WithDeadLettering()))
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateAvailableMsg(

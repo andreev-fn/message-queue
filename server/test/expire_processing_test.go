@@ -16,7 +16,8 @@ import (
 func TestExpireProcessingAfterTimeout(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
+	app := testkit.NewApp(testkit.NewAppConfig())
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -39,7 +40,8 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 func TestExpireProcessingBeforeTimeout(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
+	app := testkit.NewApp(testkit.NewAppConfig())
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)

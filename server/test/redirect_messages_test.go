@@ -18,8 +18,9 @@ import (
 func TestRedirectMessages(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	const destinationQueue = "all_results"
 
@@ -56,8 +57,9 @@ func TestRedirectMessages(t *testing.T) {
 func TestRedirectToUnknownQueue(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -77,8 +79,9 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 func TestRedirectUnknownMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Act
 	err := client.RedirectMessages(httpmodels.RedirectRequest{
@@ -95,8 +98,9 @@ func TestRedirectUnknownMessage(t *testing.T) {
 func TestRedirectToDLQNotAllowed(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare(testkit.WithDeadLettering())
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig(testkit.WithDeadLettering()))
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)

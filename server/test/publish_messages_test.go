@@ -18,8 +18,9 @@ import (
 func TestPrepareMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	const (
 		msgQueue    = "test"
@@ -53,8 +54,9 @@ func TestPrepareMessage(t *testing.T) {
 func TestPublishMessageWithPriority(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	const (
 		msgQueue    = "test"
@@ -89,8 +91,9 @@ func TestPublishMessageWithPriority(t *testing.T) {
 func TestPublishToUnknownQueue(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	const (
 		msgQueue    = "undefined_queue"
@@ -114,8 +117,9 @@ func TestPublishToUnknownQueue(t *testing.T) {
 func TestPublishToDLQNotAllowed(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare(testkit.WithDeadLettering())
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig(testkit.WithDeadLettering()))
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Act
 	_, err := client.PublishMessages(httpmodels.PublishRequest{

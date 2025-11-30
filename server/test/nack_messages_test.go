@@ -18,8 +18,9 @@ import (
 func TestNackMessages(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -41,8 +42,9 @@ func TestNackMessages(t *testing.T) {
 func TestNackMessagesNoRedeliver(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -64,8 +66,9 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 func TestNackUnknownMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{

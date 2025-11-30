@@ -17,8 +17,9 @@ import (
 func TestReleaseMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreatePreparedMsg(app)
@@ -43,8 +44,9 @@ func TestReleaseMessage(t *testing.T) {
 func TestReleaseUnknownMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	// Act
 	err := client.ReleaseMessages(httpmodels.ReleaseRequest{"d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2"})

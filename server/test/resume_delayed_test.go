@@ -16,7 +16,8 @@ import (
 func TestResumeDelayedAfterTimeout(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
+	app := testkit.NewApp(testkit.NewAppConfig())
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)
@@ -39,7 +40,8 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 func TestResumeDelayedBeforeTimeout(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
+	app := testkit.NewApp(testkit.NewAppConfig())
+	testkit.CleanupDatabase(app.DB)
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)

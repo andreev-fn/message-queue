@@ -13,17 +13,24 @@ import (
 	"server/pkg/httpclient"
 )
 
-func PrepareHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
+func NewHTTPClient(t *testing.T, app *appbuilder.App) *httpclient.Client {
 	return httpclient.NewClient("/", NewHTTPTestDoer(t, app.Router))
 }
 
-func Prepare(optArgs ...ConfigOption) *appbuilder.App {
-	app := BuildTestApp(CreateTestConfig(optArgs...))
-	CleanupDatabase(app.DB)
+func NewApp(conf *config.Config) *appbuilder.App {
+	clock := timeutils.NewStubClock(time.Date(2025, 6, 12, 12, 0, 0, 0, time.Local))
+
+	app, err := appbuilder.BuildApp(conf, &appbuilder.Overrides{
+		Clock: clock,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	return app
 }
 
-func CreateTestConfig(optArgs ...ConfigOption) *config.Config {
+func NewAppConfig(optArgs ...ConfigOption) *config.Config {
 	opts := buildConfigOptions(optArgs)
 
 	pgConf, err := config.NewPostgresConfig(
@@ -72,19 +79,6 @@ func CreateTestConfig(optArgs ...ConfigOption) *config.Config {
 	}
 
 	return conf
-}
-
-func BuildTestApp(conf *config.Config) *appbuilder.App {
-	clock := timeutils.NewStubClock(time.Date(2025, 6, 12, 12, 0, 0, 0, time.Local))
-
-	app, err := appbuilder.BuildApp(conf, &appbuilder.Overrides{
-		Clock: clock,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	return app
 }
 
 func AdvanceClock(app *appbuilder.App, dur time.Duration) {

@@ -16,8 +16,9 @@ import (
 func TestCheckExistingMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	const msgHistoryQueue = "test.result"
 
@@ -85,8 +86,9 @@ func TestCheckExistingMessage(t *testing.T) {
 func TestCheckUnknownMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
-	app := testkit.Prepare()
-	client := testkit.PrepareHTTPClient(t, app)
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
 
 	const nonExistentID = "00000000-0000-0000-0000-000000000002"
 
