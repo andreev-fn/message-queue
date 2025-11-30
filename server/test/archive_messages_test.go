@@ -10,18 +10,18 @@ import (
 	"server/internal/domain"
 	"server/internal/storage"
 	"server/internal/utils/testutils"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestArchiveMessagesFinalized(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
+	app := testkit.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateDeliveredMsg(app)
-	e2eutils.AdvanceClock(app, time.Minute)
+	testkit.AdvanceClock(app, time.Minute)
 
 	// Act
 	affected, err := app.ArchiveMessages.Do(context.Background(), 10)
@@ -42,13 +42,13 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 }
 
 func TestArchiveMessagesNotFinal(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
+	app := testkit.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	e2eutils.AdvanceClock(app, time.Minute)
+	testkit.AdvanceClock(app, time.Minute)
 
 	// Act
 	affected, err := app.ArchiveMessages.Do(context.Background(), 10)

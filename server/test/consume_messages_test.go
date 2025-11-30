@@ -11,15 +11,15 @@ import (
 	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestConsumeMessages(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	const msg2Payload = `{"arg": 213}`
 
@@ -58,10 +58,10 @@ func TestConsumeMessages(t *testing.T) {
 }
 
 func TestConsumeMessagesEmptyQueue(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Act
 	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
@@ -76,10 +76,10 @@ func TestConsumeMessagesEmptyQueue(t *testing.T) {
 }
 
 func TestConsumeFromUnknownQueue(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Act
 	_, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
@@ -92,21 +92,21 @@ func TestConsumeFromUnknownQueue(t *testing.T) {
 }
 
 func TestConsumeFromDLQAllowed(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare(e2eutils.WithDeadLettering())
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare(testkit.WithDeadLettering())
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Arrange
 	msgID := fixtures.CreateAvailableMsg(
 		app,
-		fixtures.WithQueue(e2eutils.GetDLQ(fixtures.DefaultMsgQueue)),
+		fixtures.WithQueue(testkit.GetDLQ(fixtures.DefaultMsgQueue)),
 		fixtures.WithHistory(fixtures.DefaultMsgQueue),
 	)
 
 	// Act
 	respDTO, err := client.ConsumeMessages(httpmodels.ConsumeRequest{
-		Queue: e2eutils.GetDLQ(fixtures.DefaultMsgQueue),
+		Queue: testkit.GetDLQ(fixtures.DefaultMsgQueue),
 		Limit: utils.P(1),
 	})
 

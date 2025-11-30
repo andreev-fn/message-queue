@@ -9,18 +9,18 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils/testutils"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestResumeDelayedAfterTimeout(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
+	app := testkit.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)
-	e2eutils.AdvanceClock(app, 40*time.Second)
+	testkit.AdvanceClock(app, 40*time.Second)
 
 	// Act
 	affected, err := app.ResumeDelayed.Do(context.Background(), 10)
@@ -37,13 +37,13 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 }
 
 func TestResumeDelayedBeforeTimeout(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
+	app := testkit.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateDelayedMsg(app)
-	e2eutils.AdvanceClock(app, 20*time.Second)
+	testkit.AdvanceClock(app, 20*time.Second)
 
 	// Act
 	affected, err := app.ResumeDelayed.Do(context.Background(), 10)

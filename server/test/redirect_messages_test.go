@@ -11,21 +11,21 @@ import (
 	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestRedirectMessages(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	const destinationQueue = "all_results"
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	e2eutils.AdvanceClock(app, time.Minute)
+	testkit.AdvanceClock(app, time.Minute)
 
 	// Act
 	err := client.RedirectMessages(httpmodels.RedirectRequest{
@@ -54,10 +54,10 @@ func TestRedirectMessages(t *testing.T) {
 }
 
 func TestRedirectToUnknownQueue(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -75,10 +75,10 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 }
 
 func TestRedirectUnknownMessage(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Act
 	err := client.RedirectMessages(httpmodels.RedirectRequest{
@@ -93,10 +93,10 @@ func TestRedirectUnknownMessage(t *testing.T) {
 }
 
 func TestRedirectToDLQNotAllowed(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare(e2eutils.WithDeadLettering())
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare(testkit.WithDeadLettering())
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -105,7 +105,7 @@ func TestRedirectToDLQNotAllowed(t *testing.T) {
 	err := client.RedirectMessages(httpmodels.RedirectRequest{
 		httpmodels.RedirectRequestItem{
 			ID:          msgID,
-			Destination: e2eutils.GetDLQ(fixtures.DefaultMsgQueue),
+			Destination: testkit.GetDLQ(fixtures.DefaultMsgQueue),
 		},
 	})
 

@@ -10,15 +10,15 @@ import (
 	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestAckMessages(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -40,10 +40,10 @@ func TestAckMessages(t *testing.T) {
 }
 
 func TestAckMessagesAtomicRelease(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	const msgToReleaseQueue = "test.result"
 
@@ -73,10 +73,10 @@ func TestAckMessagesAtomicRelease(t *testing.T) {
 }
 
 func TestAckUnknownMessage(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Act
 	err := client.AckMessages(httpmodels.AckRequest{

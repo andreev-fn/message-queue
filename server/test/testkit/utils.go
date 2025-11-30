@@ -1,4 +1,4 @@
-package e2eutils
+package testkit
 
 import (
 	"database/sql"

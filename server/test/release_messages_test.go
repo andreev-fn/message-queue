@@ -10,15 +10,15 @@ import (
 	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestReleaseMessage(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Arrange
 	msgID := fixtures.CreatePreparedMsg(app)
@@ -41,10 +41,10 @@ func TestReleaseMessage(t *testing.T) {
 }
 
 func TestReleaseUnknownMessage(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Act
 	err := client.ReleaseMessages(httpmodels.ReleaseRequest{"d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2"})

@@ -11,15 +11,15 @@ import (
 	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestNackMessages(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -39,10 +39,10 @@ func TestNackMessages(t *testing.T) {
 }
 
 func TestNackMessagesNoRedeliver(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
@@ -62,10 +62,10 @@ func TestNackMessagesNoRedeliver(t *testing.T) {
 }
 
 func TestNackUnknownMessage(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Act
 	err := client.NackMessages(httpmodels.NackRequest{

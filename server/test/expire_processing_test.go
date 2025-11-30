@@ -9,18 +9,18 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils/testutils"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestExpireProcessingAfterTimeout(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
+	app := testkit.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	e2eutils.AdvanceClock(app, 6*time.Minute)
+	testkit.AdvanceClock(app, 6*time.Minute)
 
 	// Act
 	affected, err := app.ExpireProcessing.Do(context.Background(), 10)
@@ -37,13 +37,13 @@ func TestExpireProcessingAfterTimeout(t *testing.T) {
 }
 
 func TestExpireProcessingBeforeTimeout(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
+	app := testkit.Prepare()
 
 	// Arrange
 	msgID := fixtures.CreateProcessingMsg(app)
-	e2eutils.AdvanceClock(app, 3*time.Minute)
+	testkit.AdvanceClock(app, 3*time.Minute)
 
 	// Act
 	affected, err := app.ExpireProcessing.Do(context.Background(), 10)

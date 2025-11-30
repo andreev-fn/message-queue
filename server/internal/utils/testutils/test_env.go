@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-func SkipIfNotIntegration(t *testing.T) {
+func SkipIfNotInTestEnv(t *testing.T) {
 	t.Helper()
-	if value, _ := os.LookupEnv("INTEGRATION"); value != "true" {
-		t.Skip("skipping integration test: INTEGRATION environment variable not set to 'true'")
+	if value, _ := os.LookupEnv("TEST_ENV"); value != "true" {
+		t.Skip("skipping test: not in test environment")
 	}
 }
 

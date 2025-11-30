@@ -8,7 +8,7 @@ import (
 	"server/internal/appbuilder"
 	"server/internal/domain"
 	"server/internal/usecases"
-	"server/test/e2eutils"
+	"server/test/testkit"
 )
 
 func CreatePreparedMsg(app *appbuilder.App, optArgs ...Option) string {
@@ -51,7 +51,7 @@ func CreateAvailableMsg(app *appbuilder.App, optArgs ...Option) string {
 		consumeMessage(app, msgID, prevQueue)
 
 		if domain.UnsafeQueueName(nextQueue).IsDLQ() {
-			if e2eutils.GetDLQ(prevQueue) != nextQueue {
+			if testkit.GetDLQ(prevQueue) != nextQueue {
 				panic(fmt.Sprintf("queue %s is unreachable from queue %s", nextQueue, prevQueue))
 			}
 

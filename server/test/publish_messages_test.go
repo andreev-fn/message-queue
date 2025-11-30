@@ -11,15 +11,15 @@ import (
 	"server/internal/utils/testutils"
 	"server/pkg/apierror"
 	"server/pkg/httpmodels"
-	"server/test/e2eutils"
 	"server/test/fixtures"
+	"server/test/testkit"
 )
 
 func TestPrepareMessage(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test"
@@ -51,10 +51,10 @@ func TestPrepareMessage(t *testing.T) {
 }
 
 func TestPublishMessageWithPriority(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "test"
@@ -87,10 +87,10 @@ func TestPublishMessageWithPriority(t *testing.T) {
 }
 
 func TestPublishToUnknownQueue(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare()
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare()
+	client := testkit.PrepareHTTPClient(t, app)
 
 	const (
 		msgQueue    = "undefined_queue"
@@ -112,15 +112,15 @@ func TestPublishToUnknownQueue(t *testing.T) {
 }
 
 func TestPublishToDLQNotAllowed(t *testing.T) {
-	testutils.SkipIfNotIntegration(t)
+	testutils.SkipIfNotInTestEnv(t)
 
-	app := e2eutils.Prepare(e2eutils.WithDeadLettering())
-	client := e2eutils.PrepareHTTPClient(t, app)
+	app := testkit.Prepare(testkit.WithDeadLettering())
+	client := testkit.PrepareHTTPClient(t, app)
 
 	// Act
 	_, err := client.PublishMessages(httpmodels.PublishRequest{
 		httpmodels.PublishRequestItem{
-			Queue:    e2eutils.GetDLQ(fixtures.DefaultMsgQueue),
+			Queue:    testkit.GetDLQ(fixtures.DefaultMsgQueue),
 			Payload:  fixtures.DefaultMsgPayload,
 			Priority: utils.P(fixtures.DefaultMsgPriority),
 		},
