@@ -68,29 +68,8 @@ func (uc *NackMessages) Do(ctx context.Context, nacks []NackParams) error {
 			return fmt.Errorf("msgRepo.GetByID: %w", err)
 		}
 
-		action, err := uc.nackPolicy.Decide(message, nack.Redeliver)
-		if err != nil {
-			return err
-		}
-
-		switch action.Type {
-		case domain.NackActionDelay:
-			if err := message.Delay(uc.clock, uc.clock.Now().Add(action.DelayDuration)); err != nil {
-				return fmt.Errorf("message.Delay: %w", err)
-			}
-		case domain.NackActionDrop:
-			if err := message.MarkDropped(uc.clock); err != nil {
-				return fmt.Errorf("message.MarkDropped: %w", err)
-			}
-		case domain.NackActionDLQ:
-			dlQueue, err := message.Queue().DLQName()
-			if err != nil {
-				return fmt.Errorf("queue.DLQName: %w", err)
-			}
-
-			if err := message.Redirect(uc.clock, scope.Dispatcher, dlQueue); err != nil {
-				return fmt.Errorf("message.MarkDropped: %w", err)
-			}
+		if err := message.Nack(uc.clock, scope.Dispatcher, uc.nackPolicy, nack.Redeliver); err != nil {
+			return fmt.Errorf("message.Nack: %w", err)
 		}
 
 		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {

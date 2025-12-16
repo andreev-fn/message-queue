@@ -55,29 +55,8 @@ func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
 	defer dbutils.RollbackWithLog(tx, uc.logger)
 
 	for _, message := range messages {
-		action, err := uc.nackPolicy.Decide(message, true)
-		if err != nil {
-			return 0, err
-		}
-
-		switch action.Type {
-		case domain.NackActionDelay:
-			if err := message.Delay(uc.clock, uc.clock.Now().Add(action.DelayDuration)); err != nil {
-				return 0, fmt.Errorf("message.Delay: %w", err)
-			}
-		case domain.NackActionDrop:
-			if err := message.MarkDropped(uc.clock); err != nil {
-				return 0, fmt.Errorf("message.MarkDropped: %w", err)
-			}
-		case domain.NackActionDLQ:
-			dlQueue, err := message.Queue().DLQName()
-			if err != nil {
-				return 0, fmt.Errorf("queue.DLQName: %w", err)
-			}
-
-			if err := message.Redirect(uc.clock, scope.Dispatcher, dlQueue); err != nil {
-				return 0, fmt.Errorf("message.MarkDropped: %w", err)
-			}
+		if err := message.Nack(uc.clock, scope.Dispatcher, uc.nackPolicy, true); err != nil {
+			return 0, fmt.Errorf("message.Nack: %w", err)
 		}
 
 		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {

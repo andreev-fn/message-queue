@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -113,7 +114,7 @@ func (m *Message) StartProcessing(clock timeutils.Clock, timeout time.Duration) 
 	return nil
 }
 
-func (m *Message) Delay(clock timeutils.Clock, delayedUntil time.Time) error {
+func (m *Message) delay(clock timeutils.Clock, delayedUntil time.Time) error {
 	if m.status != MsgStatusProcessing {
 		return errors.New("message must be in PROCESSING status")
 	}
@@ -187,7 +188,7 @@ func (m *Message) MarkDelivered(clock timeutils.Clock) error {
 	return nil
 }
 
-func (m *Message) MarkDropped(clock timeutils.Clock) error {
+func (m *Message) markDropped(clock timeutils.Clock) error {
 	if m.status != MsgStatusProcessing {
 		return errors.New("message must be in PROCESSING status")
 	}
@@ -203,4 +204,33 @@ func (m *Message) MarkDropped(clock timeutils.Clock) error {
 func (m *Message) setStatus(clock timeutils.Clock, newStatus MessageStatus) {
 	m.status = newStatus
 	m.statusChangedAt = clock.Now()
+}
+
+func (m *Message) Nack(clock timeutils.Clock, ed EventDispatcher, nackPolicy *NackPolicy, redeliver bool) error {
+	action, err := nackPolicy.Decide(m, redeliver)
+	if err != nil {
+		return err
+	}
+
+	switch action.Type {
+	case NackActionDelay:
+		if err := m.delay(clock, clock.Now().Add(action.DelayDuration)); err != nil {
+			return fmt.Errorf("msg.delay: %w", err)
+		}
+	case NackActionDrop:
+		if err := m.markDropped(clock); err != nil {
+			return fmt.Errorf("msg.markDropped: %w", err)
+		}
+	case NackActionDLQ:
+		dlQueue, err := m.Queue().DLQName()
+		if err != nil {
+			return fmt.Errorf("queue.DLQName: %w", err)
+		}
+
+		if err := m.Redirect(clock, ed, dlQueue); err != nil {
+			return fmt.Errorf("msg.Redirect: %w", err)
+		}
+	}
+
+	return nil
 }
