@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"server/internal/appbuilder/requestscope"
 	"server/internal/storage"
@@ -36,7 +37,39 @@ func NewResumeDelayed(
 	}
 }
 
-func (uc *ResumeDelayed) Do(ctx context.Context, limit int) (int, error) {
+func (uc *ResumeDelayed) Run(ctx context.Context) error {
+	for {
+		if err := uc.Do(ctx); err != nil {
+			return err
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(time.Second):
+			continue
+		}
+	}
+}
+
+func (uc *ResumeDelayed) Do(ctx context.Context) error {
+	const batchSize = 100
+
+	for {
+		affected, err := uc.doBatch(ctx, batchSize)
+		if err != nil {
+			return err
+		}
+
+		if affected < batchSize {
+			break
+		}
+	}
+
+	return nil
+}
+
+func (uc *ResumeDelayed) doBatch(ctx context.Context, limit int) (int, error) {
 	scope := uc.scopeFactory.New()
 
 	messages, err := uc.msgRepo.GetDelayedReadyToResume(ctx, uc.db, limit)

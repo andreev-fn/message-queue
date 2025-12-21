@@ -24,12 +24,10 @@ func TestResumeDelayedAfterTimeout(t *testing.T) {
 	testkit.AdvanceClock(app, 40*time.Second)
 
 	// Act
-	affected, err := app.ResumeDelayed.Do(context.Background(), 10)
+	err := app.ResumeDelayed.Do(context.Background())
 	require.NoError(t, err)
 
 	// Assert
-	require.Equal(t, 1, affected)
-
 	updatedMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 
@@ -48,12 +46,10 @@ func TestResumeDelayedBeforeTimeout(t *testing.T) {
 	testkit.AdvanceClock(app, 20*time.Second)
 
 	// Act
-	affected, err := app.ResumeDelayed.Do(context.Background(), 10)
+	err := app.ResumeDelayed.Do(context.Background())
 	require.NoError(t, err)
 
 	// Assert
-	require.Equal(t, 0, affected)
-
 	unchangedMsg, err := app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.NoError(t, err)
 

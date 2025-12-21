@@ -25,12 +25,10 @@ func TestArchiveMessagesFinalized(t *testing.T) {
 	testkit.AdvanceClock(app, time.Minute)
 
 	// Act
-	affected, err := app.ArchiveMessages.Do(context.Background(), 10)
+	err := app.ArchiveMessages.Do(context.Background())
 	require.NoError(t, err)
 
 	// Assert
-	require.Equal(t, 1, affected)
-
 	_, err = app.MsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.ErrorIs(t, err, storage.ErrMsgNotFound)
 
@@ -53,12 +51,10 @@ func TestArchiveMessagesNotFinal(t *testing.T) {
 	testkit.AdvanceClock(app, time.Minute)
 
 	// Act
-	affected, err := app.ArchiveMessages.Do(context.Background(), 10)
+	err := app.ArchiveMessages.Do(context.Background())
 	require.NoError(t, err)
 
 	// Assert
-	require.Equal(t, 0, affected)
-
 	_, err = app.ArchivedMsgRepo.GetByID(context.Background(), app.DB, msgID)
 	require.ErrorIs(t, err, storage.ErrArchivedMsgNotFound)
 

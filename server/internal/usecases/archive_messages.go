@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"server/internal/domain"
 	"server/internal/storage"
@@ -31,7 +32,39 @@ func NewArchiveMessages(
 	}
 }
 
-func (uc *ArchiveMessages) Do(ctx context.Context, limit int) (int, error) {
+func (uc *ArchiveMessages) Run(ctx context.Context) error {
+	for {
+		if err := uc.Do(ctx); err != nil {
+			return err
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(time.Second):
+			continue
+		}
+	}
+}
+
+func (uc *ArchiveMessages) Do(ctx context.Context) error {
+	const batchSize = 100
+
+	for {
+		affected, err := uc.doBatch(ctx, batchSize)
+		if err != nil {
+			return err
+		}
+
+		if affected < batchSize {
+			break
+		}
+	}
+
+	return nil
+}
+
+func (uc *ArchiveMessages) doBatch(ctx context.Context, limit int) (int, error) {
 	messages, err := uc.msgRepo.GetFinalizedToArchive(ctx, uc.db, limit)
 	if err != nil {
 		return 0, fmt.Errorf("msgRepo.GetFinalizedToArchive: %w", err)

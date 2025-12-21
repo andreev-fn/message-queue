@@ -208,7 +208,7 @@ func TestEventBus_Run_StopsOnContextCancel(t *testing.T) {
 	}
 }
 
-func TestEventBus_Run_RestartsOnError(t *testing.T) {
+func TestEventBus_Run_StopsOnError(t *testing.T) {
 	md := newMockDriver()
 	clock := timeutils.NewStubClock(time.Date(2025, 6, 12, 12, 0, 0, 0, time.Local))
 	eb := eventbus.NewEventBus(newTestLogger(), clock, md)
@@ -216,8 +216,10 @@ func TestEventBus_Run_RestartsOnError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	done := make(chan struct{})
 	go func() {
 		_ = eb.Run(ctx)
+		close(done)
 	}()
 
 	select {
@@ -231,7 +233,7 @@ func TestEventBus_Run_RestartsOnError(t *testing.T) {
 	md.TriggerListenerFailure()
 
 	select {
-	case <-md.listenStarted:
+	case <-done:
 	case <-time.After(time.Second):
 		t.Fatal("Listen did not restart in time")
 	}

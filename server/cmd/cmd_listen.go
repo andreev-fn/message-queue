@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"server/internal/appbuilder"
 	"syscall"
 	"time"
+
+	"server/internal/appbuilder"
+	"server/internal/utils/runkit"
 )
 
 func Listen(app *appbuilder.App) {
@@ -38,9 +40,11 @@ func Listen(app *appbuilder.App) {
 	defer cancel()
 
 	go func() {
-		if err := app.EventBus.Run(ctx); err != nil {
-			app.Logger.Error("event bus stopped unexpectedly", "error", err)
-		}
+		_ = runkit.Retrier{
+			Fn:     app.EventBus,
+			Name:   "event bus",
+			Logger: app.Logger,
+		}.Run(ctx)
 	}()
 
 	<-ctx.Done()

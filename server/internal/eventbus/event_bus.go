@@ -2,11 +2,9 @@ package eventbus
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"math"
 	"sync"
-	"time"
 
 	"server/internal/utils/timeutils"
 )
@@ -36,30 +34,9 @@ func NewEventBus(logger *slog.Logger, clock timeutils.Clock, driver PubSubDriver
 }
 
 func (eb *EventBus) Run(ctx context.Context) error {
-	for {
-		lastAttempt := eb.clock.Now()
-
-		err := eb.driver.Listen(ctx, []string{ChannelMsgAvailable}, func(channel, message string) {
-			eb.dispatch(channel, message)
-		})
-		if err != nil {
-			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-				return nil
-			}
-			eb.logger.Error("eventbus listener failed (will be restarted)", "error", err)
-		}
-
-		reconnectDelay := time.Duration(0)
-		if eb.clock.Now().Sub(lastAttempt) < time.Minute {
-			reconnectDelay = time.Second * 5
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-time.After(reconnectDelay):
-		}
-	}
+	return eb.driver.Listen(ctx, []string{ChannelMsgAvailable}, func(channel, message string) {
+		eb.dispatch(channel, message)
+	})
 }
 
 func (eb *EventBus) Publish(channel, message string) error {

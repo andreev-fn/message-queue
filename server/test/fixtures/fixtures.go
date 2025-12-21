@@ -128,13 +128,9 @@ func CreateDeliveredMsg(app *appbuilder.App, optArgs ...Option) string {
 func CreateArchivedMsg(app *appbuilder.App, optArgs ...Option) string {
 	msgID := CreateDeliveredMsg(app, optArgs...)
 
-	affected, err := app.ArchiveMessages.Do(context.Background(), 1)
+	err := app.ArchiveMessages.Do(context.Background())
 	if err != nil {
 		panic(err)
-	}
-
-	if affected != 1 {
-		panic(fmt.Sprint("affected ", affected, " messages (expected 1)"))
 	}
 
 	return msgID

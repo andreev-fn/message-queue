@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"server/internal/appbuilder/requestscope"
 	"server/internal/domain"
@@ -40,7 +41,39 @@ func NewExpireProcessing(
 	}
 }
 
-func (uc *ExpireProcessing) Do(ctx context.Context, limit int) (int, error) {
+func (uc *ExpireProcessing) Run(ctx context.Context) error {
+	for {
+		if err := uc.Do(ctx); err != nil {
+			return err
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(time.Second):
+			continue
+		}
+	}
+}
+
+func (uc *ExpireProcessing) Do(ctx context.Context) error {
+	const batchSize = 100
+
+	for {
+		affected, err := uc.doBatch(ctx, batchSize)
+		if err != nil {
+			return err
+		}
+
+		if affected < batchSize {
+			break
+		}
+	}
+
+	return nil
+}
+
+func (uc *ExpireProcessing) doBatch(ctx context.Context, limit int) (int, error) {
 	messages, err := uc.msgRepo.GetProcessingToExpire(ctx, uc.db, limit)
 	if err != nil {
 		return 0, fmt.Errorf("msgRepo.GetProcessingToExpire: %w", err)
