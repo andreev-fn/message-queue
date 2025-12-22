@@ -17,7 +17,7 @@ import (
 
 const (
 	CmdRun              = "run"
-	CmdListen           = "listen"
+	CmdServeAPI         = "serve-api"
 	CmdArchiveMessages  = "archive-messages"
 	CmdExpireProcessing = "expire-processing"
 	CmdResumeDelayed    = "resume-delayed"
@@ -26,7 +26,7 @@ const (
 const ApiAddr = ":8060"
 
 func main() {
-	availableCommands := []string{CmdRun, CmdListen, CmdArchiveMessages, CmdExpireProcessing, CmdResumeDelayed}
+	availableCommands := []string{CmdRun, CmdServeAPI, CmdArchiveMessages, CmdExpireProcessing, CmdResumeDelayed}
 
 	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
 
@@ -58,8 +58,8 @@ func main() {
 	switch args[0] {
 	case CmdRun:
 		Run(app)
-	case CmdListen:
-		Listen(app)
+	case CmdServeAPI:
+		ServeAPI(app)
 	case CmdArchiveMessages:
 		ArchiveMessages(app)
 	case CmdExpireProcessing:

@@ -11,7 +11,7 @@ import (
 	"server/internal/utils/runkit"
 )
 
-func Listen(app *appbuilder.App) {
+func ServeAPI(app *appbuilder.App) {
 	if err := PingDB(app.DB); err != nil {
 		app.Logger.Error("database connection failed", "error", err)
 		return

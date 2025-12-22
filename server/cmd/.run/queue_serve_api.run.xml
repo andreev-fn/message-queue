@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="queue_listen" type="GoApplicationRunConfiguration" factoryName="Go Application">
+  <configuration default="false" name="queue_serve_api" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="message-queue" />
     <working_directory value="$PROJECT_DIR$" />
-    <parameters value="listen" />
+    <parameters value="serve-api" />
     <kind value="PACKAGE" />
     <package value="server/cmd" />
     <directory value="$PROJECT_DIR$" />
