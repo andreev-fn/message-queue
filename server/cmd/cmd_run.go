@@ -11,7 +11,7 @@ import (
 	"server/internal/utils/runkit"
 )
 
-func Listen(app *appbuilder.App) {
+func Run(app *appbuilder.App) {
 	if err := PingDB(app.DB); err != nil {
 		app.Logger.Error("database connection failed", "error", err)
 		return
@@ -32,6 +32,21 @@ func Listen(app *appbuilder.App) {
 		runkit.Retrier{
 			Fn:     app.EventBus,
 			Name:   "event bus",
+			Logger: app.Logger,
+		},
+		runkit.Retrier{
+			Fn:     app.ResumeDelayed,
+			Name:   "resume delayed",
+			Logger: app.Logger,
+		},
+		runkit.Retrier{
+			Fn:     app.ExpireProcessing,
+			Name:   "expire processing",
+			Logger: app.Logger,
+		},
+		runkit.Retrier{
+			Fn:     app.ArchiveMessages,
+			Name:   "message archivation",
 			Logger: app.Logger,
 		},
 	}.Run(ctx)

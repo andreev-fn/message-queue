@@ -14,9 +14,13 @@ func ArchiveMessages(app *appbuilder.App) {
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer done()
 
-	_ = runkit.Retrier{
+	err := runkit.Retrier{
 		Fn:     app.ArchiveMessages,
 		Name:   "message archivation",
 		Logger: app.Logger,
 	}.Run(ctx)
+
+	if err != nil {
+		os.Exit(1)
+	}
 }

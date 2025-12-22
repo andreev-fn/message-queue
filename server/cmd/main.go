@@ -1,26 +1,32 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"slices"
 	"strings"
+	"time"
 
 	"server/internal/appbuilder"
 	"server/internal/config/yamlconfig"
 )
 
 const (
+	CmdRun              = "run"
 	CmdListen           = "listen"
 	CmdArchiveMessages  = "archive-messages"
 	CmdExpireProcessing = "expire-processing"
 	CmdResumeDelayed    = "resume-delayed"
 )
 
+const ApiAddr = ":8060"
+
 func main() {
-	availableCommands := []string{CmdListen, CmdArchiveMessages, CmdExpireProcessing, CmdResumeDelayed}
+	availableCommands := []string{CmdRun, CmdListen, CmdArchiveMessages, CmdExpireProcessing, CmdResumeDelayed}
 
 	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
 
@@ -50,6 +56,8 @@ func main() {
 	}
 
 	switch args[0] {
+	case CmdRun:
+		Run(app)
 	case CmdListen:
 		Listen(app)
 	case CmdArchiveMessages:
@@ -59,4 +67,15 @@ func main() {
 	case CmdResumeDelayed:
 		ResumeDelayed(app)
 	}
+}
+
+func PingDB(db *sql.DB) error {
+	pingCtx, closeCtx := context.WithTimeout(context.Background(), 5*time.Second)
+	defer closeCtx()
+
+	if err := db.PingContext(pingCtx); err != nil {
+		return fmt.Errorf("db.PingContext: %w", err)
+	}
+
+	return nil
 }

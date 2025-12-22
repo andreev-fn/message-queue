@@ -16,4 +16,4 @@ COPY --from=builder /app /app
 WORKDIR /data
 
 ENTRYPOINT ["/app"]
-CMD ["listen"]
+CMD ["run"]
