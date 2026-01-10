@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +15,8 @@ import (
 	"time"
 )
 
+// These benchmarks were performed with only the 'serve-api' process running.
+
 // batchSizePublish = 1, batchSizeConsume = 100, batchSizeAck = 1
 // 2024/12/26 02:03:17 published 500038 messages (4347.6 t/s), consumed 499732 messages (4344.9 t/s)
 // 2025/08/09 12:48:59 published 861166 messages (2562.8 t/s), consumed 860965 messages (2568.2 t/s)
@@ -23,10 +24,12 @@ import (
 // batchSizePublish = 1, batchSizeConsume = 10, batchSizeAck = 1
 // 2025/08/23 17:35:48 published 710189 messages (2574.4 t/s), consumed 710066 messages (2576.4 t/s)
 // 2025/09/30 18:58:01 published 728925 messages (2615.4 t/s), consumed 728798 messages (2615.6 t/s)
+// 2026/01/10 20:29:20 published 725336 messages (2512.9 t/s), consumed 725200 messages (2513.1 t/s)
 
 // batchSizePublish = 100, batchSizeConsume = 100, batchSizeAck = 100
 // 2025/08/23 17:28:31 published 3874300 messages (12579.6 t/s), consumed 1694600 messages (5339.8 t/s)
 // 2025/09/30 19:04:34 published 3883600 messages (12879.7 t/s), consumed 1659300 messages (5599.9 t/s)
+// 2026/01/10 20:37:33 published 3929000 messages (12759.7 t/s), consumed 1621900 messages (5459.9 t/s)
 
 const threadsCountW = 24
 const threadsCountR = 32
@@ -233,26 +236,13 @@ func consumeMessages(limit int) ([]Message, error) {
 		return nil, fmt.Errorf("non-200 response: %s, body: %s", httpResponse.Status, string(responseBody))
 	}
 
-	type ResponseDTO struct {
-		Success *bool     `json:"success"`
-		Result  []Message `json:"result"`
-	}
-
-	var responseDTO ResponseDTO
+	var responseDTO []Message
 	err = json.Unmarshal(responseBody, &responseDTO)
 	if err != nil {
 		return nil, fmt.Errorf("json.Unmarshal: %w; response: %s", err, string(responseBody))
 	}
 
-	if responseDTO.Success == nil {
-		return nil, errors.New("invalid response")
-	}
-
-	if *responseDTO.Success == false {
-		return nil, errors.New("unsuccessful response")
-	}
-
-	return responseDTO.Result, nil
+	return responseDTO, nil
 }
 
 func ackMessages(ids []string) error {
