@@ -15,13 +15,14 @@ Also serves as a **real-world example of applying Domain-Driven Design (DDD) pri
 - [x] Configurable queues (config file)
 - [x] Message redirection
 - [x] Dead-letter queues
+- [x] Single-process mode
+- [ ] Processing extension mechanism
 - [ ] Add authentication (config file)
-- [ ] Tries history (and attempt ID)
+- [ ] Attempt IDs (like delivery tags)
 - [ ] Removal of old messages
 - [ ] Metrics
 - [ ] Implement webhooks
 - [ ] Rate-limited queues
-- [ ] Single-process mode
 - [ ] gRPC
 - [ ] ValueObjects for ~~queue name~~, priority
 - [ ] Decrease priority after some time
