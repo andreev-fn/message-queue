@@ -23,8 +23,6 @@ const (
 	CmdResumeDelayed    = "resume-delayed"
 )
 
-const ApiAddr = ":8060"
-
 func main() {
 	availableCommands := []string{CmdRun, CmdServeAPI, CmdArchiveMessages, CmdExpireProcessing, CmdResumeDelayed}
 

@@ -27,6 +27,7 @@ func TestLoadFromFile_full(t *testing.T) {
 	require.Equal(t, "secret", cfg.PostgresConfig().MustValue().Password())
 
 	// App
+	require.Equal(t, uint16(8880), cfg.APIPort())
 	require.Equal(t, 122, cfg.BatchSizeLimit())
 
 	// Queues
@@ -64,6 +65,7 @@ func TestLoadFromFile_minimal(t *testing.T) {
 	require.Equal(t, "", cfg.PostgresConfig().MustValue().Password())
 
 	// App
+	require.Equal(t, config.DefaultAPIPort, cfg.APIPort())
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
@@ -96,6 +98,7 @@ func TestLoadFromFile_disabled(t *testing.T) {
 	require.Equal(t, "", cfg.PostgresConfig().MustValue().Password())
 
 	// App
+	require.Equal(t, config.DefaultAPIPort, cfg.APIPort())
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue
@@ -123,6 +126,7 @@ func TestLoadFromFile_custom(t *testing.T) {
 	require.Equal(t, "", cfg.PostgresConfig().MustValue().Password())
 
 	// App
+	require.Equal(t, config.DefaultAPIPort, cfg.APIPort())
 	require.Equal(t, config.DefaultBatchSizeLimit, cfg.BatchSizeLimit())
 
 	// Queue

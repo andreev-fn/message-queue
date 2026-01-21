@@ -6,6 +6,7 @@ db:
     password: ${env("DB_PASS")}
 
 app:
+  api_port: 8880
   batch_size_limit: ${env("BATCH_SIZE_MAX")}
 
 queues:

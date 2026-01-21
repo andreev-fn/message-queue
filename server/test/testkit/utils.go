@@ -70,6 +70,7 @@ func NewAppConfig(optArgs ...ConfigOption) *config.Config {
 	}
 
 	conf, err := config.NewConfig(
+		config.DefaultAPIPort,
 		opt.Some(pgConf),
 		config.DefaultBatchSizeLimit,
 		queues,

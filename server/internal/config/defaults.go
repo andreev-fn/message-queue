@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	DefaultAPIPort            = uint16(8060)
 	DefaultBatchSizeLimit     = 200
 	DefaultBackoffEnabled     = true
 	DefaultBackoffMaxAttempts = 5

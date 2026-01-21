@@ -15,6 +15,7 @@ const (
 )
 
 type Config struct {
+	apiPort        uint16
 	databaseType   DBType
 	postgresConfig opt.Val[*PostgresConfig]
 	batchSizeLimit int
@@ -22,6 +23,7 @@ type Config struct {
 }
 
 func NewConfig(
+	apiPort uint16,
 	pgConfig opt.Val[*PostgresConfig],
 	batchSizeLimit int,
 	queues map[domain.QueueName]*domain.QueueConfig,
@@ -54,6 +56,7 @@ func NewConfig(
 	}
 
 	return &Config{
+		apiPort:        apiPort,
 		databaseType:   DBTypePostgres,
 		postgresConfig: pgConfig,
 		batchSizeLimit: batchSizeLimit,
@@ -61,6 +64,7 @@ func NewConfig(
 	}, nil
 }
 
+func (c *Config) APIPort() uint16                          { return c.apiPort }
 func (c *Config) DatabaseType() DBType                     { return c.databaseType }
 func (c *Config) PostgresConfig() opt.Val[*PostgresConfig] { return c.postgresConfig }
 func (c *Config) BatchSizeLimit() int                      { return c.batchSizeLimit }

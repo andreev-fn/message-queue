@@ -13,7 +13,8 @@ type ConfigDTO struct {
 		PostgresConfig *PostgresConfig `yaml:"postgres"`
 	} `yaml:"db"`
 	App *struct {
-		BatchSizeLimit *int `yaml:"batch_size_limit"`
+		APIPort        *uint16 `yaml:"api_port"`
+		BatchSizeLimit *int    `yaml:"batch_size_limit"`
 	} `yaml:"app"`
 	Queues map[string]QueueConfig `yaml:"queues"`
 }

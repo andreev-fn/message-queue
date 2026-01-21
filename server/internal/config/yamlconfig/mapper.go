@@ -64,14 +64,19 @@ func MapToAppConfig(dto *ConfigDTO) (*config.Config, error) {
 		}
 	}
 
+	apiPort := config.DefaultAPIPort
 	batchSizeLimit := config.DefaultBatchSizeLimit
 	if dto.App != nil {
+		if dto.App.APIPort != nil {
+			apiPort = *dto.App.APIPort
+		}
 		if dto.App.BatchSizeLimit != nil {
 			batchSizeLimit = *dto.App.BatchSizeLimit
 		}
 	}
 
 	return config.NewConfig(
+		apiPort,
 		postgresConfig,
 		batchSizeLimit,
 		queues,

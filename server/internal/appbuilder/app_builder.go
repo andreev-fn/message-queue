@@ -27,6 +27,8 @@ type Overrides struct {
 }
 
 type App struct {
+	Config *config.Config
+
 	Clock  timeutils.Clock
 	Logger *slog.Logger
 	DB     *sql.DB
@@ -114,6 +116,8 @@ func BuildApp(conf *config.Config, overrides *Overrides) (*App, error) {
 	routes.NewCheckMessages(logger, checkMessages).Mount(mux)
 
 	return &App{
+		Config: conf,
+
 		Clock:  clock,
 		Logger: logger,
 		DB:     db,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,7 +25,7 @@ func Run(app *appbuilder.App) {
 		runkit.HTTPServer{
 			Name: "API",
 			Server: &http.Server{
-				Addr:    ApiAddr,
+				Addr:    fmt.Sprintf(":%d", app.Config.APIPort()),
 				Handler: app.Router,
 			},
 			Logger: app.Logger,
