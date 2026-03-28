@@ -32,7 +32,7 @@ func (a *ReleaseMessages) Mount(srv *http.ServeMux) {
 func (a *ReleaseMessages) handler(
 	ctx context.Context,
 	req httpmodels.ReleaseRequest,
-) (*httpmodels.OkResponse, *base.Error) {
+) (*httpmodels.OkResponse, *httpmodels.Error) {
 	if err := a.useCase.Do(ctx, req); err != nil {
 		return nil, base.ExtractKnownErrors(err)
 	}

@@ -32,7 +32,7 @@ func (a *AckMessages) Mount(srv *http.ServeMux) {
 func (a *AckMessages) handler(
 	ctx context.Context,
 	req httpmodels.AckRequest,
-) (*httpmodels.OkResponse, *base.Error) {
+) (*httpmodels.OkResponse, *httpmodels.Error) {
 	var ackParams []usecases.AckParams
 	for _, param := range req {
 		ackParams = append(ackParams, usecases.AckParams{

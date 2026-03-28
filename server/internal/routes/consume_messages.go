@@ -34,10 +34,10 @@ func (a *ConsumeMessages) Mount(srv *http.ServeMux) {
 func (a *ConsumeMessages) handler(
 	ctx context.Context,
 	req httpmodels.ConsumeRequest,
-) (httpmodels.ConsumeResponse, *base.Error) {
+) (httpmodels.ConsumeResponse, *httpmodels.Error) {
 	queue, err := domain.NewQueueName(req.Queue)
 	if err != nil {
-		return nil, base.NewError(http.StatusBadRequest, err)
+		return nil, httpmodels.NewError(httpmodels.ErrorCodeRequestInvalid, err.Error())
 	}
 
 	limit := 1

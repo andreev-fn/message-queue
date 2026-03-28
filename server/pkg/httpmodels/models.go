@@ -171,8 +171,7 @@ func (items ReleaseRequest) Validate() error {
 }
 
 type ErrorResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Error *Error `json:"error"`
 }
 
 type OkResponse struct {

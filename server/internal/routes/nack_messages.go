@@ -32,7 +32,7 @@ func (a *NackMessages) Mount(srv *http.ServeMux) {
 func (a *NackMessages) handler(
 	ctx context.Context,
 	req httpmodels.NackRequest,
-) (*httpmodels.OkResponse, *base.Error) {
+) (*httpmodels.OkResponse, *httpmodels.Error) {
 	var nackParams []usecases.NackParams
 
 	for _, param := range req {

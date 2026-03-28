@@ -9,7 +9,7 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils/testutils"
-	"server/pkg/apierror"
+	"server/pkg/httpclient"
 	"server/pkg/httpmodels"
 	"server/test/fixtures"
 	"server/test/testkit"
@@ -73,7 +73,7 @@ func TestRedirectToUnknownQueue(t *testing.T) {
 	})
 
 	// Assert
-	require.True(t, apierror.IsCode(err, apierror.CodeQueueNotFound))
+	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeQueueNotFound))
 }
 
 func TestRedirectUnknownMessage(t *testing.T) {
@@ -92,7 +92,7 @@ func TestRedirectUnknownMessage(t *testing.T) {
 	})
 
 	// Assert
-	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
+	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeMessageNotFound))
 }
 
 func TestRedirectToDLQNotAllowed(t *testing.T) {

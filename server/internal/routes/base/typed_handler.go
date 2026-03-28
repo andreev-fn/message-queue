@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -17,7 +16,7 @@ type ValidatableDTO interface {
 	Validate() error
 }
 
-type TypedHandlerFunc[TI ValidatableDTO, TO any] = func(context.Context, TI) (TO, *Error)
+type TypedHandlerFunc[TI ValidatableDTO, TO any] = func(context.Context, TI) (TO, *httpmodels.Error)
 
 type TypedHandler[TI ValidatableDTO, TO any] struct {
 	logger      *slog.Logger
@@ -43,20 +42,23 @@ func (a *TypedHandler[TI, TO]) ServeHTTP(writer http.ResponseWriter, req *http.R
 	a.writeSuccess(writer, respDTO)
 }
 
-func (a *TypedHandler[TI, TO]) handleRequest(req *http.Request) (TO, *Error) {
+func (a *TypedHandler[TI, TO]) handleRequest(req *http.Request) (TO, *httpmodels.Error) {
 	var emptyResp TO
 
 	if req.Method != http.MethodPost {
-		return emptyResp, NewError(http.StatusMethodNotAllowed, errors.New("method not allowed"))
+		return emptyResp, httpmodels.NewError(httpmodels.ErrorCodeRequestInvalid, "method not allowed")
 	}
 
 	if req.Header.Get("Content-Type") != "application/json" {
-		return emptyResp, NewError(http.StatusBadRequest, errors.New("json content type expected"))
+		return emptyResp, httpmodels.NewError(httpmodels.ErrorCodeRequestInvalid, "json content type expected")
 	}
 
 	bodyBytes, err := io.ReadAll(req.Body)
 	if err != nil {
-		return emptyResp, NewError(http.StatusBadRequest, fmt.Errorf("io.ReadAll: %w", err))
+		return emptyResp, httpmodels.NewError(
+			httpmodels.ErrorCodeRequestInvalid,
+			fmt.Sprintf("io.ReadAll: %v", err),
+		)
 	}
 
 	dec := json.NewDecoder(bytes.NewReader(bodyBytes))
@@ -64,27 +66,33 @@ func (a *TypedHandler[TI, TO]) handleRequest(req *http.Request) (TO, *Error) {
 
 	var reqDTO TI
 	if err := dec.Decode(&reqDTO); err != nil {
-		return emptyResp, NewError(http.StatusBadRequest, fmt.Errorf("json.Unmarshal: %w", err))
+		return emptyResp, httpmodels.NewError(
+			httpmodels.ErrorCodeRequestInvalid,
+			fmt.Sprintf("json.Unmarshal: %v", err),
+		)
 	}
 
 	if err := reqDTO.Validate(); err != nil {
-		return emptyResp, NewError(http.StatusBadRequest, fmt.Errorf("reqDTO.Validate: %w", err))
+		return emptyResp, httpmodels.NewError(
+			httpmodels.ErrorCodeRequestInvalid,
+			fmt.Sprintf("reqDTO.Validate: %v", err),
+		)
 	}
 
 	return a.handlerFunc(req.Context(), reqDTO)
 }
 
-func (a *TypedHandler[TI, TO]) writeError(writer http.ResponseWriter, apiErr *Error) {
-	if apiErr.StatusCode() >= http.StatusInternalServerError {
+func (a *TypedHandler[TI, TO]) writeError(writer http.ResponseWriter, apiErr *httpmodels.Error) {
+	statusCode := MapErrorCodeToStatusCode(apiErr.Code())
+	if statusCode >= http.StatusInternalServerError {
 		a.logger.Error("request failed", "error", apiErr.Error())
 	}
 
 	writer.Header().Add("Content-Type", "application/json")
-	writer.WriteHeader(apiErr.StatusCode())
+	writer.WriteHeader(statusCode)
 
 	err := json.NewEncoder(writer).Encode(httpmodels.ErrorResponse{
-		Code:    string(apiErr.ErrorCode()),
-		Message: apiErr.Error(),
+		Error: apiErr,
 	})
 	if err != nil {
 		a.logger.Error("json encode of error response failed", "error", err)

@@ -9,7 +9,7 @@ import (
 	"server/internal/domain"
 	"server/internal/utils"
 	"server/internal/utils/testutils"
-	"server/pkg/apierror"
+	"server/pkg/httpclient"
 	"server/pkg/httpmodels"
 	"server/test/fixtures"
 	"server/test/testkit"
@@ -76,5 +76,5 @@ func TestNackUnknownMessage(t *testing.T) {
 	})
 
 	// Assert
-	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
+	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeMessageNotFound))
 }

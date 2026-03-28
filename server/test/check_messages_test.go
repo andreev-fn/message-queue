@@ -7,7 +7,7 @@ import (
 
 	"server/internal/utils"
 	"server/internal/utils/testutils"
-	"server/pkg/apierror"
+	"server/pkg/httpclient"
 	"server/pkg/httpmodels"
 	"server/test/fixtures"
 	"server/test/testkit"
@@ -96,5 +96,5 @@ func TestCheckUnknownMessage(t *testing.T) {
 	_, err := client.CheckMessages(httpmodels.CheckRequest{nonExistentID})
 
 	// Assert
-	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
+	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeMessageNotFound))
 }

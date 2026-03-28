@@ -34,14 +34,14 @@ func (a *PublishMessages) Mount(srv *http.ServeMux) {
 func (a *PublishMessages) publishHandler(
 	ctx context.Context,
 	req httpmodels.PublishRequest,
-) (httpmodels.PublishResponse, *base.Error) {
+) (httpmodels.PublishResponse, *httpmodels.Error) {
 	return a.handler(ctx, req, true)
 }
 
 func (a *PublishMessages) prepareHandler(
 	ctx context.Context,
 	req httpmodels.PublishRequest,
-) (httpmodels.PublishResponse, *base.Error) {
+) (httpmodels.PublishResponse, *httpmodels.Error) {
 	return a.handler(ctx, req, false)
 }
 
@@ -49,7 +49,7 @@ func (a *PublishMessages) handler(
 	ctx context.Context,
 	req httpmodels.PublishRequest,
 	autoRelease bool,
-) (httpmodels.PublishResponse, *base.Error) {
+) (httpmodels.PublishResponse, *httpmodels.Error) {
 	var newMessages []usecases.NewMessageParams
 	for _, param := range req {
 		priority := 100
@@ -59,7 +59,7 @@ func (a *PublishMessages) handler(
 
 		queue, err := domain.NewQueueName(param.Queue)
 		if err != nil {
-			return nil, base.NewError(http.StatusBadRequest, err)
+			return nil, httpmodels.NewError(httpmodels.ErrorCodeRequestInvalid, err.Error())
 		}
 
 		newMessages = append(newMessages, usecases.NewMessageParams{

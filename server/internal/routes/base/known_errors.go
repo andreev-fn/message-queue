@@ -7,26 +7,37 @@ import (
 	"server/internal/config"
 	"server/internal/storage"
 	"server/internal/usecases"
-	"server/pkg/apierror"
+	"server/pkg/httpmodels"
 )
 
-func ExtractKnownErrors(err error) *Error {
+func ExtractKnownErrors(err error) *httpmodels.Error {
 	if errors.Is(err, usecases.ErrBatchSizeTooBig) {
-		return NewError(http.StatusBadRequest, err)
+		return httpmodels.NewError(httpmodels.ErrorCodeBatchSizeTooBig, err.Error())
 	}
 
 	if errors.Is(err, usecases.ErrDirectWriteToDLQNotAllowed) {
-		return NewError(http.StatusBadRequest, err)
+		return httpmodels.NewError(httpmodels.ErrorCodeQueueNotWritable, err.Error())
 	}
 
 	if errors.Is(err, storage.ErrMsgNotFound) || errors.Is(err, storage.ErrArchivedMsgNotFound) {
-		return NewError(http.StatusBadRequest, err).WithCode(apierror.CodeMessageNotFound)
+		return httpmodels.NewError(httpmodels.ErrorCodeMessageNotFound, err.Error())
 	}
 
 	var queueError config.QueueNotFoundError
 	if errors.As(err, &queueError) {
-		return NewError(http.StatusBadRequest, err).WithCode(apierror.CodeQueueNotFound)
+		return httpmodels.NewError(httpmodels.ErrorCodeQueueNotFound, err.Error())
 	}
 
-	return NewError(http.StatusInternalServerError, err)
+	return httpmodels.NewError(httpmodels.ErrorCodeUnknown, err.Error())
+}
+
+func MapErrorCodeToStatusCode(code httpmodels.ErrorCode) int {
+	switch code {
+	case httpmodels.ErrorCodeBatchSizeTooBig, httpmodels.ErrorCodeQueueNotWritable:
+		return http.StatusBadRequest
+	case httpmodels.ErrorCodeMessageNotFound, httpmodels.ErrorCodeQueueNotFound:
+		return http.StatusNotFound
+	default:
+		return http.StatusInternalServerError
+	}
 }

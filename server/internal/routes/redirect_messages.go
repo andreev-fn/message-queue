@@ -34,15 +34,15 @@ func (a *RedirectMessages) Mount(srv *http.ServeMux) {
 func (a *RedirectMessages) handler(
 	ctx context.Context,
 	req httpmodels.RedirectRequest,
-) (*httpmodels.OkResponse, *base.Error) {
+) (*httpmodels.OkResponse, *httpmodels.Error) {
 	var redirectParams []usecases.RedirectParams
 
 	for _, param := range req {
 		destination, err := domain.NewQueueName(param.Destination)
 		if err != nil {
-			return nil, base.NewError(
-				http.StatusBadRequest,
-				fmt.Errorf("domain.NewQueueName(%s): %w", param.Destination, err),
+			return nil, httpmodels.NewError(
+				httpmodels.ErrorCodeRequestInvalid,
+				fmt.Sprintf("domain.NewQueueName(%s): %v", param.Destination, err),
 			)
 		}
 

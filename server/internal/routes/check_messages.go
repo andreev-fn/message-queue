@@ -32,7 +32,7 @@ func (a *CheckMessages) Mount(srv *http.ServeMux) {
 func (a *CheckMessages) handler(
 	ctx context.Context,
 	req httpmodels.CheckRequest,
-) (httpmodels.CheckResponse, *base.Error) {
+) (httpmodels.CheckResponse, *httpmodels.Error) {
 	result, err := a.useCase.Do(ctx, req)
 	if err != nil {
 		return nil, base.ExtractKnownErrors(err)

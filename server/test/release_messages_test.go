@@ -8,7 +8,7 @@ import (
 
 	"server/internal/domain"
 	"server/internal/utils/testutils"
-	"server/pkg/apierror"
+	"server/pkg/httpclient"
 	"server/pkg/httpmodels"
 	"server/test/fixtures"
 	"server/test/testkit"
@@ -52,5 +52,5 @@ func TestReleaseUnknownMessage(t *testing.T) {
 	err := client.ReleaseMessages(httpmodels.ReleaseRequest{"d8d4d0f7-1bbd-48c0-9f80-c66f5fd45fc2"})
 
 	// Assert
-	require.True(t, apierror.IsCode(err, apierror.CodeMessageNotFound))
+	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeMessageNotFound))
 }

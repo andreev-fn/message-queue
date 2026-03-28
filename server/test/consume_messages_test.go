@@ -9,7 +9,7 @@ import (
 	"server/internal/domain"
 	"server/internal/utils"
 	"server/internal/utils/testutils"
-	"server/pkg/apierror"
+	"server/pkg/httpclient"
 	"server/pkg/httpmodels"
 	"server/test/fixtures"
 	"server/test/testkit"
@@ -91,7 +91,7 @@ func TestConsumeFromUnknownQueue(t *testing.T) {
 	})
 
 	// Assert
-	require.True(t, apierror.IsCode(err, apierror.CodeQueueNotFound))
+	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeQueueNotFound))
 }
 
 func TestConsumeFromDLQAllowed(t *testing.T) {
