@@ -33,7 +33,7 @@ func ExtractKnownErrors(err error) *httpmodels.Error {
 
 func MapErrorCodeToStatusCode(code httpmodels.ErrorCode) int {
 	switch code {
-	case httpmodels.ErrorCodeBatchSizeTooBig, httpmodels.ErrorCodeQueueNotWritable:
+	case httpmodels.ErrorCodeRequestInvalid, httpmodels.ErrorCodeBatchSizeTooBig, httpmodels.ErrorCodeQueueNotWritable:
 		return http.StatusBadRequest
 	case httpmodels.ErrorCodeMessageNotFound, httpmodels.ErrorCodeQueueNotFound:
 		return http.StatusNotFound
