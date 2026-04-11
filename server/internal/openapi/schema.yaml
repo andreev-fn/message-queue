@@ -209,7 +209,7 @@ components:
             required: [error]
             properties:
               error:
-                $ref: "#/components/responses/ErrorResponse"
+                $ref: "#/components/schemas/Error"
 
   schemas:
     # ----------------------
