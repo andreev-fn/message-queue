@@ -34,24 +34,24 @@ func NewClient(baseURL string, httpDoer HTTPDoer) *Client {
 	}
 }
 
-func (c *Client) PrepareMessages(reqDTO httpmodels.PublishRequest) (httpmodels.PublishResponse, error) {
+func (c *Client) PrepareMessages(reqDTO httpmodels.PublishRequest) (*httpmodels.PublishResponse, error) {
 	var respDTO httpmodels.PublishResponse
 
 	if err := c.doRequest("/messages/prepare", reqDTO, &respDTO); err != nil {
 		return nil, err
 	}
 
-	return respDTO, nil
+	return &respDTO, nil
 }
 
-func (c *Client) PublishMessages(reqDTO httpmodels.PublishRequest) (httpmodels.PublishResponse, error) {
+func (c *Client) PublishMessages(reqDTO httpmodels.PublishRequest) (*httpmodels.PublishResponse, error) {
 	var respDTO httpmodels.PublishResponse
 
 	if err := c.doRequest("/messages/publish", reqDTO, &respDTO); err != nil {
 		return nil, err
 	}
 
-	return respDTO, nil
+	return &respDTO, nil
 }
 
 func (c *Client) ReleaseMessages(reqDTO httpmodels.ReleaseRequest) error {

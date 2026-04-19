@@ -34,14 +34,14 @@ func (a *PublishMessages) Mount(srv *http.ServeMux) {
 func (a *PublishMessages) publishHandler(
 	ctx context.Context,
 	req httpmodels.PublishRequest,
-) (httpmodels.PublishResponse, *httpmodels.Error) {
+) (*httpmodels.PublishResponse, *httpmodels.Error) {
 	return a.handler(ctx, req, true)
 }
 
 func (a *PublishMessages) prepareHandler(
 	ctx context.Context,
 	req httpmodels.PublishRequest,
-) (httpmodels.PublishResponse, *httpmodels.Error) {
+) (*httpmodels.PublishResponse, *httpmodels.Error) {
 	return a.handler(ctx, req, false)
 }
 
@@ -49,31 +49,42 @@ func (a *PublishMessages) handler(
 	ctx context.Context,
 	req httpmodels.PublishRequest,
 	autoRelease bool,
-) (httpmodels.PublishResponse, *httpmodels.Error) {
-	var newMessages []usecases.NewMessageParams
-	for _, param := range req {
-		priority := 100
-		if param.Priority != nil {
-			priority = *param.Priority
-		}
+) (*httpmodels.PublishResponse, *httpmodels.Error) {
+	mappedItems, mapItemErrors := base.MapBatchRequestItems(req, a.mapRequestItem)
 
-		queue, err := domain.NewQueueName(param.Queue)
-		if err != nil {
-			return nil, httpmodels.NewError(httpmodels.ErrorCodeRequestInvalid, err.Error())
-		}
-
-		newMessages = append(newMessages, usecases.NewMessageParams{
-			Queue:    queue,
-			Payload:  param.Payload,
-			Priority: priority,
-			StartAt:  param.StartAt,
-		})
-	}
-
-	msgIDs, err := a.useCase.Do(ctx, newMessages, autoRelease)
+	results, err := a.useCase.Do(ctx, mappedItems, autoRelease)
 	if err != nil {
 		return nil, base.ExtractKnownErrors(err)
 	}
 
-	return msgIDs, nil
+	return &httpmodels.PublishResponse{
+		Results: base.MapBatchResults(mapItemErrors, results, a.mapResult),
+	}, nil
+}
+
+func (a *PublishMessages) mapRequestItem(
+	params httpmodels.PublishRequestItem,
+) (usecases.NewMessageParams, *httpmodels.Error) {
+	priority := 100
+	if params.Priority != nil {
+		priority = *params.Priority
+	}
+
+	queue, err := domain.NewQueueName(params.Queue)
+	if err != nil {
+		return usecases.NewMessageParams{}, httpmodels.NewError(httpmodels.ErrorCodeRequestInvalid, err.Error())
+	}
+
+	return usecases.NewMessageParams{
+		Queue:    queue,
+		Payload:  params.Payload,
+		Priority: priority,
+		StartAt:  params.StartAt,
+	}, nil
+}
+
+func (a *PublishMessages) mapResult(result *usecases.NewMessageResult) *httpmodels.PublishedMessage {
+	return &httpmodels.PublishedMessage{
+		ID: result.ID,
+	}
 }

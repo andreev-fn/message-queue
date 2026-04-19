@@ -13,7 +13,6 @@ import (
 	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/storage"
-	"server/internal/utils/dbutils"
 	"server/internal/utils/timeutils"
 )
 
@@ -22,6 +21,10 @@ type NewMessageParams struct {
 	Payload  string
 	Priority int
 	StartAt  *time.Time
+}
+
+type NewMessageResult struct {
+	ID string
 }
 
 type PublishMessages struct {
@@ -55,56 +58,63 @@ func (uc *PublishMessages) Do(
 	ctx context.Context,
 	messages []NewMessageParams,
 	autoRelease bool,
-) ([]string, error) {
+) ([]BatchResult[NewMessageResult], error) {
 	if len(messages) > uc.conf.BatchSizeLimit() {
 		return nil, ErrBatchSizeTooBig
 	}
 
+	results := make([]BatchResult[NewMessageResult], 0, len(messages))
+
+	for _, params := range messages {
+		results = append(results, mapResultToBatch(uc.doOne(ctx, params, autoRelease)))
+	}
+
+	return results, nil
+}
+
+func (uc *PublishMessages) doOne(
+	ctx context.Context,
+	params NewMessageParams,
+	autoRelease bool,
+) (*NewMessageResult, error) {
 	scope := uc.scopeFactory.New()
 
-	tx, err := uc.db.BeginTx(ctx, nil)
+	// check that the queue exists
+	if _, err := uc.conf.GetQueueConfig(params.Queue); err != nil {
+		return nil, err
+	}
+
+	if params.Queue.IsDLQ() {
+		return nil, ErrDirectWriteToDLQNotAllowed
+	}
+
+	message, err := domain.NewMessage(
+		uc.clock,
+		uuid.New(),
+		params.Queue,
+		params.Payload,
+		params.Priority,
+		params.StartAt,
+	)
 	if err != nil {
 		return nil, err
 	}
-	defer dbutils.RollbackWithLog(tx, uc.logger)
 
-	result := make([]string, 0, len(messages))
-
-	for _, msg := range messages {
-		// check that the queue exists
-		if _, err := uc.conf.GetQueueConfig(msg.Queue); err != nil {
-			return nil, err
+	if autoRelease {
+		if err := message.Release(uc.clock, scope.Dispatcher); err != nil {
+			return nil, fmt.Errorf("message.Release: %w", err)
 		}
-
-		if msg.Queue.IsDLQ() {
-			return nil, ErrDirectWriteToDLQNotAllowed
-		}
-
-		message, err := domain.NewMessage(uc.clock, uuid.New(), msg.Queue, msg.Payload, msg.Priority, msg.StartAt)
-		if err != nil {
-			return nil, err
-		}
-
-		if autoRelease {
-			if err := message.Release(uc.clock, scope.Dispatcher); err != nil {
-				return nil, fmt.Errorf("message.Release: %w", err)
-			}
-		}
-
-		if err := uc.msgRepo.Save(ctx, tx, message); err != nil {
-			return nil, fmt.Errorf("msgRepo.Save: %w", err)
-		}
-
-		result = append(result, message.ID().String())
 	}
 
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("tx.Commit: %w", err)
+	if err := uc.msgRepo.SaveInNewTransaction(ctx, uc.db, message); err != nil {
+		return nil, fmt.Errorf("msgRepo.Save: %w", err)
 	}
 
 	if err := scope.MsgAvailabilityNotifier.Flush(); err != nil {
 		uc.logger.Error("scope.MsgAvailabilityNotifier.Flush", "error", err)
 	}
 
-	return result, nil
+	return &NewMessageResult{
+		ID: message.ID().String(),
+	}, nil
 }

@@ -17,7 +17,7 @@ func CreatePreparedMsg(app *appbuilder.App, optArgs ...Option) string {
 }
 
 func publish(app *appbuilder.App, queue string, payload string, priority int, release bool) string {
-	msgIDs, err := app.PublishMessages.Do(
+	results, err := app.PublishMessages.Do(
 		context.Background(),
 		[]usecases.NewMessageParams{{
 			Queue:    domain.UnsafeQueueName(queue),
@@ -31,11 +31,15 @@ func publish(app *appbuilder.App, queue string, payload string, priority int, re
 		panic(err)
 	}
 
-	if len(msgIDs) != 1 {
-		panic(fmt.Sprint("expected 1 msgID, got ", msgIDs))
+	if len(results) != 1 {
+		panic(fmt.Sprint("expected 1 result, got ", len(results)))
 	}
 
-	return msgIDs[0]
+	if results[0].Error != nil {
+		panic(results[0].Error)
+	}
+
+	return results[0].Data.ID
 }
 
 func CreateAvailableMsg(app *appbuilder.App, optArgs ...Option) string {

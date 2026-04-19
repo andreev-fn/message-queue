@@ -2,10 +2,12 @@ package test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/utils"
 	"server/internal/utils/testutils"
@@ -38,10 +40,11 @@ func TestPrepareMessage(t *testing.T) {
 
 	// Assert response
 	require.NoError(t, err)
-	require.Len(t, respDTO, 1)
+	require.Len(t, respDTO.Results, 1)
+	require.Nil(t, respDTO.Results[0].Error)
 
 	// Assert the message in DB
-	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO[0])
+	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO.Results[0].Data.ID)
 	require.NoError(t, err)
 
 	require.Equal(t, msgQueue, message.Queue().String())
@@ -51,85 +54,104 @@ func TestPrepareMessage(t *testing.T) {
 	require.Equal(t, msgPriority, message.Priority())
 }
 
-func TestPublishMessageWithPriority(t *testing.T) {
-	testutils.SkipIfNotInTestEnv(t)
-
-	app := testkit.NewApp(testkit.NewAppConfig())
-	client := testkit.NewHTTPClient(t, app)
-	testkit.CleanupDatabase(app.DB)
-
-	const (
-		msgQueue    = "test"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 5
-	)
-
-	// Act
-	respDTO, err := client.PublishMessages(httpmodels.PublishRequest{
-		httpmodels.PublishRequestItem{
-			Queue:    msgQueue,
-			Payload:  msgPayload,
-			Priority: utils.P(msgPriority),
-		},
-	})
-
-	// Assert response
-	require.NoError(t, err)
-	require.Len(t, respDTO, 1)
-
-	// Assert the message in DB
-	message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO[0])
-	require.NoError(t, err)
-
-	require.Equal(t, msgQueue, message.Queue().String())
-	require.Equal(t, msgPayload, message.Payload())
-	require.Equal(t, app.Clock.Now(), message.CreatedAt())
-	require.Equal(t, domain.MsgStatusAvailable, message.Status())
-	require.Equal(t, msgPriority, message.Priority())
-}
-
-func TestPublishToUnknownQueue(t *testing.T) {
-	testutils.SkipIfNotInTestEnv(t)
-
-	app := testkit.NewApp(testkit.NewAppConfig())
-	client := testkit.NewHTTPClient(t, app)
-	testkit.CleanupDatabase(app.DB)
-
-	const (
-		msgQueue    = "undefined_queue"
-		msgPayload  = `{"arg": 123}`
-		msgPriority = 5
-	)
-
-	// Act
-	_, err := client.PublishMessages(httpmodels.PublishRequest{
-		httpmodels.PublishRequestItem{
-			Queue:    msgQueue,
-			Payload:  msgPayload,
-			Priority: utils.P(msgPriority),
-		},
-	})
-
-	// Assert
-	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeQueueNotFound))
-}
-
-func TestPublishToDLQNotAllowed(t *testing.T) {
+func TestPublishMessage(t *testing.T) {
 	testutils.SkipIfNotInTestEnv(t)
 
 	app := testkit.NewApp(testkit.NewAppConfig(testkit.WithDeadLettering()))
 	client := testkit.NewHTTPClient(t, app)
 	testkit.CleanupDatabase(app.DB)
 
+	const (
+		unknownMsgQueue = "undefined_queue"
+		invalidMsgQueue = "invalid+queue"
+	)
+
 	// Act
-	_, err := client.PublishMessages(httpmodels.PublishRequest{
+	respDTO, err := client.PublishMessages(httpmodels.PublishRequest{
 		httpmodels.PublishRequestItem{
-			Queue:    testkit.GetDLQ(fixtures.DefaultMsgQueue),
+			Queue:   fixtures.DefaultMsgQueue,
+			Payload: fixtures.DefaultMsgPayload,
+		},
+		httpmodels.PublishRequestItem{
+			Queue:    fixtures.DefaultMsgQueue,
 			Payload:  fixtures.DefaultMsgPayload,
-			Priority: utils.P(fixtures.DefaultMsgPriority),
+			Priority: utils.P(fixtures.DefaultMsgPriority + 1),
+		},
+		httpmodels.PublishRequestItem{
+			Queue:   unknownMsgQueue,
+			Payload: fixtures.DefaultMsgPayload,
+		},
+		httpmodels.PublishRequestItem{
+			Queue:   invalidMsgQueue,
+			Payload: fixtures.DefaultMsgPayload,
+		},
+		httpmodels.PublishRequestItem{
+			Queue:   testkit.GetDLQ(fixtures.DefaultMsgQueue),
+			Payload: fixtures.DefaultMsgPayload,
 		},
 	})
 
-	// Assert
-	require.ErrorContains(t, err, "writing directly to DLQ is not allowed")
+	// Assert response
+	require.NoError(t, err)
+	require.Len(t, respDTO.Results, 5)
+
+	t.Run("creates message with default priority", func(t *testing.T) {
+		require.Nil(t, respDTO.Results[0].Error)
+
+		message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO.Results[0].Data.ID)
+		require.NoError(t, err)
+
+		require.Equal(t, fixtures.DefaultMsgQueue, message.Queue().String())
+		require.Equal(t, fixtures.DefaultMsgPayload, message.Payload())
+		require.Equal(t, app.Clock.Now(), message.CreatedAt())
+		require.Equal(t, domain.MsgStatusAvailable, message.Status())
+		require.Equal(t, fixtures.DefaultMsgPriority, message.Priority())
+	})
+
+	t.Run("creates message with custom priority", func(t *testing.T) {
+		require.Nil(t, respDTO.Results[1].Error)
+
+		message, err := app.MsgRepo.GetByID(context.Background(), app.DB, respDTO.Results[1].Data.ID)
+		require.NoError(t, err)
+
+		require.Equal(t, fixtures.DefaultMsgQueue, message.Queue().String())
+		require.Equal(t, fixtures.DefaultMsgPayload, message.Payload())
+		require.Equal(t, app.Clock.Now(), message.CreatedAt())
+		require.Equal(t, domain.MsgStatusAvailable, message.Status())
+		require.Equal(t, fixtures.DefaultMsgPriority+1, message.Priority())
+	})
+
+	t.Run("fails for unknown queue", func(t *testing.T) {
+		require.NotNil(t, respDTO.Results[2].Error)
+		require.True(t, httpclient.IsCode(respDTO.Results[2].Error, httpmodels.ErrorCodeQueueNotFound))
+	})
+
+	t.Run("fails for invalid queue name", func(t *testing.T) {
+		require.NotNil(t, respDTO.Results[3].Error)
+		require.True(t, httpclient.IsCode(respDTO.Results[3].Error, httpmodels.ErrorCodeRequestInvalid))
+	})
+
+	t.Run("fails for non-writable queue", func(t *testing.T) {
+		require.NotNil(t, respDTO.Results[4].Error)
+		require.True(t, httpclient.IsCode(respDTO.Results[4].Error, httpmodels.ErrorCodeQueueNotWritable))
+	})
+}
+
+func TestPublishGeneralFailure(t *testing.T) {
+	testutils.SkipIfNotInTestEnv(t)
+
+	app := testkit.NewApp(testkit.NewAppConfig())
+	client := testkit.NewHTTPClient(t, app)
+	testkit.CleanupDatabase(app.DB)
+
+	// Act
+	_, err := client.PublishMessages(slices.Repeat(httpmodels.PublishRequest{
+		httpmodels.PublishRequestItem{
+			Queue:   fixtures.DefaultMsgQueue,
+			Payload: fixtures.DefaultMsgPayload,
+		},
+	}, config.DefaultBatchSizeLimit+1))
+
+	// Assert response
+	require.True(t, httpclient.IsCode(err, httpmodels.ErrorCodeBatchSizeTooBig))
 }

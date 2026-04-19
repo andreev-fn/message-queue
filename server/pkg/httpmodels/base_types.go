@@ -37,3 +37,8 @@ type Message struct {
 	History     []MessageChapter `json:"history"`
 	Payload     string           `json:"payload"`
 }
+
+type BatchResult[T any] struct {
+	Data  *T     `json:"data,omitempty"`
+	Error *Error `json:"error,omitempty"`
+}

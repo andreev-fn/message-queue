@@ -375,9 +375,22 @@ components:
     # Responses
     # ----------------------
     PublishResponse:
-      type: array
-      items:
-        $ref: "#/components/schemas/MessageID"
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              data:
+                type: object
+                required: [ id ]
+                properties:
+                  id:
+                    $ref: "#/components/schemas/MessageID"
+              error:
+                $ref: "#/components/schemas/Error"
 
     CheckResponse:
       type: array

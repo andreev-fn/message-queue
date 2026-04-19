@@ -127,7 +127,13 @@ func (items PublishRequest) Validate() error {
 	return nil
 }
 
-type PublishResponse = []MessageID
+type PublishResponse struct {
+	Results []BatchResult[PublishedMessage] `json:"results"`
+}
+
+type PublishedMessage struct {
+	ID MessageID `json:"id"`
+}
 
 type RedirectRequest []RedirectRequestItem
 
